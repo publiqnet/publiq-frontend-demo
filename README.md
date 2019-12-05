@@ -1,29 +1,42 @@
-# PubliqAngularWorkspace
+## How To Setup Project
+
+### Install Node.js and Angular Cli
+ + `install node (my current version - v10.15.3)`
+ + `install angular cli (npm install -g @angular/cli@8.3.17)`
 
 
-## Publishing Platform App
+### Clone Project From GitHub
 
-### Development
-Run `npm run start:publishing-platform`
+ + `git clone https://github.com/publiqnet/publiq-frontend-demo.git`
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+## Installing dependencies 
 
-## Code scaffolding
+ + Remove from package.json
+```console
+   "helper-lib": "file:shared-angular-workspace/dist/helper-lib",
+   "ui-lib": "file:shared-angular-workspace/dist/ui-lib",
+```
+ + Run
+ ```console
+    npm install
+    npm run build:libs
+ ```
+ 
+  + Add to package.json
+ ```console
+    "helper-lib": "file:shared-angular-workspace/dist/helper-lib",
+    "ui-lib": "file:shared-angular-workspace/dist/ui-lib",
+ ```
+ 
+ + Run
+  ```console
+     npm install
+  ```
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
-
-## Build
-
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `--prod` flag for a production build.
-
-## Running unit tests
-
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
-
-## Running end-to-end tests
-
-Run `ng e2e` to execute the end-to-end tests via [Protractor](http://www.protractortest.org/).
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI README](https://github.com/angular/angular-cli/blob/master/README.md).
+## Running project
+ + Run
+  ```console
+     run local - npm run pp:serve,
+     run stage - npm run pp:start:stage,
+     run prod - npm run pp:start:prod
+  ```
