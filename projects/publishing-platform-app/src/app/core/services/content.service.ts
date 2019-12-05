@@ -245,57 +245,6 @@ export class ContentService {
     }
   }
 
-  getHomePageContent(channel, channelAuthors): Observable<any> {
-    const contentData = [];
-    return this.http.post(environment.daemon_https_address, {
-      'id': 0,
-      'method': 'call',
-      'params': [0, 'search_content_ex_sponsored', ['', '', channelAuthors, '-published', '', '0.0.0', '', 5, 30]]
-    }).pipe(
-      flatMap((data: any) => {
-        const ids = [];
-        let nextContent = {};
-        if (data && data.result) {
-          data.result.map((content) => {
-            ids.push(content.ds_id);
-            if (typeof content.meta === 'undefined' || typeof content.meta.headline === 'undefined') {
-              return false;
-            }
-
-            content.meta.tags = ContentService.generateTags(content.meta.tags);
-
-            content.meta.displayTags = content.meta.tags.map(t => {
-              if (t.display) {
-                return t.display;
-              } else if (t.name) {
-                return t.name;
-              }
-            });
-
-            if (content.full_account) {
-              content.full_account = new Account(content.full_account);
-            }
-
-            ['options', 'owner', 'registrar', 'rights_to_publish', 'statistics'].forEach(e => (content.full_account && content.full_account.hasOwnProperty(e)) ? delete content.full_account[e] : '');
-            ['version', 'headline', 'mimetype', 'source_of_material', 'reference', 'channel_id', 'gender'].forEach(e => (content.meta && content.meta.hasOwnProperty(e)) ? delete content.meta[e] : '');
-
-            nextContent = {
-              author: content.author,
-              created: content.created,
-              ds_id: content.ds_id,
-              meta: content.meta,
-              full_account: content.full_account
-            };
-
-            contentData.push(nextContent);
-          });
-          const viewCountUrl = environment.ds_backend + '/content/views';
-          return forkJoin(of(contentData), this.http.post(viewCountUrl, { ids }));
-        }
-      })
-    );
-  }
-
   public addFeedbackReport(dsId, reasonId, authorPubliqId): void {
     if (isPlatformBrowser(this.platformId)) {
       const authToken = this.getAccountToken();
