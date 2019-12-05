@@ -1,0 +1,15 @@
+<div [ngClass]="['members-list', className]" *ngIf="membersData">
+  <div class="members-list__circle">
+    <ui-avatar [avatarData]="member" *ngFor="let member of this.membersData.slice(0, 4)" (click)="getMemberData(member)"></ui-avatar>
+    <div class="members-list__count" *ngIf="membersData.length > 4">+{{membersData.slice(4).length}}</div>
+    <div class="members-list__icon" *ngIf="membersData.length === 0">
+      <i class="icon-profile"></i>
+    </div>
+  </div>
+  <div>
+    <div class="members-list__all">
+      <ui-datum [count]="this.membersData.length" [property]="'ui.publication-members.members' | translate" [className]="'members-list__all--datum'"></ui-datum>
+    </div>
+  </div>
+</div>
+

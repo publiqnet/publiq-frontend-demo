@@ -1,0 +1,15 @@
+<div class="image-upload" [class.image-upload--uploaded]="imageUrl">
+  <div class="image-upload__image">
+    <img class="icon-plus" [src]="imageUrl" *ngIf="imageUrl">
+    <i class="icon-plus" *ngIf="!imageUrl"></i>
+  </div>
+
+  <div class="image-upload__texts">
+    <h4>{{filename ? filename : heading}}</h4>
+    <p>{{subheading}}</p>
+  </div>
+
+  <i class="icon-close image-upload__remove" *ngIf="imageUrl" (click)="removeImage()"></i>
+
+  <input type="file" title="" [id]="inputId" (change)="onImageChange($event)" [readonly]="readonly" [disabled]="disabled"/>
+</div>

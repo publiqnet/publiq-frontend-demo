@@ -1,0 +1,171 @@
+<div class="story" [class.story--coverless]="!contentData || !contentData.cover || !contentData.cover.url"
+     [ngClass]="['story--'+type, className, menuOpen.publication ||  menuOpen.settings ? 'show-menu' : '']" [class.story--pending]="contentData.status == 'pending'" *ngIf="type !== 'edit'">
+  <div class="story__image" *ngIf="type !== 'edit'">
+    <span class="story__image__letter" *ngIf="(!contentData.cover || !contentData.cover.url) && type == 'single'">{{getTitleFirstChar()}}</span>
+    <ng-container *ngIf="contentData && contentData.cover && contentData.cover.url">
+      <div class="story__image__content">
+        <a [href]="'/s/' + contentData.uri" (click)="onContentClick($event)">
+          <img *ngIf="showThumbnail()" [ngStyle]="{opacity: !thumbnailLoaded ? 0 : null, maxHeight: !thumbnailLoaded ? '1px' : null}"
+               [src]="contentData.cover.thumbnail" (load)="onImageLoaded($event, 'thumbnail')" (error)="onImageError($event, 'thumbnail')"
+               (click)="onContentClick($event)" [alt]="contentData.title">
+
+          <img *ngIf="showOriginal()" [ngStyle]="{opacity: !originalImageLoaded ? 0 : null, maxHeight: !originalImageLoaded ? '1px' : null}"
+               [src]="contentData.cover.url" (load)="onImageLoaded($event, 'img')" (error)="onImageError($event, 'img')" [title]="contentData.title"
+               (click)="onContentClick($event)" [alt]="contentData.title">
+          <div *ngIf="showSkeleton()"
+               class="img-skeleton" [style.paddingTop]="contentData.cover.thumbnailHeight / contentData.cover.thumbnailWidth * 100 + '%'">
+            <i class="icon-picture"></i>
+            <span *ngIf="thumbnailLoaded === null && originalImageLoaded === null">The file is not available:</span>
+            <span *ngIf="thumbnailLoaded === null && originalImageLoaded === null">{{imageUri}}</span>
+          </div>
+        </a>
+        <div class="story__image__views">
+          <i class="icon-preview"></i>
+          <span>{{contentData.view_count ? contentData.view_count : 0}}</span>
+        </div>
+        <div class="story__image__arrows" *ngIf="imageArrowsShown">
+          <i class="icon-arrow-up" (click)="onImageArrowClick(-1)"></i>
+          <i class="icon-arrow-up" (click)="onImageArrowClick(1)"></i>
+        </div>
+        <div class="story__image__change" *ngIf="changeImageShown">
+          <ui-button iconClassName="picture" (click)="onChangeImageClick(true)" [text]="'ui.content-single.change_image' | translate"></ui-button>
+        </div>
+        <!--          <div class="story__image__like">-->
+        <!--            <i (click)="onLikeClick($event, contentData.uri)" class="icon-like"></i>-->
+        <!--          </div>-->
+        <ng-container *ngIf="contentData && contentData.cover && contentData.cover.url && canEditContent">
+          <div class="story__image__publication">
+            <ui-dropdown-list [type]="'publication-dropdown'" [delta]="85" [optionsData]="publicationList" [position]="'bottom'" [icon]="'publication'" (onItemSelect)="selectPublication($event)" [(isOpen)]="menuOpen.publication" [selectedPublication]="(contentData.publication && contentData.publication.slug) ? contentData.publication.slug : ''" [shadowed]="true"></ui-dropdown-list>
+          </div>
+          <div class="story__image__settings--menu">
+            <ui-dropdown-list [type]="'default'" [delta]="65" *ngIf="dropdownSettings" [items]="dropdownSettings" (onItemSelect)="selectTagValue($event)" [icon]="'menu'" [position]="'bottom'" [(isOpen)]="menuOpen.settings" [shadowed]="true"></ui-dropdown-list>
+          </div>
+        </ng-container>
+      </div>
+    </ng-container>
+  </div>
+  <div class="story__data" *ngIf="type !== 'edit'">
+    <div class="story__tags">
+      <ng-container *ngIf="contentData && contentData.tags && contentData.tags.length">
+        <ng-container *ngFor="let tag of contentData.tags; let i = index">
+          <a [href]="'/content/t/' + tag" (click)="onTagClick($event, tag)">{{tag}}</a>{{ i !== contentData.tags.length - 1 ? ', ' : null}}
+        </ng-container>
+      </ng-container>
+    </div>
+    <a [href]="'/s/' + contentData.uri" (click)="onContentClick($event)" class="title-bold">
+      <h4 class="story__title" [attr.data-letter]="getTitleFirstChar()">{{contentData.title}}</h4>
+    </a>
+    <div class="story__meta" *ngIf="type !== 'related'">
+      <ui-avatar *ngIf="contentData && contentData.author" [loadOriginalImg]="loadOriginalImg" [avatarData]="contentData.author" (click)="onAccountClick($event)"></ui-avatar>
+      <div class="story__meta-info">
+        <div class="story__meta-info__author">
+          <a *ngIf="contentData && contentData.author" [href]="'/a/' + contentData.author.slug" (click)="onAccountClick($event)">{{contentData.author.fullName ? contentData.author.fullName : contentData.author.slug}}</a>
+          <ng-container *ngIf="contentData.publication && contentData.publication.title">
+            <em>{{' ' + ('ui.content-single.in' | translate) + ' '}}</em>
+            <a [href]="'/p/' + contentData.publication.slug" (click)="onPublicationClick($event)">{{contentData.publication.title}}</a>
+          </ng-container>
+        </div>
+        <div class="story__meta-info__date">
+          <span *ngIf="contentData.published">{{!contentData.boosted ? (contentData.published * 1000 | localizedDate:'dd MMM, HH:mm') : ('ui.content-single.sponsored' | translate)}}</span>
+          <div class="story__meta-info__views">
+            <i class="icon-preview"></i>
+            <span>{{contentData.view_count ? contentData.view_count : 0}}</span>
+          </div>
+        </div>
+      </div>
+      <!--      <div class="story__meta-single-actions">-->
+      <!--        <ui-button [iconButton]="true" iconClassName="like" size="small" (btnClicked)="onLikeClick($event, contentData.uri)"></ui-button>-->
+      <!--      </div>-->
+      <div class="story__meta-single-actions" *ngIf="contentData && canEditContent && type !== 'grid'">
+        <span class="story__meta-single-actions--publication">
+          <ui-dropdown-list [type]="'publication-dropdown'" [delta]="type == 'single' ? 40 : 65" [optionsData]="publicationList" [position]="'bottom'" [icon]="'publication'" (onItemSelect)="selectPublication($event)" [(isOpen)]="menuOpen.publication" [selectedPublication]="(contentData.publication && contentData.publication.slug) ? contentData.publication.slug : ''" [shadowed]="true"></ui-dropdown-list>
+        </span>
+        <span class="story__meta-single-actions--settings">
+          <ui-dropdown-list [type]="'default'" [delta]="type == 'single' ? 20 : 65" *ngIf="dropdownSettings" [items]="dropdownSettings" (onItemSelect)="selectTagValue($event)" [icon]="'menu'" [position]="'bottom'" [openerClassName]="'user-data'" [(isOpen)]="menuOpen.settings" [shadowed]="true"></ui-dropdown-list>
+        </span>
+      </div>
+    </div>
+    <div *ngIf="type == 'grid' && (!contentData.cover || !contentData.cover.url)" class="grid-options">
+      <div class="grid-view-count">
+        <i class="icon-preview"></i>
+        <span>{{contentData.view_count ? contentData.view_count : 0}}</span>
+      </div>
+      <div *ngIf="canEditContent" class="grid-view-options">
+        <span>
+          <ui-dropdown-list [type]="'publication-dropdown'" [delta]="85" [optionsData]="publicationList" [position]="'bottom'" [icon]="'publication'" (onItemSelect)="selectPublication($event)" [(isOpen)]="menuOpen.publication" [selectedPublication]="(contentData.publication && contentData.publication.slug) ? contentData.publication.slug : ''" [shadowed]="true"></ui-dropdown-list>
+        </span>
+        <span>
+          <ui-dropdown-list [type]="'default'" [delta]="65" *ngIf="dropdownSettings" [items]="dropdownSettings" (onItemSelect)="selectTagValue($event)" [icon]="'menu'" [position]="'bottom'" [openerClassName]="'user-data'" [(isOpen)]="menuOpen.settings" [shadowed]="true"></ui-dropdown-list>
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="story__edit" [class.story__edit--pending]="contentData.status == 'pending'" [ngClass]="className" *ngIf="type == 'edit'">
+  <div class="story__edit__header">
+    <div class="story__edit__header--image">
+      <span class="story__image__letter" *ngIf="!contentData || !contentData.cover || !contentData.cover.url">{{getTitleFirstChar()}}</span>
+      <ng-container *ngIf="contentData && contentData.cover && contentData.cover.url">
+        <a [href]="'/s/' + contentData.uri" (click)="onContentClick($event)">
+          <img *ngIf="showThumbnail()" [ngStyle]="{opacity: !thumbnailLoaded ? 0 : null, maxHeight: !thumbnailLoaded ? '1px' : null}"
+               [src]="contentData.cover.thumbnail" (load)="onImageLoaded($event, 'thumbnail')" (error)="onImageError($event, 'thumbnail')"
+               [alt]="contentData.title" (click)="onContentClick($event)">
+
+          <img *ngIf="showOriginal()" [ngStyle]="{opacity: !originalImageLoaded ? 0 : null, maxHeight: !originalImageLoaded ? '1px' : null}"
+                      [src]="contentData.cover.url" title="{{contentData.title}}" (load)="onImageLoaded($event, 'img')" (error)="onImageError($event, 'img')"
+                      [alt]="contentData.title" (click)="onContentClick($event)">
+
+          <div *ngIf="showSkeleton()"
+               class="img-skeleton" [style.paddingTop]="contentData.cover.thumbnailHeight / contentData.cover.thumbnailWidth * 100 + '%'">
+            <i class="icon-picture"></i>
+            <span *ngIf="thumbnailLoaded === null && originalImageLoaded === null">The file is not available:</span>
+            <span *ngIf="thumbnailLoaded === null && originalImageLoaded === null">{{imageUri}}</span>
+          </div>
+        </a>
+      </ng-container>
+    </div>
+    <div class="story__edit__header--content">
+      <div>
+        <span *ngIf="contentData.published" class="publish-data"><b>{{('ui.content-single.published' | translate) + ' '}} </b>{{contentData.published * 1000 | localizedDate:'dd MMM, HH:mm'}}</span>
+        <span *ngIf="contentData.updated"><b>{{'ui.content-single.updated' | translate}} </b>{{contentData.updated * 1000 | localizedDate:'dd MMM, HH:mm'}}</span>
+      </div>
+      <div>
+        <a [href]="'/s/' + contentData.uri" (click)="onContentClick($event)">
+          <h2 [attr.data-letter]="getTitleFirstChar()">{{contentData.title}}</h2>
+        </a>
+      </div>
+    </div>
+  </div>
+  <div class="story__edit__footer" [ngClass]="contentData.history && contentData.history.length ? '' : 'data-history'" *ngIf="contentData && contentData.status != 'pending'">
+    <div class="story__edit__footer--dropdown">
+      <ui-dropdown *ngIf="publicationList && publicationList.length" [type]="'withIcon'" [addPlaceholder]="'ui.content-single.add_to_publication' | translate" [optionsData]="publicationList" (onSelectChange)="onPublicationsListClick($event)" [selectedOptionValue]="contentData.publication.slug" [isNone]="true" [isNoneText]="'ui.content-single.none' | translate"></ui-dropdown>
+    </div>
+    <div class="story__edit__footer--history" [ngClass]="toggleHistoryIcon ? 'toggle-icon' : ''" *ngIf="contentData.history && contentData.history.length">
+      <ui-button [type]="'ordinary'" [iconClassName]="'arrow-right'" [text]="'ui.content-single.show_previous' | translate" [className]="'show-history'" (btnClicked)="onBtnClick($event)"></ui-button>
+    </div>
+    <div class="story__edit__footer--buttons">
+      <ui-button [type]="'ordinary'" [text]="hasBoost ? ('ui.content-single.cancel_boost' | translate) : ('ui.content-single.boost' | translate)" [className]="'boost-btn'" (btnClicked)="onBoostClick($event)"></ui-button>
+      <ui-button [type]="'ordinary'" [text]="'ui.content-single.edit' | translate" [className]="'edit-btn'" (btnClicked)="onEditClick($event)"></ui-button>
+    </div>
+  </div>
+</div>
+<div class="story-author" *ngIf="type === 'related'" [ngClass]="className">
+  <ui-avatar *ngIf="contentData && contentData.author" [loadOriginalImg]="loadOriginalImg" (click)="onAccountClick($event)" size="large" [avatarData]="contentData.author"></ui-avatar>
+  <a *ngIf="contentData && contentData.author" [href]="'/a/' + contentData.author.slug" (click)="onAccountClick($event)"><h4>{{contentData.author.fullName ? contentData.author.fullName : contentData.author.slug}}</h4></a>
+  <span *ngIf="contentData.published" class="date">{{!contentData.boosted ? (contentData.published * 1000 | localizedDate:'dd MMM, HH:mm') : ('ui.content-single.sponsored' | translate)}}</span>
+</div>
+<div class="story__edit--history" *ngIf="contentData.history && contentData.history.length && toggleHistoryIcon">
+  <div class="story__edit--history--list">
+    <div class="story__edit--history--list--item" *ngFor="let item of contentData.history">
+      <div class="content">
+        <span><b>{{('ui.content-single.published' | translate) + ' '}}</b>{{item.updated * 1000 | localizedDate:'dd MMM, HH:mm'}}</span>
+        <a [href]="'/s/' + item.slug" (click)="onHistoryClick($event, item.slug)">
+          <h2>{{item.title}}</h2>
+        </a>
+      </div>
+      <div class="read-more">
+        <ui-button [className]="'single-history-more'" [iconButton]="true" [iconClassName]="'arrow-right'" (btnClicked)="onHistoryClick($event, item.slug)"></ui-button>
+      </div>
+    </div>
+  </div>
+</div>

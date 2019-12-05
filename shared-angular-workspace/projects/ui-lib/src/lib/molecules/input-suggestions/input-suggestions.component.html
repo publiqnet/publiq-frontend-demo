@@ -1,0 +1,9 @@
+<div class="suggestions-wrapper">
+    <div class="suggestions">
+        <div class="suggestions__item" (click)="onSelect.emit(suggestion);" *ngFor="let suggestion of suggestions;">
+            <ui-avatar *ngIf="suggestion" [avatarData]="{'image': suggestion.image, 'fullName': suggestion.fullName}" size="xsmall"></ui-avatar>
+            <span>{{suggestion.fullName ? suggestion.fullName : suggestion.slug}}</span>
+        </div>
+        <div class="suggestions__item" *ngIf="!suggestions.length" (click)="onSelect.emit(false);">{{'ui.input-suggestions.no_result' | translate}}</div>
+    </div>
+</div>

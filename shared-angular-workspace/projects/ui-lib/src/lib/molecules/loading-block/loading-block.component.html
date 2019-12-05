@@ -1,0 +1,38 @@
+<div *ngIf="type !== null" class="loading-block__wrapper" [ngClass]="className">
+  <ng-container *ngIf="type === 'grid'">
+    <div class="loading-block__image"></div>
+    <div class="loading-block__tags">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+    <div class="loading-block__title-1"></div>
+    <div class="loading-block__title-2"></div>
+    <div class="loading-block__avatar">
+      <div></div>
+      <div>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+  </ng-container>
+  <ng-container *ngIf="type === 'single'">
+    <div class="loading-block__image"></div>
+    <div>
+      <div class="loading-block__tags">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+      <div class="loading-block__title-1"></div>
+      <div class="loading-block__title-2"></div>
+      <div class="loading-block__avatar">
+        <div></div>
+        <div>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</div>

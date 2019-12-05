@@ -1,0 +1,5 @@
+<div class="select-container" [class]="className">
+  <select [multiple]="multiple" *ngIf="optionsData.length" class="select-container__select">
+    <option *ngFor="let option of optionsData" [value]="option.value" class="select-container__option">{{option.text}}</option>
+  </select>
+</div>

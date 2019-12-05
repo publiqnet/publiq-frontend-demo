@@ -1,0 +1,10 @@
+<div class="tag-menu-c container" *ngIf="tagItems"
+     [ngClass]="{'container--270--first' : tagItems.length <= 8, 'container--540' : tagItems.length > 8, 'container--810' : tagItems.length > 16,
+      'container--1080' : tagItems.length > 24, 'container--max' : tagItems.length > 32}" (uiClickOutside)="_onClickedOutside($event)">
+  <div class="tag-menu-c__child">
+    <div class="tag-menu">
+      <div class="tag-menu__item" tabindex="0" *ngFor="let item of tagItems;" (click)="selectItem($event, {type: 'item', slug: item.slug})"
+           (keydown)="$event.keyCode === 13 ? selectItem($event, {type: 'item', slug: item.slug}) : null">{{item.text}}</div>
+    </div>
+  </div>
+</div>

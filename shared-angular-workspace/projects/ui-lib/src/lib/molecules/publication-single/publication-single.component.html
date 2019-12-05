@@ -1,0 +1,59 @@
+<!-- in-follow -->
+<div [ngClass]="['follow-part', className]" *ngIf="type == 'follow'">
+    <ui-avatar [size]="'large'" [isSquaric]="true" [avatarData]="avatarData" (click)="getPublicationData($event)"></ui-avatar>
+    <div class="follow-part__content">
+        <h3 (click)="getPublicationData($event)">{{publicationData?.title}}</h3>
+        <p>{{publicationData?.description}}</p>
+    </div>
+    <div *ngIf="!isOwner" class="follow-part__button">
+        <ui-button [text]="this.publicationData?.following ? ('ui.publication-single.following' | translate) : ('ui.publication-single.follow' | translate)" [isFollowing]="this.publicationData?.following" (btnClicked)="onFollow(!this.publicationData?.following)" [type]="'primary'"></ui-button>
+    </div>
+</div>
+
+<!-- invitation -->
+<div [ngClass]="['inv-part', className]" *ngIf="type == 'invitation'">
+    <ui-avatar [size]="'mediumPublication'" [avatarData]="avatarData" [isSquaric]="true" (click)="getPublicationData($event)"></ui-avatar>
+    <div class="inv-part__content">
+        <h3 (click)="getPublicationData($event)">{{publicationData?.title}}</h3>
+        <div>
+            <a [ngClass]="{'ellipsis' : !publicationData?.inviter.fullName}">{{publicationData?.inviter.fullName ? publicationData?.inviter.fullName : publicationData?.inviter.publicKey}} </a> <span>{{'ui.publication-single.invite_you' | translate}}</span>
+        </div>
+    </div>
+    <div class="inv-part__buttons">
+        <ui-button (btnClicked)="invAnswer(true)" [type]="'primary'" [size]="'small'" [text]="'ui.publication-single.accept' | translate" class="inv-part__buttons--accept"></ui-button>
+        <ui-button (btnClicked)="invAnswer(false)" [type]="'ordinary'" [size]="'small'" [text]="'ui.publication-single.reject' | translate" class="inv-part__buttons--reject"></ui-button>
+    </div>
+</div>
+
+<!-- list-part -->
+<div [ngClass]="['list-part', className]" *ngIf="type == 'list'">
+    <ui-avatar [size]="'Medium'" [isSquaric]="true" [avatarData]="avatarData" (click)="getPublicationData($event)"></ui-avatar>
+    <div class="list-part__content">
+        <h3 (click)="getPublicationData($event)">{{publicationData?.title}}</h3>
+        <p>{{publicationData?.subscribersCount + ' ' + ('ui.publication-single.followers' | translate)}}</p>
+    </div>
+    <div class="list-part__button" (click)="onFollow(!publicationData.following)" (mouseover)="animate(true)" (mouseleave)="animate(false)">
+        <ui-icon [size]="20" [action]="animationAction" [animationOptions]="createOptions('userFollow')"></ui-icon>
+    </div>
+</div>
+
+
+<!-- staff-part -->
+<div [ngClass]="['staff-part', publicationData.hideCover ? 'staff-part--coverless' : '', className]" *ngIf="type == 'staff'">
+    <div class="staff-part__roles">
+      <div>
+        <ul class="staff-part__role">
+          <li>{{statusList[publicationData.status]}}</li>
+        </ul>
+      </div>
+    </div>
+    <div class="staff-part__background" *ngIf="!publicationData.hideCover" [ngStyle]="{'background-image': 'url(' + publicationData?.cover + ')'}"></div>
+    <div class="staff-part__logo" *ngIf="avatarData">
+        <ui-avatar [size]="'large'" [isSquaric]="true" [avatarData]="avatarData" (click)="getPublicationData($event)"></ui-avatar>
+    </div>
+    <div class="staff-part__content">
+        <h3 (click)="getPublicationData($event)">{{publicationData?.title}}</h3>
+        <ui-datum [property]="'ui.publication-single.stories' | translate" [count]="publicationData.storiesCount" [className]="'staff-part__content--datum'"></ui-datum>
+    </div>
+    <ui-publication-members (getMember)="_getSelectedMember($event)" *ngIf="publicationData.membersList" [membersData]="publicationData.membersList"></ui-publication-members>
+</div>

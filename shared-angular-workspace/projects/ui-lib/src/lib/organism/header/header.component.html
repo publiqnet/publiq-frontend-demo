@@ -1,0 +1,178 @@
+<header class="header" (uiClickOutside)="closeMenu()">
+    <!-- `(dblclick)="toggleNavigation();"` was removed -->
+  <div class="header__doubled" [ngClass]="[isSecondActive ? 'header--narrow' : '']" >
+    <div class="header__slider container" [ngClass]="[isSecondActive ? 'header__slider--second' : '']">
+      <div class="header__slide header__slide--main">
+        <a href="#" (click)="onLogoClick($event, '')">
+          <img src="{{headerData.logo}}" class="logo" alt="PUBLIQ" *ngIf="headerData && headerData.logo" [ngClass]="{'no-logo' : articlePage && headerData.isLogged}" (load)="imageLoaded()">
+          <i class="icon icon-close"></i>
+        </a>
+        <div class="header__tags">
+          <ng-container *ngIf="articlePage && draftUpdate">
+            <span class="header__tags-draft" [ngClass]="{'pl-media' : articlePage && headerData.isLogged}">{{('ui.header.draft_saved' | translate) + ': '}}{{headerData.draftData.updated * 1000 | localizedDate:'HH:mm:ss'}}</span>
+            <span class="header__tags-loading" [hidden]="!showLoading">
+              <ui-loader [color]="'blue'" [size]="24"></ui-loader>
+            </span>
+          </ng-container>
+          <ng-container *ngIf="!articlePage">
+            <a *ngFor="let item of tagItems | slice:0:tagCountToSlice; let i=index" class="header__tags-item" (click)="selectTagValue(item['slug'])">{{item['text']}}</a>
+            <i class="icon-menu header__tags-more" tabindex="0" #overlayMenuList (click)="passClick('tag', $event)" (keypress)="$event.keyCode === 13 ? passClick('tag', $event) : null" *ngIf="tagItems" [ngClass]="{'after-visible' : menuOpen.tag}"
+            [class.d-none]="tagItems.length <= 4"></i>
+          </ng-container>
+        </div>
+        <div class="header__right-icons">
+          <ng-container *ngIf="!articlePage">
+            <ui-button [type]="'ordinary'" [text]="'Search'" [iconButton]="true" [iconClassName]="'search search-icon'" (btnClicked)="_searchEvent($event, true)" [name]="'header_search'"></ui-button>
+          </ng-container>
+          <ng-container *ngIf="articlePage">
+            <a href="/" (click)="_continueArticle($event)">{{'ui.header.continue_later' | translate}}</a>
+            <div class="header-publish-button" (click)="_publishArticle($event)" *ngIf="articlePage && headerData.isLogged"><span>{{'ui.header.publish' | translate}}</span> <i class="icon-arrow-link"></i></div>
+          </ng-container>
+          <div class="vline d-none d-md-inline-block"></div>
+          <div *ngIf="headerData.isLogged; else guestTemplate" [ngClass]="{'no-visibility' : articlePage && headerData.isLogged}">
+            <div class="notifications-wrapper">
+              <i class="icon-energy" tabindex="0" #notificationMenuList (click)="passClick('notification', $event)" (keypress)="$event.keyCode === 13 ? passClick('notification', $event) : null"></i>
+              <small *ngIf="headerData.notificationData && headerData.notificationData.newNotificationsCount">{{headerData.notificationData.newNotificationsCount}}</small>
+            </div>
+            <!-- <ui-dropdown-list [type]="'notification-list'" [position]="'bottom'" [icon]="'energy'" [items]="headerData.notificationData" [openerClassName]="'notification-list'"></ui-dropdown-list> -->
+            <div class="header__menu-avatar" tabindex="0" (keypress)="$event.keyCode === 13 ? passClick('profile', $event) : null" (click)="passClick('profile', $event)" #profileMenuList>
+              <i class="icon-profile" *ngIf="!headerData.userData || !headerData.userData.user || !headerData.userData.user.image"></i>
+              <img src="{{headerData.userData.user.image}}" *ngIf="headerData.userData && headerData.userData.user && headerData.userData.user.image" alt="{{headerData.userData.user.fullName}}" />
+            </div>
+          </div>
+          <ng-template #guestTemplate>
+            <ui-button [text]="'ui.header.sign_in' | translate" [type]="'ordinary'" [size]="'medium'" [className]="'sign-in'" (btnClicked)="_userSignIn($event)"></ui-button>
+            <ui-button [text]="'ui.header.sign_up' | translate" [type]="'primary'" [size]="'medium'" [className]="'sign-up'" (btnClicked)="_userSignUp($event)"></ui-button>
+          </ng-template>
+        </div>
+      </div>
+      <!--    publication block-->
+      <div *ngIf="headerData.publicationData" class="header__slide header__slide--second-part">
+        <div class="avatar avatar--squaric">
+          <div *ngIf="headerData.publicationData">
+            <ui-avatar [avatarData]="avatarData" [size]="'small'" [isSquaric]="true" (click)="navigationLinkClick(headerData.publicationData.slug)" ></ui-avatar>
+          </div>
+        </div>
+        <div class="header__slide__meta">
+          <div *ngIf="headerData.publicationData">
+            <h2 (click)="publicationTitleClick.emit(null)">{{headerData.publicationData.title}}</h2>
+          </div>
+          <div class="button button--primary button--small" *ngIf="headerData.publicationData.memberStatus !== 1">
+            <ui-button [type]="!headerData.publicationData.following ? 'primary' : 'ordinary'" [text]="headerData.publicationData.following ? ('ui.header.following' | translate) : ('ui.header.follow' | translate)" [size]="'small'" [isFollowing]="headerData.publicationData.following" (btnClicked)="_publicationFollow(!headerData.publicationData.following)" [className]="'publication-follow'"></ui-button>
+          </div>
+        </div>
+        <div class="header__slide__stats">
+          <div class="datum-list">
+            <div class="datum-container">
+              <span class="datum-container__count">{{headerData.publicationData.views}}</span>
+              <span class="datum-container__property">{{'ui.header.views' | translate}}</span>
+            </div>
+            <div class="datum-container">
+              <span class="datum-container__count">{{headerData.publicationData.storiesCount}}</span>
+              <span class="datum-container__property">{{'ui.header.stories' | translate}}</span>
+            </div>
+            <div class="datum-container">
+              <span class="datum-container__count">{{headerData.publicationData.subscribersCount}}</span>
+              <span class="datum-container__property">{{'ui.header.followers' | translate}}</span>
+            </div>
+            <div class="datum-container">
+              <span class="datum-container__count">{{headerData.publicationData.membersList ? headerData.publicationData.membersList.length : 0}}</span>
+              <span class="datum-container__property">{{'ui.header.members' | translate}}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!--    user block -->
+      <div *ngIf="headerData.authorData" class="header__slide header__slide--second-part">
+        <div class="avatar avatar--squaric">
+          <div *ngIf="headerData.authorData.user">
+            <ui-avatar  [avatarData]="headerData.authorData.user" [size]="'small'" [isSquaric]="false" (click)="navigationLinkClick(headerData.authorData.user)"></ui-avatar>
+          </div>
+        </div>
+        <div class="header__slide__meta">
+          <div *ngIf="headerData.authorData.user">
+            <h2 (click)="navigationLinkClick(headerData.authorData.user)">{{headerData.authorData.user.fullName}}</h2>
+          </div>
+          <div class="button button--primary button--small" *ngIf="headerData.authorData.user">
+            <ui-button [type]="'primary'" [text]="'ui.header.follow' | translate" [size]="'small'" [isFollowing]="true" (btnClicked)="_userFollow($event)" [className]="'user-follow'"></ui-button>
+          </div>
+        </div>
+        <div class="header__slide__stats">
+          <div *ngIf="headerData.authorData.user" class="user-info">
+            <div *ngFor="let item of headerData.authorData.info">
+              <ui-datum [property]="item.property" [count]="item.count"></ui-datum>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!--    article block-->
+      <div *ngIf="headerData.articleData" class="header__slide header__slide--second-part">
+        <div class="avatar avatar--squaric">
+          <div style="display: flex">
+            <ui-avatar [avatarData]="headerData.articleData.user" [size]="'small'" [isSquaric]="false" (click)="navigationLinkClick(headerData.articleData.slug)"></ui-avatar>
+          </div>
+        </div>
+        <div class="header__slide__meta">
+          <div>
+            <h2 (click)="articleTitleClick.emit(null)" style="display: flex">{{headerData.articleData.title}}</h2>
+          </div>
+        </div>
+        <div class="header__slide__stats">
+          <div class="share-block">
+            <ui-button *ngIf="!headerData.articleData.isCurrentUser" [type]="!headerData.articleData.followingAuthor ? 'primary' : 'ordinary'" [text]="headerData.articleData.followingAuthor ? ('ui.header.following' | translate) : ('ui.header.follow' | translate)" [size]="'small'" [isFollowing]="headerData.articleData.followingAuthor" (btnClicked)="_articleAuthorFollow(this.headerData?.articleData?.user ,!headerData.articleData.followingAuthor)" [className]="'publication-follow follow-button'"></ui-button>
+            <div class="share-dropdown" #socialMenuList (click)="passClick('social', $event)" (keypress)="$event.keyCode === 13 ? passClick('social', $event) : null">
+              <svg width="24px" height="24px" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                <!-- Generator: Sketch 59.1 (86144) - https://sketch.com -->
+                <title>icon / gray / share</title>
+                <desc>Created with Sketch.</desc>
+                <g id="icon-/-gray-/-share" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                  <rect id="Rectangle-Copy-5" x="0" y="0" width="24" height="24"></rect>
+                  <g id="Group-27" transform="translate(6.000000, 6.000000)" stroke="#565A60" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
+                    <g id="Group" transform="translate(4.285714, 0.000000)">
+                      <line x1="1.71428571" y1="7.70869808" x2="1.71428571" y2="0.851555224" id="Stroke-349"></line>
+                      <line x1="3.42857143" y1="1.71316819" x2="1.71428571" y2="1.11022302e-16" id="Stroke-350"></line>
+                      <line x1="1.71428571" y1="1.11022302e-16" x2="0" y2="1.71316819" id="Stroke-351"></line>
+                    </g>
+                    <path d="M9.42857143,3.85714286 L10.9984555,3.85714286 C11.5515932,3.85714286 12,4.29850533 12,4.86047215 L12,10.2784504 C12,10.7521414 11.616,11.1350345 11.1428571,11.1350345 L0.857142857,11.1350345 C0.384,11.1350345 0,10.7521414 0,10.2784504 L0,4.86047215 C0,4.30634868 0.454444885,3.85714286 0.996148927,3.85714286 L2.14285714,3.85714286" id="Stroke-352"></path>
+                  </g>
+                </g>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="header__search" [ngClass]="{'header__search__animation' : showSearchBar}">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-8 offset-md-2">
+          <label for="search_bar" class="search-input-space"></label>
+          <input id="search_bar" type="text" #searchBar>
+          <div class="close-search" (click)="_searchEvent($event, false)">
+            <span>{{'ui.header.close' | translate}}</span>
+            <i class="icon icon-close"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <span class="header__article-read" *ngIf="articleReadPercent" [style.width]="articleReadPercent+'%'"></span>
+  <!--TAGS-->
+  <div class="tags" [ngClass]="{'tags--visible' : menuOpen.tag}">
+    <ui-tag-menu (onTagItemSelect)="selectTagValue($event.slug)" (onClickedOutside)="tagMenuOutsideClick($event)" [tagItems]="tagItems.slice(tagCountToSlice)"></ui-tag-menu>
+  </div>
+  <!--end-->
+</header>
+
+<div class="header-overlay" [ngClass]="[isSecondActive ? 'header-overlay--narrow' : '']">
+
+  <ui-dropdown-list [delta]="40" [type]="'notification-list'" [shadowed]="true" [blockInfiniteScroll]="blockInfiniteScroll" [seeMoreLoading]="seeMoreLoading"
+                    (seeMore)="onSeeMoreEvent($event)" [position]="'bottom'" [icon]="'energy'" [items]="headerData.notificationData.notifications" (onItemSelect)="navigationLinkClick($event)" [openerClassName]="'notification-list'" class="header-overlay__item" [style.left]="leftVal.notification + 'px'" [(isOpen)]="menuOpen.notification"></ui-dropdown-list>
+
+
+  <ui-dropdown-list [type]="'default'" [shadowed]="true" *ngIf="headerData.userLoggedData" [userPublicKey]="headerData.userData.user.slug" [items]="headerData.userLoggedData" (onItemSelect)="navigationLinkClick($event)" [icon]="'profile'" [position]="'bottom'" [openerClassName]="'user-data'" class="header-overlay__item" [style.left]="leftVal.profile + 'px'" [(isOpen)]="menuOpen.profile"></ui-dropdown-list>
+
+  <ui-dropdown-list [type]="'social-menu'" [shadowed]="true" [position]="'bottom'" [icon]="'menu'" [(isOpen)]="menuOpen.social" [delta]="25" [items]="" [style.left]="leftVal.social + 'px'" class="header-overlay__item" (articleShared)="_articleShared($event)"></ui-dropdown-list>
+
+</div>

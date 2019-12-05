@@ -1,0 +1,15 @@
+<div [ngClass]="['progress-container', className]">
+    <span class="progress-container__value" *ngIf="!selectedValue; else secondSection">
+    {{defaultValue}} {{titleName}}
+  </span>
+    <ng-template #secondSection>
+      <span class="progress-container__value"> {{selectedValue}} {{titleName}}</span>
+    </ng-template>
+  <div class="progress-container__info">
+    <div>
+      <span class="range-min-value">{{minValue}} {{titleName}}</span>
+      <span class="range-max-value">{{maxValue}} {{titleName}}</span>
+    </div>
+    <input type="range" [min]="minValue" [max]="maxValue" [value]="defaultValue" (change)="onRangeChange($event)"/>
+  </div>
+</div>

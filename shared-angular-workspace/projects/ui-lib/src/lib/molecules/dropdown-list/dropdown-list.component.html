@@ -1,0 +1,91 @@
+  <div class="dropdown-item">
+    <div class="dropdown-item__opener" [ngClass]="[openerClassName || '']" [class.dropdown-item__opener--open]="isOpen" tabindex="0" (keydown)="$event.keyCode === 13 ? toggleOpen() : null" (click)="toggleOpen()">
+      <i [ngClass]="['icon-' + icon]" *ngIf="type !== 'channel-type'"></i>
+      <div class="channel-type-opener" *ngIf="type === 'channel-type'">
+        <span>{{isChannelPrivate ? ('ui.dropdown-list.private' | translate) : ('ui.dropdown-list.public' | translate)}}</span>
+        <small>{{'ui.dropdown-list.channel_type' | translate}}</small>
+        <i class="icon-arrow-up-down"></i>
+      </div>
+    </div>
+    <div class="dropdown-list" (uiClickOutside)="toggleOpen()" [class.dropdown-list--menu]="type === 'default' && items && items.length > 0" [class.dropdown-list--dark]="isDark" [class.dropdown-list--shadowed]="shadowed" [ngClass]="['dropdown-list--' + directions[position], listClassName || '']" [ngStyle]="listStyle()" *ngIf="isOpen">
+      <div class="dropdown-list__cursor" [ngStyle]="cursorStyle()"></div>
+      <div class="dropdown-list__content" *ngIf="type !== 'default'; else defaultList;">
+        <ng-container [ngSwitch]="type">
+          <ui-tag-menu (onTagItemSelect)="selectValue($event)" [tagItems]="items" *ngSwitchCase="'tag-menu'"></ui-tag-menu>
+          <ui-channel-type-menu (onItemSelect)="selectValue($event)" [isPrivate]="isChannelPrivate" *ngSwitchCase="'channel-type'"></ui-channel-type-menu>
+          <ui-notification-menu [seeMoreLoading]="seeMoreLoading" [blockInfiniteScroll]="blockInfiniteScroll" (onItemSelect)="selectValue($event)" (seeMore)="onSeeMoreEvent($event)"  [items]="items" *ngSwitchCase="'notification-list'"></ui-notification-menu>
+        </ng-container>
+      </div>
+      <ng-template #defaultList>
+        <ng-container *ngFor="let item of items">
+          <a  *ngIf="useAsLink(item.value); else notLinked" [href]="setPath(item.value)" (keydown)="$event.keyCode === 13 ? selectValue(item.value, $event) : null" (click)="selectValue(item.value, $event)">
+            <div class="dropdown-list__item" [ngClass]="[item.className || '']" tabindex="0">
+              <i *ngIf="item.icon" class="dropdown-list__icon" [ngClass]="['icon-'+item.icon]"></i>
+              <span *ngIf="!item.inner" class="dropdown-list__text">{{item.text}}</span>
+              <div *ngIf="item.inner" class="dropdown-list__inner">
+               <span class="dropdown-list__link">
+                {{item.inner.text}}
+                 <i *ngIf="item.inner.icon" [ngClass]="'icon-'+item.inner.icon"></i>
+              </span>
+              </div>
+              <span *ngIf="item.inner" class="dropdown-list__text pbq_count">{{item.text}}</span>
+            </div>
+          </a>
+          <ng-template #notLinked>
+            <div class="dropdown-list__item" [ngClass]="[item.className || '']" (keydown)="$event.keyCode === 13 ? selectValue(item.value) : null" (click)="selectValue(item.value)" tabindex="0">
+              <i *ngIf="item.icon" class="dropdown-list__icon" [ngClass]="['icon-'+item.icon]"></i>
+              <span *ngIf="!item.inner" class="dropdown-list__text">{{item.text}}</span>
+              <div *ngIf="item.inner" class="dropdown-list__inner">
+               <span class="dropdown-list__link">
+                {{item.inner.text}}
+                 <i *ngIf="item.inner.icon" [ngClass]="'icon-'+item.inner.icon"></i>
+              </span>
+              </div>
+              <span *ngIf="item.inner" class="dropdown-list__text pbq_count">{{item.text}}</span>
+            </div>
+          </ng-template>
+          <div *ngIf="item.seperator" class="dropdown-list__seperator"></div>
+        </ng-container>
+      </ng-template>
+      <ng-container *ngIf="type == 'publication-dropdown'">
+        <div class="publication-menu">
+          <p class="publication-menu__title">{{"ui.dropdown-list.add_to_publication" | translate}}</p>
+          <ui-dropdown [type]="'afterSubmit'" [isNone]="true" [isNoneText]="('ui.dropdown-list.none' | translate) | titlecase" (onSelectChange)="selectValue($event)" [addPlaceholder]="'ui.dropdown-list.choose' | translate" [optionsData]="optionsData" [className]="'publication-dropdown'" [selectedOptionValue]="selectedPublication" (onCloseDropdown)="closeDropdown($event)"></ui-dropdown>
+        </div>
+      </ng-container>
+      <ng-container *ngIf="type == 'social-menu'">
+        <div class="social-menu">
+          <div class="article-icons">
+            <div class="article-icons__single" (click)="_articleShared('facebook')" (mouseover)="animateFacebook(true)" (mouseleave)="animateFacebook(false)" >
+              <div [ngClass]="hoverFacebook ? 'active' : 'deactive'" class="icon-block">
+                <ui-icon [animationOptions]="{name: 'facebook', type: 'social'}" [size]="16" [action]="hoverFacebook" [ngStyle]="{'display' : hoverFacebook ? 'none': 'block'}"></ui-icon>
+                <ui-icon [animationOptions]="{name: 'facebookNextState', type: 'social'}" [size]="16" [action]="hoverFacebook" [ngStyle]="{'display' : hoverFacebook ? 'block' : 'none'}"></ui-icon>
+              </div>
+              <span>Facebook</span>
+            </div>
+            <div class="article-icons__single" (click)="_articleShared('twitter')" (mouseover)="animateTwitter(true)" (mouseleave)="animateTwitter(false)">
+              <div [ngClass]="hoverTwitter ? 'active' : 'deactive'" class="icon-block">
+                <ui-icon [animationOptions]="{name: 'twitter', type: 'social'}" [size]="18" [action]="hoverTwitter" [ngStyle]="{'display' : hoverTwitter ? 'none': 'block'}"></ui-icon>
+                <ui-icon [animationOptions]="{name: 'twitterNextState', type: 'social'}" [size]="18" [action]="hoverTwitter"  [ngStyle]="{'display' : hoverTwitter ? 'block' : 'none'}"></ui-icon>
+              </div>
+              <span>Twitter</span>
+            </div>
+            <div class="article-icons__single" (click)="_articleShared('linkedin')" (mouseover)="animateLinkedin(true)" (mouseleave)="animateLinkedin(false)">
+              <div [ngClass]="hoverLinkedin ? 'active' : 'deactive'" class="icon-block">
+                <ui-icon [animationOptions]="{name: 'linkedin', type: 'social'}" [size]="20" [action]="hoverLinkedin" [ngStyle]="{'display' : hoverLinkedin ? 'none': 'block'}"></ui-icon>
+                <ui-icon [animationOptions]="{name: 'linkedinNextState', type: 'social'}" [size]="20" [action]="hoverLinkedin" [ngStyle]="{'display' : hoverLinkedin ? 'block' : 'none'}"></ui-icon>
+              </div>
+              <span>Linkedin</span>
+            </div>
+            <div class="article-icons__single" (click)="_articleShared('reddit')" (mouseover)="animateReddit(true)" (mouseleave)="animateReddit(false)">
+              <div [ngClass]="hoverReddit ? 'active' : 'deactive'" class="icon-block">
+                <ui-icon [animationOptions]="{name: 'reddit', type: 'social'}" [size]="16" [action]="hoverReddit" [ngStyle]="{'display' : hoverReddit ? 'none': 'block'}"></ui-icon>
+                <ui-icon [animationOptions]="{name: 'redditNextState', type: 'social'}" [size]="16" [action]="hoverReddit" [ngStyle]="{'display' : hoverReddit ? 'block' : 'none'}"></ui-icon>
+              </div>
+              <span>Reddit</span>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+  </div>

@@ -1,0 +1,37 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "baseUrl": "./",
+    "downlevelIteration": true,
+    "outDir": "./dist/out-tsc",
+    "sourceMap": true,
+    "declaration": false,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "es2015",
+    "typeRoots": [
+      "node_modules/@types"
+    ],
+    "lib": [
+      "es2018",
+      "dom"
+    ],
+    "paths": {
+      "helper-lib": [
+        "dist/helper-lib"
+      ],
+      "helper-lib/*": [
+        "dist/helper-lib/*"
+      ],
+      "ui-lib": [
+        "dist/ui-lib"
+      ],
+      "ui-lib/*": [
+        "dist/ui-lib/*"
+      ]
+    }
+  }
+}

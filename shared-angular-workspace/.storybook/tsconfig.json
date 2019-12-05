@@ -1,0 +1,13 @@
+{
+  "extends": "../tsconfig.json",
+  "exclude": [
+    "../projects/**/*.spec.ts"
+  ],
+  "include": [
+    "../projects/**/*"
+  ],
+  "typeRoots": [
+    "node_modules/@types",
+    "node_modules/@types","./typings.d.ts"
+  ]
+}

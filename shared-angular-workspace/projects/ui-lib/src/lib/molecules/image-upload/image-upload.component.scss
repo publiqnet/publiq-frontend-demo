@@ -1,0 +1,87 @@
+@import "../../../assets/common";
+
+.image-upload {
+  position: relative;
+  padding: 15px;
+  font-family: $open-sans;
+  background-color: pbq-color($grey, 200);
+  border-radius: 10px;
+  width: 100%;
+  display: flex;
+
+  &__image {
+    display: inline-flex;
+    flex: 0 0 56px;
+    height: 56px;
+    background-color: $blue;
+    border-radius: 7px;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    margin-right: 15px;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+    }
+
+    i.icon-plus {
+      font-size: 32px;
+      color: #fff;
+    }
+  }
+
+  &__texts {
+    flex-grow: 1;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    font-size: 13px;
+    line-height: 18px;
+
+    h4 {
+      font-size: inherit;
+      font-weight: 600;
+      color: pbq-color($lightgrey, 700);
+      margin: -5px 0 3px;
+    }
+
+    p {
+      color: $grey;
+      margin: 0;
+    }
+  }
+
+  &__remove {
+    display: inline-block;
+    position: absolute;
+    top: 15px; right: 15px;
+    width: 24px; height: 24px;
+    z-index: 2;
+    cursor: pointer;
+  }
+
+  input[type="file"] {
+    position: absolute;
+    width: 100%; height: 100%;
+    top: 0; left: 0;
+    bottom: 0; right: 0;
+    outline: none;
+    opacity: 0;
+    z-index: 1;
+    -webkit-appearance: none;
+    cursor: pointer;
+  }
+
+  &--uploaded {
+    .image-upload__texts {
+      h4 {
+        //color: $blue;
+        cursor: pointer;
+      }
+    }
+  }
+}

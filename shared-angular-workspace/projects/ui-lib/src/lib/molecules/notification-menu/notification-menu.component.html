@@ -1,0 +1,33 @@
+<div class="notification-list" [class.notification-list--zero]="items && items.length === 0"
+     infiniteScroll [scrollWindow]="false" [infiniteScrollDistance]="1"
+     [infiniteScrollThrottle]="50" [infiniteScrollDisabled]="blockInfiniteScroll"
+     (scrolled)="seeMoreNots('scrolledDown')" (scrolledUp)="seeMoreNots('scrolledUp')">
+  <ng-container *ngIf="items && items.length === 0; else notificationsList;">
+    <div>
+      <i class="icon-energy"></i>
+    </div>
+    <div>
+      <h4>{{'ui.notification-menu.no_notifications' | translate}}</h4>
+      <span>{{'ui.notification-menu.no_notifications_info' | translate}}</span>
+    </div>
+  </ng-container>
+  <ng-template #notificationsList>
+    <div class="notification-list__header">
+      <h5>{{'ui.notification-menu.notifications' | translate}}</h5>
+      <span class="mark-all-as-read" tabindex="0" (click)="selectItem($event, {action: 'mark-all-as-read', stayOpen: true})" (keydown)="$event.keyCode === 13 ? selectItem($event, {action: 'mark-all-as-read', stayOpen: true}) : null">{{'ui.notification-menu.mark_all' | translate}}</span>
+      <span class="mark-all-as-read" tabindex="0" (click)="selectItem($event, {action: 'delete-all-notifications', stayOpen: true})" (keydown)="$event.keyCode === 13 ? selectItem($event, {action: 'delete-all-notifications', stayOpen: true}) : null">{{'ui.notification-menu.delete_all' | translate}}</span>
+    </div>
+    <div *ngFor="let notification of items;" class="notification-list__item" tabindex="0" [class.notification-list__item--read]="notification.isRead" (click)="selectItem($event, {action: 'redirect', slug: notification})" (keydown)="$event.keyCode === 13 ? selectItem($event, {action: 'redirect', slug: notification}) : null">
+      <ui-avatar [avatarData]="notification.actionFrom"></ui-avatar>
+      <div class="notification-list__item__content">
+        <div (click)="onBodyClick($event)" [innerHTML]="(translateService.currentLang === 'en' ? notification.langOptions.bodyEn : notification.langOptions.bodyJp) | safeHtml"></div>
+        <span class="notification-list__item__date">{{notification.date | localizedDate:'dd MMM, HH:mm'}}</span>
+      </div>
+      <div class="notification-list__item__circle" tabindex="0" (click)="selectItem($event, {action: notification.isRead ? 'mark-as-unread' : 'mark-as-read', slug: notification, stayOpen: true})" (keydown)="$event.keyCode === 13 ? selectItem($event, {action: notification.isRead ? 'mark-as-unread' : 'mark-as-read', slug: notification, stayOpen: true}) : null"></div>
+      <div class="mark-all-as-read" tabindex="0" (click)="selectItem($event, {action: 'delete-notification', slug: notification, stayOpen: true})" (keydown)="$event.keyCode === 13 ? selectItem($event, {action: 'delete-notification', slug: notification, stayOpen: true}) : null"><i class="icon-close"></i></div>
+    </div>
+  </ng-template>
+  <div class="notification-list__loading" *ngIf="seeMoreLoading">
+    <ui-loader [color]="'blue'"></ui-loader>
+  </div>
+</div>
