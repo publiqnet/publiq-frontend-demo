@@ -1,0 +1,321 @@
+<div class="vh-centered" *ngIf="loadingAuthor">
+  <ui-loader [size]="60" [color]="'blue'"></ui-loader>
+</div>
+
+<div class="content content--mob" *ngIf="!loadingAuthor && author">
+    <div class="container">
+        <form class="form" *ngIf="authorForm" novalidate (ngSubmit)="onSubmit()" [formGroup]="authorForm">
+            <div class="row profile-metadata">
+                <div class="col-2 profile-metadata__avatar profile-metadata__avatar--editable">
+                    <div class="profile-metadata__hover" [ngClass]="{'hover-avatar' : isCurrentUser}">
+                        <ui-avatar [size]="'large'" [avatarData]="{'image': getCurrentImage(), 'fullName': author.fullName}" [avatarData]="{'image': getCurrentImage(), 'fullName': author.fullName}"></ui-avatar>
+                        <i class="icon-close" [ngClass]="{'icon-close--hover' : currentImage && isCurrentUser}" (click)="removeCurrentImage()"></i>
+                        <label class="profile-metadata__hover__upload" for="profilePic" [ngStyle]="{'cursor': !isCurrentUser ? 'default' : 'pointer'}">
+              <input *ngIf="isCurrentUser" type="file" (change)="showUploadedImage($event)"
+                     accept="image/jpeg,image/png" id="profilePic">
+              <i class="icon-picture"></i>
+              <small>{{'author.upload' | translate}}</small>
+            </label>
+                    </div>
+                </div>
+                <div class="col-lg-6 col-md-6 col-sm-7 col-10">
+                    <h1 class="profile-metadata__fullname">
+                        <label>
+              <textarea [attr.contenteditable]="isCurrentUser" contenteditable="true" maxlength="60"
+                        *ngIf="isCurrentUser"
+                        [placeholder]="isCurrentUser ? ('author.add_your_name' | translate) : ''" #authorName
+                        (keyup)="onNameEdit($event)" class="author-fullname" rows="1"
+                        [readonly]="!isCurrentUser"
+                        #fullnameTextarea>{{author.fullName}}</textarea>
+              <span *ngIf="!isCurrentUser">{{author.fullName ? author.fullName : author.publicKey}}</span>
+              <i class="icon-edit editable-icon" [ngClass]="editTitleIcon ? 'active-icon' : ''"></i>
+            </label>
+                    </h1>
+                    <h3 class="profile-metadata__bio">
+                        <label>
+              <textarea [attr.contenteditable]="isCurrentUser"
+                        [placeholder]="isCurrentUser ? ('author.short_bio' | translate) : ''" #bioText
+                        (keyup)="onBioEdit($event)" class="author-bio" rows="1"
+                        [readonly]="!isCurrentUser"
+                        #bioTextarea>{{author.bio}}</textarea>
+              <i class="icon-edit editable-icon" [ngClass]="editBioIcon ? 'active-icon' : ''"></i>
+            </label>
+                    </h3>
+                </div>
+                <div class="col-lg-2 col-md-3 col-sm-3 col-12">
+                    <div class="edit-menu">
+                        <ng-container *ngIf="isCurrentUser">
+                            <ui-button *ngIf="editMode || showEditModeIcons" [type]="'primary'" [size]="'medium'" [text]="'author.button_save' | translate" [disabled]="disableSave"></ui-button>
+                            <div *ngIf="!editMode && !showEditModeIcons" class="button button--icon" (click)="onEditMode(true)" (mouseover)="animate(true)" (mouseleave)="animate(false)">
+                              <ui-icon [size]="18" [animationOptions]="{name: 'settings', type: 'profile', loop: 0.5}" [action]="animationAction"></ui-icon>
+                            </div>
+                            <ui-button *ngIf="editMode || showEditModeIcons" [iconButton]="true" size="small" [iconClassName]="'close'" (btnClicked)="resetValues()" [className]="'author-close-icon'"></ui-button>
+                        </ng-container>
+                        <div *ngIf="!isCurrentUser">
+                            <ui-button [type]="'primary'" [iconClassName]="canFollow ? 'follow' : 'unfollow'" [size]="'medium'" [text]="canFollow ? ('author.button_follow' | translate) : ('author.button_unfollow' | translate)" (click)="(canFollow ? follow() : unfollow())"></ui-button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <div class="row profile-statistics" [ngClass]="{'editable-disabled' : editMode}">
+            <div class="col-lg-2 offset-lg-2 col-3 offset-0 datum-mob">
+                <div class="datum" *ngIf="false">
+                    <span class="datum__value">{{author && author.rating ? author.rating.toFixed(1) : 0}}</span>
+                    <span class="datum__descriptor">RATING</span>
+                    <span class="datum__rating"><img src="assets/images/rating.svg" alt="rating"></span>
+                </div>
+            </div>
+            <div class="col-lg-6 col-md-8 col-12 col-12-center">
+                <div class="datum">
+                    <span class="datum__value">{{author && author.views ? author.views : 0}}</span>
+                    <span class="datum__descriptor">{{ 'author.views' | translate }}</span>
+                </div>
+                <div class="datum">
+                    <span class="datum__value">{{author && author.articlesCount ? author.articlesCount : 0}}</span>
+                    <span class="datum__descriptor">{{ 'author.stories' | translate }}</span>
+                </div>
+                <div class="datum">
+                    <span class="datum__value">{{author && author.subscribersCount ? author.subscribersCount : 0}}</span>
+                    <span class="datum__descriptor">{{ 'author.followers' | translate }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container" *ngIf="isCurrentUser">
+        <div class="row" *ngIf="editMode">
+            <div class="col-12 col-lg-8 offset-lg-2">
+                <div class="grid-style grid-style--custom">
+                  <div class="security">
+                    <h3>{{ 'author.security' | translate | titlecase}}</h3>
+                    <p>{{ 'author.recovery_phrase_hint' | translate }}</p>
+                    <div class="security__fields">
+                      <div class="security__steps">
+                        <div>
+                          <span>{{ 'author.address' | translate }}</span>
+                          <i class="icon-info"></i>
+                          <span class="tooltip_text">{{ 'author.address_hint' | translate }}</span>
+                        </div>
+                        <div class="security__steps__inputs">
+                          <ui-input [readonly]="true" [placeholder]="''" [type]="'text'" [inputValue]="accountService.accountInfo.publicKey"></ui-input>
+                          <div class="show">
+                            <i (click)="copy(accountService.accountInfo.publicKey)" class="icon-copy"></i>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="security__steps">
+                        <div>
+                          <span>{{ 'author.private_key' | translate }}</span>
+                          <i class="icon-info"></i>
+                          <span class="tooltip_text">{{ 'author.private_key_hint' | translate }}</span>
+                        </div>
+                        <div class="security__steps__inputs">
+                          <ui-input [readonly]="true" [placeholder]="''" [type]="'password'" [inputValue]="'ub035e40d09c7797e3b04a49bc01948a8'"></ui-input>
+                          <div class="show">
+                            <i (click)="openPopup(true, 1)" [ngClass]="showSecurityModal ? 'icon-hidden' : 'icon-preview'"></i>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="security__steps">
+                        <div>
+                          <span>{{ 'author.recovery_phrase' | translate }}</span>
+                          <i class="icon-info"></i>
+                          <span class="tooltip_text">{{ 'author.recovery_phrase_hint' | translate }}</span>
+                        </div>
+                        <div class="security__steps__inputs">
+                          <ui-input [readonly]="true" [placeholder]="''" [type]="'password'" [inputValue]="'ub035e40d09c7797e3b04a49bc01948a8'"></ui-input>
+                          <div class="show">
+                            <i (click)="openPopup(true, 2)" [ngClass]="showSecurityModal ? 'icon-hidden' : 'icon-preview'"></i>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="grid-style__info">
+                      <h4>{{ 'author.your_email' | translate }}: <span class="lighten">{{accountService.accountInfo.email}}</span>
+                      </h4>
+                  </div>
+                  <div class="grid-style__choose">
+                      <div>
+                          <h4>{{((listType === 'single' ? 'author.single' : 'author.grid_style') | translate | titlecase) + (translateService.currentLang === 'en' ? ' ' : '') + ('author.style' | translate) }}</h4>
+                          <p>{{ 'author.story_seeing_way' | translate }}</p>
+                      </div>
+                      <div class="grid-style__choose__item">
+                          <span (click)="listType = 'grid'">
+                            <i class="grid-icon icon-multi-grid" [ngClass]="{'grid-icon--selected': (listType == 'grid')}"></i>
+                            <small>{{'author.grid_style' | translate}}</small>
+                          </span>
+                          <span (click)="listType = 'single'">
+                            <i class="grid-icon icon-single-grid" [ngClass]="{'grid-icon--selected': (listType == 'single')}"></i>
+                            <small>{{'author.list_style' | translate}}</small>
+                          </span>
+                      </div>
+                  </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 offset-lg-2 col-xl-8 stories">
+                <div class="stories__tab">
+                    <ui-tab *ngIf="isCurrentUser && !editMode" [className]="'author-tab'" (onTabChange)="tabChange($event)" [tabs]="tabs"></ui-tab>
+                    <ng-container *ngIf="selectedTab == '2' && drafts">
+                        <ui-button *ngIf="drafts.length" (btnClicked)="deleteAllDrafts()" [text]="'author.delete_all_drafts' | translate" [className]="'delete-draft'"></ui-button>
+                    </ng-container>
+                </div>
+                <div [ngClass]="{'editable-disabled' : editMode && publishedContent.length && (selectedTab == '1' || !isCurrentUser)}" *ngIf="publishedContent.length && (selectedTab == '1' || !isCurrentUser)">
+                    <ng-container *ngIf="listType == 'grid'">
+                        <div [class.masonry]="isMasonryLoaded" (layoutComplete)="onLayoutComplete($event)" ngx-masonry [options]="masonryOptions" class="grid-view-content content-grid">
+                            <ui-content-single *ngFor="let data of publishedContent" (accountClick)="utilService.routerChangeHelper('account', $event.slug)" (contentClick)="utilService.routerChangeHelper('content',$event)" (publicationClick)="utilService.routerChangeHelper('publication',$event.slug)"
+                                (tagClick)="onTagClick($event)" ngxMasonryItem [type]="'grid'" [canEditContent]="data.canEditContent" [contentData]="data" [publicationList]="publicationsList" (onPublicationSelect)="changePublication($event, data.uri)" (onTagItemSelect)="onRouteChange($event, data)">
+                            </ui-content-single>
+                        </div>
+                    </ng-container>
+                    <div *ngIf="listType == 'single'" class="content-single">
+                        <ui-content-single *ngFor="let data of publishedContent" [type]="'single'" (accountClick)="utilService.routerChangeHelper('account', $event.slug)" (contentClick)="utilService.routerChangeHelper('content', $event)" (publicationClick)="utilService.routerChangeHelper('publication', $event.slug)"
+                            (tagClick)="onTagClick($event)" [contentData]="data" [canEditContent]="data.canEditContent" [publicationList]="publicationsList" (onPublicationSelect)="changePublication($event, data.uri)" (onTagItemSelect)="onRouteChange($event, data)"></ui-content-single>
+                    </div>
+                  <div *ngIf="seeMoreLoading" class="empty">
+                    <div style="display: inline-block">
+                      <ui-loader [size]="100" [color]="'blue'"></ui-loader>
+                    </div>
+                  </div>
+                  <ng-container *ngIf="seeMoreChecker">
+                        <div class="search-results" infiniteScroll [infiniteScrollDistance]="1" [infiniteScrollThrottle]="50" [infiniteScrollDisabled]="blockInfiniteScroll" (scrolled)="seeMore('stories')"></div>
+                    </ng-container>
+                </div>
+                <div class="no-stories" *ngIf="selectedTab == '1' && !loadingAuthor && articlesLoaded && !publishedContent.length">
+                    <img src="assets/images/no_story.svg" alt="no story" />
+                    <span>{{ 'author.no_stories' | translate }}</span>
+                </div>
+                <div *ngIf="selectedTab == '2' && !loading">
+                    <div *ngIf="drafts && drafts.length > 0; else no_content">
+                        <ui-draft *ngFor="let oDraft of drafts; let index = index" [type]="'single'" (deleteClick)="deleteDraft(oDraft.id, index)" (editClick)="editDraft(oDraft.id)" (contentClick)="editDraft(oDraft.id)" [draftData]="oDraft"></ui-draft>
+                    </div>
+                    <div *ngIf="seeMoreDraftLoading" class="empty">
+                      <div style="display: inline-block">
+                        <ui-loader [size]="100" [color]="'blue'"></ui-loader>
+                      </div>
+                    </div>
+                    <ng-container *ngIf="seeMoreDraftChecker">
+                      <div class="search-results" infiniteScroll [infiniteScrollDistance]="1" [infiniteScrollThrottle]="50" [infiniteScrollDisabled]="blockInfiniteScroll" (scrolled)="seeMore('drafts')"></div>
+                    </ng-container>
+                    <ng-template #no_content>
+                        <div class="no-drafts">
+                            <img src="assets/images/no_story.svg" alt="no drafts" />
+                            <span>{{ 'author.no_drafts' | translate }}</span>
+                        </div>
+                    </ng-template>
+                </div>
+                <div *ngIf="selectedTab == '3' && boostStates">
+                  <div class="ads-container">
+                    <h3 class="ads-container__title">{{'author.overview' | translate | uppercase}}</h3>
+                    <div class="ads-container__views">
+                      <div class="ads-container__views--total" *ngIf="boostStates && boostStates.summary">
+                        <h4>{{'author.total_views' | translate}}</h4>
+                        <span>{{boostStates.summary.views}}</span>
+                      </div>
+                      <div class="ads-container__views--channels">
+                        <h4>{{'author.total_channels' | translate}}</h4>
+                        <span>{{boostStates.summary.channels}}</span>
+                      </div>
+                      <div class="ads-container__views--spend">
+                        <h4>{{'author.total_spend' | translate}}</h4>
+                        <span>{{boostStates.summary.balance}} PBQ</span>
+                      </div>
+                    </div>
+                    <div class="ads-container__active-boosts">
+                      <div class="header" *ngIf="boostStates.active && boostStates.active.length">
+                        <h4>{{'author.active' | translate}}</h4>
+                        <span></span>
+                      </div>
+                      <div *ngIf="boostStates.active && boostStates.active.length">
+                        <ui-boost-content-single *ngFor="let activeBoost of boostStates.active" [boostContentData]="activeBoost" (boostClick)="onActiveBoost($event, 'boost')" (contentClick)="utilService.routerChangeHelper('content', $event)"></ui-boost-content-single>
+                      </div>
+                    </div>
+                    <div class="ads-container__boosts-history" *ngIf="boostStates.passive && boostStates.passive.length">
+                      <h4>{{'author.boosted_stories' | translate}}</h4>
+                      <ui-boost-content-single *ngFor="let passiveBoost of boostStates.passive" [boostContentData]="passiveBoost" (boostClick)="onActiveBoost($event, 'boost')" (contentClick)="utilService.routerChangeHelper('content', $event)"></ui-boost-content-single>
+                    </div>
+                    <div class="no-boosts" *ngIf="selectedTab == '3' && !loadingAuthor && !boostStates && !boostStates.passive.length && !boostStates.active.length">
+                      <img src="assets/images/no_story.svg" alt="no story" />
+                      <span>{{ 'author.no_boosts' | translate }}</span>
+                    </div>
+                  </div>
+                  <div class="no-boosts" *ngIf="!loadingAuthor && articlesLoaded && !boostStates">
+                      <img src="assets/images/no_story.svg" alt="no boosts" title="no boosts"/>
+                      <span>{{ 'author.no_boosts' | translate }}</span>
+                  </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-overlay--custom" [ngClass]="{'open' : showSecurityModal}">
+    <div class="custom-modal custom-modal--security">
+        <span class="custom-modal__close" (click)="openPopup(false)">
+      <i class="icon icon-close"></i>
+    </span>
+        <div *ngIf="showPrivateKey">
+            <h3>{{ 'author.private_key' | translate }}</h3>
+            <span *ngIf="!passwordVerified">{{ 'author.password_title' | translate }}
+        <b>{{ 'author.private_key' | translate }}</b></span>
+            <ui-input [type]="'password'" [inputId]="'private-key'" [placeholder]="'author.password' | translate" (focus)="focusFunction()" (keyup)="keyupFunc($event, 'generatePrivateKey')" [(ngModel)]="password" [inputValue]="password" [hidden]="passwordVerified"></ui-input>
+            <span class="text-error" *ngIf="passError && !passwordVerified">{{passError}}</span>
+            <div *ngIf="passwordVerified">
+                <div class="password-container">
+                    <p>{{ 'author.private_key_hint' | translate }}</p>
+                    <p class="password-block" (click)="copy(decriptedPrivateKey)">{{decriptedPrivateKey}}</p>
+                </div>
+            </div>
+        </div>
+        <div *ngIf="showPhase">
+            <h3>{{ 'author.recovery_phrase' | translate }}</h3>
+            <span *ngIf="!passwordVerified">{{ 'author.password_title' | translate }}
+        <b>{{ 'author.recovery_phrase' | translate }}</b></span>
+            <ui-input [type]="'password'" [inputId]="'recovery-phase'" [placeholder]="'author.password' | translate" (focus)="focusFunction()" (keyup)="keyupFunc($event, 'generateBK')" [(ngModel)]="password" [inputValue]="password" [hidden]="passwordVerified"></ui-input>
+            <span class="text-error" *ngIf="passError && !passwordVerified">{{passError}}</span>
+            <div *ngIf="passwordVerified">
+                <div class="password-container">
+                    <p>{{ 'author.recovery_phrase_hint_reduced' | translate }}</p>
+                    <div class="password-block" (click)="copy(decryptedBrainKey)">
+                        {{decryptedBrainKey}}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="custom-modal__buttons">
+            <ng-container *ngIf="showPrivateKey && !passwordVerified">
+                <ui-button [text]="'author.submit' | translate" (btnClicked)="generatePrivateKey()" [className]="'cancel-modal'" [type]="'primary'" [disabled]="passwordValidator()"></ui-button>
+            </ng-container>
+            <ng-container *ngIf="showPhase && !passwordVerified">
+                <ui-button [text]="'author.submit' | translate" (btnClicked)="generateBK()" [className]="'cancel-modal'" [type]="'primary'" [disabled]="passwordValidator()"></ui-button>
+            </ng-container>
+        </div>
+    </div>
+</div>
+
+<!--create story-->
+<div class="container container--new-story" *ngIf="isCurrentUser">
+    <div class="new-story" [routerLink]="'/content/newcontent'">
+        <img src="assets/images/new-story.svg" alt="new story">
+    </div>
+</div>
+<!--end-->
+
+<div class="no-visible" [ngClass]="{'visible' : showModal}">
+    <app-custom-dialog [case]="'draft'" [properties]="modalProps" (closeConfirmModal)="doDelete($event)"></app-custom-dialog>
+</div>
+
+<!--for boosting-->
+<div class="publishing-space publishing-space--edit-boost" [ngClass]="{'visible' : showBoostModal}">
+    <app-boost-modal [resetModal]="!showBoostModal" [modalType]="showBoostModalType" [boostFee]="currentBoostFee" (closeBoostedModal)="closeBoostModal()" (cancelBoost)="cancelBoostSubmit($event)" (newBoost)="newBoostSubmit($event)"></app-boost-modal>
+</div>
+<div *ngIf="showHistoryModal">
+  <app-custom-dialog [case]="'history'" [properties]="contentVersions" (closeConfirmModal)="closeHistoryModal($event)"></app-custom-dialog>
+</div>
+

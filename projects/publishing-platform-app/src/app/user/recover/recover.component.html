@@ -1,0 +1,19 @@
+<div *ngIf="isDataLoaded" class="signinup__inner__restore">
+  <div *ngIf="!isPasswordMode">
+    <h3>{{ 'recover.title' | translate }}</h3>
+    <p>
+     {{'recover.recovery_phrase' | translate}}
+    </p>
+    <form class="form" novalidate [formGroup]="recoverForm">
+      <label for="recover"></label>
+      <ui-textarea id="recover" [resize]="true" formControlName="brainKey"
+                   [placeholder]="'recover.recovery_phrase_placeholder' | translate" [rows]='4' [cols]='35'></ui-textarea>
+      <ui-button [disabled]="!recoverForm?.valid" [className]="'button button--large button--primary button--full-radius'"
+                 [text]="'recover.confirm' | translate" [type]="'ordinary'" [size]="'large'" (btnClicked)="checkBrainKey()"></ui-button>
+      <div>
+        <p class="error-message" *ngIf="brainKeyError">{{brainKeyError}}</p>
+      </div>
+    </form>
+  </div>
+  <app-new-password [brainKey]="brainKey" [stringToSign]="stringToSign" *ngIf="isPasswordMode"></app-new-password>
+</div>

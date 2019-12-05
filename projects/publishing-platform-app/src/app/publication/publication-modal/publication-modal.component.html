@@ -1,0 +1,65 @@
+<div class="modal-overlay">
+    <div class="custom-modal" [ngClass]="{'invitors-modal': modalType !== 'invitation'}">
+        <span class="custom-modal__close" (click)="closePopup()">
+      <i class="icon icon-close"></i>
+    </span>
+
+        <!--create publication form-->
+        <div *ngIf="modalType == 'create'">
+            <form class="create-form" novalidate [formGroup]="publicationForm">
+                <h3>{{'publication.create_new_publication' | translate}}</h3>
+
+                <span class="create-form__label">{{'publication.name' | translate}}</span>
+                <ui-input [type]="'text'" [className]="'create-form__input'" [placeholder]="'publication.type_publication_name' | translate" formControlName="title"></ui-input>
+                <p class="error-msg" *ngIf="titleError">{{titleError}}</p>
+                <span class="create-form__label">{{'publication.description' | translate}}</span>
+                <ui-input [type]="'text'" [className]="'create-form__input'" [placeholder]="'publication.type_description' | translate" formControlName="description"></ui-input>
+                <p class="error-msg" *ngIf="descriptionError">{{descriptionError}}</p>
+                <!-- <span class="create-form__label">Tags</span>
+                <ui-input [type]="'text'" [className]="'create-form__input'" [placeholder]="'Type a tag…'" formControlName="tags"></ui-input>
+                upload avatar -->
+                <div class="create-form__upload">
+                    <label class="create-form__upload__pic" for="publicationAvatar">
+              <input type="file" accept="image/jpeg,image/png" id="publicationAvatar" formControlName="logo" (change)="selectLogo($event)">
+              <span class="create-form__upload__pic__icon" *ngIf="!logoImage">
+                <i class="icon icon-plus"></i>
+              </span>
+              <img class="uploaded-pic" *ngIf="logoImage" src="{{logoImage}}" alt="">
+            </label>
+                    <span class="create-form__upload__text">
+              <b *ngIf="!logoImage">{{'publication.upload_logo' | translate}}</b>
+              <b class="blue" *ngIf="logoImage" (click)="removeLogo()">{{'publication.remove_logo' | translate}}</b>
+              <span>({{'publication.logo_size_text' | translate}})</span>
+                    </span>
+                </div>
+                <!--upload cover-->
+                <div class="create-form__upload">
+                    <label class="create-form__upload__pic" for="publicationCover">
+              <input type="file" accept="image/jpeg,image/png" id="publicationCover" formControlName="cover" (change)="selectCover($event)">
+              <span class="create-form__upload__pic__icon" *ngIf="!coverImage">
+                <i class="icon icon-plus"></i>
+              </span>
+              <img *ngIf="coverImage" class="uploaded-pic" src="{{coverImage}}" alt="">
+            </label>
+                    <span class="create-form__upload__text">
+              <b *ngIf="!coverImage">{{'publication.upload_cover' | translate}}</b>
+              <b *ngIf="coverImage" class="blue" (click)="removeCover()">{{'publication.remove_cover' | translate}}</b>
+              <span>({{'publication.cover_size_text' | translate}})</span>
+                    </span>
+                </div>
+            </form>
+            <div class="create-form__button-space">
+                <ui-button [size]="'large'" [className]="'modal-button'" [text]="'publication.cancel_uppercase' | translate" (click)="closePopup()"></ui-button>
+                <ui-button [size]="'large'" [className]="'modal-button'" [type]="'primary'" [text]="'publication.create' | translate" (click)="onSubmit()" [disabled]="loading"></ui-button>
+
+            </div>
+        </div>
+
+
+        <!--see invitations-->
+        <div class="invitation-form" *ngIf="modalType == 'invitation'">
+            <h3>{{'publication.invitations' | translate}} <b>({{invitations && invitations.length}})</b></h3>
+            <ui-publication-single *ngFor="let invitationData of invitations, let i=index" [type]="['invitation']" [className]="'inviters'" [publicationData]="invitationData" (invitationAnswer)="answer($event, i)"></ui-publication-single>
+        </div>
+    </div>
+</div>

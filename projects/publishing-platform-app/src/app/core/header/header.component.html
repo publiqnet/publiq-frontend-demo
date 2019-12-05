@@ -1,0 +1,15 @@
+<ui-header *ngIf="isBrowser && isDataLoaded" [headerData]="headerData" [showSearchBar]="showSearch" (userSignIn)="userAuth('login')"
+           (userSignUp)="userAuth('register')" (navigationLink)="onRouteChange($event)" (notificationMenuOpened)="onNotificationMenuOpened()"
+           (searchEvent)="searchEvent($event)" [seeMoreLoading]="seeMoreLoading" [blockInfiniteScroll]="blockInfiniteScroll"
+           (seeMore)="onNotificationsTabScrollEvent($event)" (onInputChange)="onInputChange($event)"
+           [tagItems]="tagsList" (onTagItemSelect)="onTagSelect($event)" [isSecondActive]="sharedData.headerSecondActive"
+           [articlePage]="sharedData.headerArticleActive" [articleReadPercent]="sharedData.articleReadPercent"
+           (articleShared)="onShare($event)" (articleTitleClick)="titleClicked()"
+           (articleAuthorFollow)="onArticleAuthorFollow($event)"
+           (publishArticleClick)="onPublishArticleClick($event)"
+           (publicationFollow)="onPublicationFollow($event)" (publicationTitleClick)="titleClicked()" (continueArticle)="onContinueArticle()">
+</ui-header>
+
+<ng-container *ngIf="showSearch">
+  <app-search (closeSearchBar)="searchEvent($event)" [searchWord]="searchWord" [searchResult]="searchData" [defaultSearchData]="defaultSearchData"></app-search>
+</ng-container>

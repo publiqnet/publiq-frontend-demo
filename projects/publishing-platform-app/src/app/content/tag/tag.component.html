@@ -1,0 +1,33 @@
+<div class="container">
+    <div class="row">
+        <div class="offset-lg-2 col-lg-8 col-xl-9">
+            <div class="grid-style grid-style--tag">
+                <h2 class="shadowed-heading" [attr.data-shadow-text]="'tag.title' | translate">{{"tag.title" | translate}}</h2>
+                <div class="grid-style__items">
+                    <i (click)="listType = 'grid'" class="grid-icon grid-icon--selected icon-multi-grid" [ngClass]="{'grid-icon--selected': (listType == 'grid')}"></i>
+                    <i (click)="listType = 'single'" class="grid-icon icon-single-grid" [ngClass]="{'grid-icon--selected': (listType == 'single')}"></i>
+                </div>
+            </div>
+        </div>
+        <ng-container *ngIf="contents.length">
+            <ng-container *ngIf="listType == 'grid'" >
+                <div class="offset-lg-2 col-lg-8 col-xl-9 stories" [class.masonry]="isMasonryLoaded" (layoutComplete)="onLayoutComplete($event)" ngx-masonry [options]="myOptions">
+                    <ui-content-single (accountClick)="onAccountClick($event)" (contentClick)="onContentClick($event)" (publicationClick)="onPublicationClick($event)" (tagClick)="onTagClick($event)"
+                                       ngxMasonryItem [type]="listType" *ngFor="let content of contents;" [contentData]="content"></ui-content-single>
+                </div>
+            </ng-container>
+            <div *ngIf="listType == 'single'" class="offset-lg-2 col-lg-8 col-xl-9">
+                <ui-content-single (accountClick)="onAccountClick($event)" (contentClick)="onContentClick($event)" (publicationClick)="onPublicationClick($event)" (tagClick)="onTagClick($event)"
+                                   [type]="listType" *ngFor="let content of contents;" [contentData]="content"></ui-content-single>
+            </div>
+        </ng-container>
+    </div>
+    <div class="empty" *ngIf="seeMoreLoading">
+        <div style="display: inline-block">
+            <ui-loader [size]="100" [color]="'blue'"></ui-loader>
+        </div>
+    </div>
+    <ng-container *ngIf="seeMoreChecker">
+        <div class="search-results" infiniteScroll [infiniteScrollDistance]="1" [infiniteScrollThrottle]="50" [infiniteScrollDisabled]="blockInfiniteScroll" (scrolled)="seeMore()"></div>
+    </ng-container>
+</div>

@@ -1,0 +1,131 @@
+<div class="container">
+    <div class="row">
+        <div *ngIf="isDataLoaded" class="col-lg-8 col-xl-9">
+            <div class="grid-style">
+                <h2 class="shadowed-heading" [attr.data-shadow-text]="'homepage.recommended' | translate">{{'homepage.recommended' | translate}}</h2>
+                <div class="grid-style__items">
+                    <i (click)="listType = 'grid'" class="grid-icon grid-icon--selected icon-multi-grid" [ngClass]="{'grid-icon--selected': (listType == 'grid')}"></i>
+                    <i (click)="listType = 'single'" class="grid-icon icon-single-grid" [ngClass]="{'grid-icon--selected': (listType == 'single')}"></i>
+                </div>
+            </div>
+        </div>
+        <ng-container *ngIf="(listType == 'grid' && !isMasonryLoaded) || (listType == 'single' && !firstContentBlock.length)">
+            <div class="col-lg-8 col-xl-9">
+                <ui-loading-block [type]="listType"></ui-loading-block>
+                <ui-loading-block [type]="listType"></ui-loading-block>
+                <ui-loading-block [type]="listType"></ui-loading-block>
+                <ui-loading-block [type]="listType"></ui-loading-block>
+                <ui-loading-block [type]="listType"></ui-loading-block>
+                <ui-loading-block [type]="listType"></ui-loading-block>
+            </div>
+            <div class="col-lg-4 col-xl-3">
+                <ui-welcome-message type="welcome_to_media_loading"></ui-welcome-message>
+            </div>
+        </ng-container>
+        <ng-container *ngIf="firstContentBlock.length">
+            <ng-container *ngIf="listType == 'grid'">
+                <ngx-masonry class="col-lg-8 col-xl-9 stories" [class.masonry]="isMasonryLoaded"  [updateLayout]="updateMasonryFirstBlock" (layoutComplete)="onLayoutComplete($event)" [options]="myOptions">
+                  <ngxMasonryItem *ngFor="let content of firstContentBlock">
+                    <ui-content-single (accountClick)="utilService.routerChangeHelper('account',$event.slug)"
+                                       (contentClick)="utilService.routerChangeHelper('content',$event)"
+                                       (publicationClick)="utilService.routerChangeHelper('publication',$event.slug)"
+                                       (tagClick)="onTagClick($event)" class="masonry-item"
+                                       [type]="listType"
+                                       [contentData]="content"
+                                       [loadOriginalImg]="false"
+                                       (imageLoaded)="updateMasonryFirstBlock = !updateMasonryFirstBlock">
+                    </ui-content-single>
+                  </ngxMasonryItem>
+                </ngx-masonry>
+            </ng-container>
+            <div *ngIf="listType == 'single'" class="col-lg-8 col-xl-9">
+                <ui-content-single (accountClick)="utilService.routerChangeHelper('account',$event.slug)" (contentClick)="utilService.routerChangeHelper('content',$event)" (publicationClick)="utilService.routerChangeHelper('publication',$event.slug)" (tagClick)="onTagClick($event)"
+                    [type]="listType" *ngFor="let content of firstContentBlock;" [contentData]="content"></ui-content-single>
+            </div>
+        </ng-container>
+        <div class="col-lg-4 col-xl-3" *ngIf="(listType == 'grid' && isMasonryLoaded) || (listType == 'single' && firstContentBlock.length)">
+            <ui-welcome-message *ngIf="welcomeMessageState && !accountService.loggedIn()"
+                                [type]="welcomeMessageType"
+                                [state]="welcomeMessageState"
+                                (onSubmit)="onSignUp($event)"
+                                (onClosed)="welcomeMessageState = null;">
+            </ui-welcome-message>
+            <ui-welcome-message *ngIf="haveFirstArticle && startEarningShown && accountService.loggedIn()"
+                                type="start_earning" (onClosed)="startEarningShown = false;"
+                                (onSubmit)="goToEditor(false)">
+            </ui-welcome-message>
+            <div class="publications" *ngIf="publicationsList && publicationsList.length">
+                <ui-publication-list [countByPage]="4" [data]="publicationsList" [hasMore]="hasMorePublications" (loadMore)="loadMorePublications()" (getPublication)="goPublicationPage($event)" (onFollow)="followPublication($event)"></ui-publication-list>
+            </div>
+            <ng-template #noPublication>
+                <div class="no-more">
+                    {{'homepage.no_suggested_publications' | translate}}
+                </div>
+            </ng-template>
+            <div class="copyright-space">
+                <span class="copyright-space__text">  {{ 'homepage.publiq' | translate }}</span>
+                <div class="copyright-space__items">
+                  <span class="copyright-space__items__item" [ngClass]="{'selected' : translateService.currentLang == 'en'}" (click)="useLang('en')">EN</span>
+                  <span class="copyright-space__items__item" [ngClass]="{'selected' : translateService.currentLang == 'jp'}" (click)="useLang('jp')">JP</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <ng-container *ngIf="contentArray.length">
+        <ui-relevant-content (contentClick)="utilService.routerChangeHelper('content',$event)" *ngIf="firstRelevantBlock.length" [type]="'all-single'" [contentList]="firstRelevantBlock" [title]="'homepage.interesting_writers_first' | translate"></ui-relevant-content>
+        <div class="row" *ngIf="secondContentBlock.length">
+            <ng-container *ngIf="listType == 'grid'">
+                <ngx-masonry class="col-lg-8 col-xl-9 stories" [class.masonry]="isMasonryLoaded"  [updateLayout]="updateMasonrySecondBlock" (layoutComplete)="onLayoutComplete($event)" [options]="myOptions">
+                  <ngxMasonryItem *ngFor="let content of secondContentBlock">
+                    <ui-content-single  (accountClick)="utilService.routerChangeHelper('account',$event.slug)"
+                                        (contentClick)="utilService.routerChangeHelper('content',$event)"
+                                        (publicationClick)="utilService.routerChangeHelper('publication',$event.slug)"
+                                        (tagClick)="onTagClick($event)" class="masonry-item"
+                                        [type]="listType" [contentData]="content"
+                                        [loadOriginalImg]="false"
+                                        (imageLoaded)="updateMasonrySecondBlock = !updateMasonrySecondBlock">
+                    </ui-content-single>
+                  </ngxMasonryItem>
+                </ngx-masonry>
+            </ng-container>
+            <div *ngIf="listType == 'single'" class="col-lg-8 col-xl-9">
+                <ui-content-single (accountClick)="utilService.routerChangeHelper('account',$event.slug)" (contentClick)="utilService.routerChangeHelper('content',$event)" (publicationClick)="utilService.routerChangeHelper('publication',$event.slug)" (tagClick)="onTagClick($event)"
+                    [type]="listType" *ngFor="let content of secondContentBlock;" [contentData]="content"></ui-content-single>
+            </div>
+        </div>
+        <ui-relevant-content (contentClick)="utilService.routerChangeHelper('content',$event)" (publicationClick)="utilService.routerChangeHelper('publication',$event.slug)" (accountClick)="utilService.routerChangeHelper('account',$event.slug)" (tagClick)="onTagClick($event)" *ngIf="secondRelevantBlock.length" [contentList]="secondRelevantBlock" [title]="'homepage.interesting_writers_second' | translate"></ui-relevant-content>
+    </ng-container>
+    <ng-container *ngIf="loadedContentBlock.length">
+        <div class="row">
+            <ng-container *ngIf="listType == 'grid'">
+                <ngx-masonry class="col-lg-8 col-xl-9 stories" [class.masonry]="isMasonryLoaded" [updateLayout]="updateMasonryContentBlock" (layoutComplete)="onLayoutComplete($event)" [options]="myOptions">
+                    <ngxMasonryItem *ngFor="let content of loadedContentBlock">
+                        <ui-content-single (accountClick)="utilService.routerChangeHelper('account',$event.slug)"
+                                           (contentClick)="utilService.routerChangeHelper('content',$event)"
+                                           (publicationClick)="utilService.routerChangeHelper('publication',$event.slug)"
+                                           (tagClick)="onTagClick($event)" class="masonry-item"
+                                           [type]="listType" [contentData]="content"
+                                           [loadOriginalImg]="false"
+                                           (imageLoaded)="updateMasonryContentBlock = !updateMasonryContentBlock">
+                        </ui-content-single>
+                    </ngxMasonryItem>
+                </ngx-masonry>
+            </ng-container>
+            <div *ngIf="listType == 'single'" class="col-lg-8 col-xl-9">
+                <ui-content-single (accountClick)="utilService.routerChangeHelper('account',$event.slug)" (contentClick)="utilService.routerChangeHelper('content',$event)" (publicationClick)="utilService.routerChangeHelper('publication',$event.slug)" (tagClick)="onTagClick($event)"
+                    [type]="listType" *ngFor="let content of loadedContentBlock" [contentData]="content"></ui-content-single>
+            </div>
+        </div>
+    </ng-container>
+    <div class="row" *ngIf="seeMoreLoading">
+        <div class="col-lg-8 col-xl-9 loading-indicator">
+            <ui-loading-block [type]="listType"></ui-loading-block>
+            <ui-loading-block [type]="listType"></ui-loading-block>
+            <ui-loading-block [type]="listType" class="additional-block"></ui-loading-block>
+        </div>
+    </div>
+    <ng-container *ngIf="seeMoreChecker">
+        <div class="search-results" infiniteScroll [infiniteScrollDistance]="1" [infiniteScrollThrottle]="50" [infiniteScrollDisabled]="blockInfiniteScroll" (scrolled)="seeMore()"></div>
+    </ng-container>
+</div>
+<app-start-earning-popup *ngIf="accountService.startEarningPopupShown" (onClosed)="accountService.startEarningPopupShown = false;" (onButtonClicked)="goToEditor(true)"></app-start-earning-popup>

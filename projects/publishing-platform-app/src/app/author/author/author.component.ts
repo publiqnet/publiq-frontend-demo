@@ -1,0 +1,941 @@
+import {
+  Component,
+  Inject,
+  OnDestroy,
+  OnInit,
+  PLATFORM_ID,
+  Input,
+  ViewChild,
+  ElementRef,
+  HostListener
+} from '@angular/core';
+import { ActivatedRoute, Params, Router } from '@angular/router';
+
+import { of, ReplaySubject } from 'rxjs';
+import { debounceTime, delay, map, switchMap, takeUntil } from 'rxjs/operators';
+import { Account } from '../../core/services/models/account';
+import { AccountService } from '../../core/services/account.service';
+import { ErrorEvent, ErrorService } from '../../core/services/error.service';
+import { Content } from '../../core/services/models/content';
+import { ContentService } from '../../core/services/content.service';
+import { DraftService } from '../../core/services/draft.service';
+import { NgxMasonryComponent, NgxMasonryOptions } from 'ngx-masonry';
+import { UtilService } from '../../core/services/util.service';
+import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
+import { ValidationService } from '../../core/validator/validator.service';
+import { SafeStylePipe } from '../../core/pipes/safeStyle.pipe';
+import { DomSanitizer } from '@angular/platform-browser';
+import { CryptService } from '../../core/services/crypt.service';
+import { Publications } from '../../core/services/models/publications';
+import { PublicationService } from '../../core/services/publication.service';
+import { UiNotificationService } from '../../core/services/ui-notification.service';
+import { isPlatformBrowser } from '@angular/common';
+import { UtilsService } from 'shared-lib';
+import { ClipboardService } from 'ngx-clipboard';
+import { TranslateService } from '@ngx-translate/core';
+import { setHebrewMonth } from '@ng-bootstrap/ng-bootstrap/datepicker/hebrew/hebrew';
+
+enum ModalConfirmActions {
+  DeleteOne,
+  DeleteAll
+}
+enum LoadDataType {
+  Stories = 'stories',
+  Drafts = 'drafts',
+}
+
+@Component({
+  selector: 'app-author',
+  templateUrl: './author.component.html',
+  styleUrls: ['./author.component.scss'],
+  providers: [SafeStylePipe]
+})
+export class AuthorComponent implements OnInit, OnDestroy {
+  @ViewChild(NgxMasonryComponent, { static: false }) masonry: NgxMasonryComponent;
+  public isMasonryLoaded = false;
+  public publicationsList = [];
+  public activeBoostsData = [];
+  public allBoostsData = [];
+  bioTextElement: ElementRef;
+  authorNameElement: ElementRef;
+
+  modalTitles = null;
+  public animationAction: boolean;
+
+  @ViewChild('authorName', { static: false }) set authorName(el: ElementRef | null) {
+    if (!el) {
+      return;
+    }
+
+    this.authorNameElement = el;
+    this.resizeTextareaElement(el.nativeElement);
+  }
+
+  @ViewChild('bioText', { static: false }) set bioText(el: ElementRef | null) {
+    if (!el) {
+      return;
+    }
+
+    this.bioTextElement = el;
+    this.resizeTextareaElement(el.nativeElement);
+  }
+
+  @ViewChild('fullnameTextarea', { static: false }) fullnameTextarea: ElementRef;
+  @ViewChild('bioTextarea', { static: false }) bioTextarea: ElementRef;
+
+  @Input('autoresize') maxHeight: number;
+  public masonryOptions: NgxMasonryOptions = {
+    transitionDuration: '0s',
+    itemSelector: '.story--grid',
+    gutter: 10,
+    horizontalOrder: true
+  };
+  public testTest: any;
+  showEditIcon = false;
+  showEditIcon1 = false;
+  showEditModeIcons = false;
+  private authorId: string;
+  shortName;
+  loadingAuthor = true;
+  avatarUrl: string;
+  canFollow = true;
+  isCurrentUser = false;
+  articlesLoaded = false;
+  editTitleIcon: boolean = false;
+  editBioIcon: boolean = false;
+  disableSave: boolean = false;
+  showPrivateKey: boolean = false;
+  showPhase: boolean = false;
+  showModal: boolean = false;
+  showSecurityModal: boolean = false;
+  protected password: string = '';
+  passwordVerified = false;
+  decriptedPrivateKey: string;
+  passError = '';
+  incorrectRecoverPhrase = '';
+  public boostType: string = 'boost';
+  public decryptedBrainKey: string;
+  public publishedContent: Content[] = [];
+  public loading = true;
+  listType = 'grid';
+  public drafts: Array<any>;
+  private unsubscribe$ = new ReplaySubject<void>(1);
+  selectedTab: string = '1';
+  public blockInfiniteScroll = false;
+  public seeMoreChecker = false;
+  seeMoreLoading = false;
+  public seeMoreDraftChecker = false;
+  seeMoreDraftLoading: boolean = false;
+  public startFromUri = null;
+  public startFromDraftId = 0; // for draft data loading
+  public storiesDefaultCount = 10;
+  public draftsDefaultCount = 10;
+  authorForm: FormGroup;
+  tabs = [];
+  author: Account;
+  currentImage: string;
+  fullName: string;
+  firstName: string;
+  lastName: string;
+  bio: string;
+  photo: File;
+  editMode: boolean = false;
+  modalProps: any = {};
+  public showBoostModal: boolean = false;
+  public showHistoryModal: boolean = false;
+  showBoostModalType: string = 'boost';
+  public selectedBoostData: any = {};
+  public feeWhole: number = 0;
+  public feeFraction: number = 0;
+  public currentBoostFee: number = 0;
+  public currentTime: number;
+  public boostStates: {active: Content[], passive: Content[], summary: any};
+  public contentVersions = [];
+
+  constructor(
+    private activatedRoute: ActivatedRoute,
+    private router: Router,
+    private uiNotificationService: UiNotificationService,
+    public accountService: AccountService,
+    private errorService: ErrorService,
+    private contentService: ContentService,
+    private draftService: DraftService,
+    public utilService: UtilService,
+    private formBuilder: FormBuilder,
+    private safeStylePipe: SafeStylePipe,
+    protected sanitizer: DomSanitizer,
+    public cryptService: CryptService,
+    private publicationService: PublicationService,
+    public _clipboardService: ClipboardService,
+    public translateService: TranslateService,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {
+  }
+
+  ngOnInit() {
+    if (isPlatformBrowser(this.platformId)) {
+      this.initDefaultData();
+      this.activatedRoute.params
+        .pipe(
+          debounceTime(500),
+          switchMap((params: Params) => {
+            this.authorId = params['id'];
+            this.clearData();
+            return this.accountService.accountUpdated$;
+          }),
+          switchMap((data: any) => {
+            if (this.authorId === 'undefined') {
+              this.router.navigate(['/']);
+              return;
+            }
+            return this.accountService.getAuthorByPublicKey(this.authorId);
+          }),
+          switchMap((author: Account) => {
+            this.author = author;
+            this.firstName = this.author.firstName;
+            this.lastName = this.author.lastName;
+            this.bio = this.author.bio;
+            this.listType = this.author.listView ? 'single' : 'grid';
+            this.bio = this.author.bio || this.translateService.instant('author.write_short_bio');
+            this.fullName = this.author.fullName;
+            if (this.author.image) {
+              this.avatarUrl = this.author.image;
+            }
+            this.shortName = this.author.shortName ? this.author.shortName : '';
+            this.canFollow = !this.author.subscribed;
+            this.loadingAuthor = false;
+            setTimeout(() => this.calculateTextareaHeight(), 75);
+            if (this.accountService.loggedIn() && this.author && this.accountService.accountInfo.publicKey == this.author.publicKey) {
+              this.isCurrentUser = true;
+              this.setAuthorName();
+              return this.contentService.getMyContents(this.startFromUri, this.storiesDefaultCount);
+            } else {
+              return this.contentService.getContents(this.authorId, this.startFromUri, this.storiesDefaultCount);
+            }
+          }),
+          takeUntil(this.unsubscribe$)
+        )
+        .subscribe((contents: any) => {
+          this.publishedContent = this.publishedContent.concat(contents.data);
+          this.seeMoreChecker = contents.more;
+          this.seeMoreLoading = false;
+          this.calculateLastStoryUri();
+          this.buildForm();
+          this.articlesLoaded = true;
+        }, error => this.errorService.handleError('loadAuthorData', error));
+
+      this.accountService.followAuthorChanged
+        .pipe(
+          takeUntil(this.unsubscribe$)
+        )
+        .subscribe(data => {
+          this.accountService.getAuthorByPublicKey(this.author.publicKey);
+          this.canFollow = false;
+        });
+
+      this.errorService.errorEventEmiter
+        .pipe(
+          takeUntil(this.unsubscribe$)
+        )
+        .subscribe((data: ErrorEvent) => {
+          if (data.action === 'loadAuthorData') {
+            this.router.navigate([`/page-not-found`]);
+          } else if (data.action == 'loadAuthorStories') {
+            console.log('--error--', data.message);
+          } else if (['getUserDrafts', 'deleteDraft', 'deleteAllDrafts'].includes(data.action)) {
+            this.uiNotificationService.error(this.translateService.instant('author.error'), data.message);
+          }
+        }
+        );
+
+      this.translateService.onLangChange.subscribe(lang => {
+        this.tabs = [
+          {
+            'value': '1',
+            'text': this.translateService.instant('author.stories'), // 'Stories',
+            'active': true
+          },
+          {
+            'value': '2',
+            'text': this.translateService.instant('author.drafts'), // Drafts
+            'active': false
+          },
+          {
+            'value': '3',
+            'text': this.translateService.instant('author.ads'), // Ads
+            'active': false
+          }
+        ];
+
+        this.modalTitles = {
+          DeleteOneDraft : this.translateService.instant('author.delete_draft_question'),
+          DeleteAllDrafts : this.translateService.instant('author.delete_all_drafts_question')
+        };
+      });
+    }
+  }
+
+  initDefaultData() {
+    this.tabs = [
+      {
+        'value': '1',
+        'text': this.translateService.instant('author.stories'), // 'Stories',
+        'active': true
+      },
+      {
+        'value': '2',
+        'text': this.translateService.instant('author.drafts'), // Drafts
+        'active': false
+      },
+      {
+        'value': '3',
+        'text': this.translateService.instant('author.ads'), // Ads
+        'active': false
+      }
+    ];
+
+    this.modalTitles = {
+      DeleteOneDraft : this.translateService.instant('author.delete_draft_question'),
+      DeleteAllDrafts : this.translateService.instant('author.delete_all_drafts_question')
+    };
+  }
+
+  loadCurrentBoostFee() {
+    this.contentService.getFee()
+      .pipe(
+        takeUntil(this.unsubscribe$)
+      )
+      .subscribe(feeData => {
+        this.feeWhole = feeData.whole ? feeData.whole : 0;
+        this.feeFraction = feeData.fraction ? feeData.fraction : 0;
+        this.currentTime = feeData.currentTime;
+        this.currentBoostFee = UtilsService.calculateBalance(this.feeWhole, this.feeFraction);
+        this.loading = false;
+      });
+  }
+
+  refreshStories() {
+    this.startFromUri = null;
+    this.contentService.getMyContents(this.startFromUri, this.storiesDefaultCount)
+      .subscribe(contents => {
+        this.publishedContent = contents.data;
+        this.seeMoreChecker = contents.more;
+        this.calculateLastStoryUri();
+        this.articlesLoaded = true;
+      });
+  }
+
+  getAllBoosts() {
+    this.contentService.getBoostsData()
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe(boostData => {
+        this.boostStates = boostData;
+      });
+  }
+
+  onBoostModal(data) {
+    this.selectedBoostData = {};
+    if (data && data.type == 'cancel' && data['boostData'] && data['boostData'].length) {
+      data['boostData'].forEach(boost => {
+        if (['pending', 'active'].includes(boost.status)) {
+          this.selectedBoostData['transactionHash'] = boost['transaction']['transactionHash'];
+        }
+      });
+    }
+    this.selectedBoostData['uri'] = data.uri;
+    this.selectedBoostData['type'] = data.type;
+    this.showBoostModal = true;
+    this.showBoostModalType = data.type == 'cancel' ? 'cancel-boost' : 'boost';
+  }
+
+  onActiveBoost(data, type) {
+    this.selectedBoostData['uri'] = data.uri;
+    this.selectedBoostData['type'] = data.type;
+    this.selectedBoostData['transactionHash'] = data.hash ? data.hash : '';
+    this.showBoostModal = true;
+    this.showBoostModalType = data.type == 'cancel' ? 'cancel-boost' : 'boost';
+  }
+
+  closeBoostModal() {
+    this.showBoostModal = false;
+  }
+
+  closeHistoryModal(event) {
+    if (event.closeHistory) { this.showHistoryModal = false; }
+  }
+
+  @HostListener('document:keydown', ['$event']) onKeydownHandler(event: KeyboardEvent) {
+  }
+
+  @HostListener('window:resize', [])
+  calculateTextareaHeight() {
+    if (isPlatformBrowser(this.platformId)) {
+      if (this.fullnameTextarea && this.fullnameTextarea.nativeElement) {
+        this.resizeTextareaElement(this.fullnameTextarea.nativeElement);
+      }
+      if (this.bioTextarea && this.bioTextarea.nativeElement) {
+        this.resizeTextareaElement(this.bioTextarea.nativeElement);
+      }
+    }
+  }
+
+  private buildForm() {
+    this.firstName = this.author.firstName;
+    this.lastName = this.author.lastName;
+    this.bio = this.author.bio;
+    if (this.author.image) {
+      this.currentImage = this.author.image;
+    }
+    this.authorForm = this.formBuilder.group({
+      firstName: new FormControl(this.firstName, []),
+      lastName: new FormControl(this.lastName, []),
+      bio: new FormControl(this.bio, [])
+    },
+      { validator: ValidationService.noSpaceValidator }
+    );
+  }
+
+  resizeTextareaElement(el) {
+    let newHeight;
+    if (el) {
+      el.style.overflow = 'hidden';
+      el.style.height = 'auto';
+      if (this.maxHeight) {
+        newHeight = Math.min(el.scrollHeight, this.maxHeight);
+      } else {
+        newHeight = el.scrollHeight;
+      }
+      el.style.height = newHeight + 'px';
+    }
+  }
+
+  onNameEdit(event) {
+    if (event.target) {
+      this.resizeTextareaElement(event.target);
+    }
+    this.editTitleIcon = true;
+    this.showEditModeIcons = true;
+    this.fullName = event.target.value;
+    if (this.fullName == this.author.fullName) {
+      this.editTitleIcon = false;
+      this.showEditModeIcons = false;
+    }
+    const splittedFullName = this.fullName.split(' ').filter(item => item);
+    this.firstName = (splittedFullName.length > 1) ? splittedFullName.slice(0, -1).join(' ') : splittedFullName.slice(-1).join(' ');
+    this.lastName = (splittedFullName.length > 1) ? splittedFullName.slice(-1).join(' ') : '';
+    if (this.fullName != this.author.fullName) {
+      this.authorForm.controls['firstName'].setValue(this.firstName);
+      this.authorForm.controls['lastName'].setValue(this.lastName);
+    }
+  }
+
+  onBioEdit(event) {
+    this.showEditModeIcons = true;
+    this.editBioIcon = true;
+    if (event.target) {
+      this.resizeTextareaElement(event.target);
+    }
+    this.bio = event.target.value;
+    if (this.bio == this.author.bio) {
+      this.editBioIcon = false;
+      this.showEditModeIcons = false;
+    }
+    if (this.bio.trim().length && (this.bio !== this.author.bio)) {
+      this.authorForm.controls['bio'].setValue(this.bio);
+    } else if (!this.bio.trim().length) {
+      this.authorForm.controls['bio'].setValue('');
+    }
+  }
+
+  resetValues() {
+    if (this.bioTextElement) {
+      this.bioTextElement.nativeElement.value = this.author.bio;
+    }
+
+    if (this.authorNameElement) {
+      this.authorNameElement.nativeElement.value = this.author.fullName;
+    }
+
+    this.currentImage = this.author.image;
+    this.authorForm.controls['firstName'].setValue(this.author.firstName);
+    this.authorForm.controls['lastName'].setValue(this.author.lastName);
+    this.authorForm.controls['bio'].setValue(this.author.bio);
+    this.listType = this.author.listView ? 'single' : 'grid';
+    this.editMode = false;
+    this.showEditModeIcons = false;
+    this.showEditIcon = false;
+    this.showEditIcon1 = false;
+    this.editTitleIcon = false;
+    this.editBioIcon = false;
+  }
+
+  removeCurrentImage() {
+     this.currentImage = null;
+     if (!this.showEditModeIcons) { this.showEditModeIcons = true; }
+  }
+
+  tabChange(e) {
+    this.selectedTab = e;
+    if (e == 2 && !this.drafts.length) {
+      this.loading = true;
+      this.getDrafts();
+    } else {
+      if (!this.publicationsList.length) {
+        this.loading = true;
+        this.getMyPublications();
+      }
+      if (!this.feeWhole && !this.feeFraction) {
+        this.loading = true;
+        this.loadCurrentBoostFee();
+      }
+
+      if (e == 3) {
+        this.getAllBoosts();
+      }
+    }
+  }
+
+  onEditMode(flag: boolean, fullName?, bio?) {
+    this.listType = this.author.listView ? 'single' : 'grid';
+    this.editMode = flag;
+    this.showEditModeIcons = false;
+    this.showEditIcon = false;
+    this.showEditIcon1 = false;
+    if (!flag) {
+      fullName.textContent = this.setAuthorName();
+      bio.textContent = this.author.bio || this.translateService.instant('author.write_short_bio');
+    }
+  }
+
+  getDrafts() {
+    this.draftService.getUserDrafts(this.startFromDraftId, this.draftsDefaultCount)
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe((drafts) => {
+        this.drafts = drafts.data || [];
+        this.seeMoreDraftChecker = drafts.more;
+        this.seeMoreDraftLoading = false;
+        this.calculateLastDraftId();
+        this.loading = false;
+      });
+  }
+
+  getMyPublications() {
+    this.publicationsList = [];
+    this.publicationService.getMyPublications()
+      .pipe(
+        map((publicationsData: Publications) => {
+          const publicationsList = [...publicationsData.membership, ...publicationsData.owned];
+          return publicationsList;
+        }),
+        takeUntil(this.unsubscribe$)
+      )
+      .subscribe(publicationsList => {
+        if (publicationsList.length) {
+          publicationsList.forEach(publication => {
+            const text = publication.title ? publication.title : publication.description;
+            const nextPublication = {
+              'value': publication.slug,
+              'text': text,
+              'metaData': {
+                'image': publication.logo ? publication.logo : publication.cover,
+                'first_name': text,
+                'last_name': '',
+                'fullName': text
+              }
+            };
+            this.publicationsList.push(nextPublication);
+          });
+        }
+        this.loading = false;
+      });
+  }
+
+  historyClicked(uri) {
+    this.router.navigate([`/s/${uri}`]);
+  }
+
+  deleteDraft(id: number, index: number) {
+    const title = this.modalTitles.DeleteOneDraft;
+    this.modalProps = { action: ModalConfirmActions.DeleteOne.toString(), title, slug: id, index };
+    this.showModal = !this.showModal;
+  }
+
+  editDraft(id: string) {
+    this.router.navigate([`/content/editdraft/${id}`]);
+  }
+
+  deleteAllDrafts() {
+    const title = this.modalTitles.DeleteAllDrafts;
+    this.modalProps = { action: ModalConfirmActions.DeleteAll.toString(), title };
+    this.showModal = !this.showModal;
+  }
+
+  onLayoutComplete(event) {
+    if (event && event.length > 1) {
+      this.isMasonryLoaded = true;
+      if (this.masonry) {
+        this.masonry.reloadItems();
+        this.masonry.layout();
+      }
+    }
+  }
+
+  calculateLastStoryUri() {
+    if (this.publishedContent.length) {
+      const lastIndex = this.publishedContent.length - 1;
+      if (this.publishedContent[lastIndex].uri !== this.startFromUri) {
+        this.startFromUri = this.publishedContent[lastIndex].uri;
+      }
+    }
+  }
+
+
+  private calculateLastDraftId() {
+    if (this.drafts.length) {
+      const lastIndex = this.drafts.length - 1;
+      if (this.drafts[lastIndex].slug !== this.startFromDraftId) {
+        this.startFromDraftId = this.drafts[lastIndex].slug;
+      }
+    }
+  }
+
+  seeMore(type?: string) {
+    this.blockInfiniteScroll = true;
+    let contentObservable;
+    if (type === LoadDataType.Stories) {
+      this.seeMoreLoading = true;
+      contentObservable = this.isCurrentUser ? this.contentService.getMyContents(this.startFromUri, this.storiesDefaultCount) :
+        this.contentService.getContents(this.authorId, this.startFromUri, this.storiesDefaultCount);
+    } else if (type === LoadDataType.Drafts) {
+      this.seeMoreDraftLoading = true;
+      contentObservable = this.draftService.getUserDrafts(this.startFromDraftId, this.draftsDefaultCount);
+    } else { of([]); }
+
+    contentObservable.pipe(
+      takeUntil(this.unsubscribe$)
+    )
+      .subscribe(
+        (loadedData: any) => {
+          if (type === LoadDataType.Stories) {
+            this.seeMoreChecker = loadedData.more;
+            this.publishedContent = this.publishedContent.concat(loadedData.data);
+            this.calculateLastStoryUri();
+            this.seeMoreLoading = false;
+          } else if (type === LoadDataType.Drafts) {
+            this.seeMoreDraftChecker = loadedData.more;
+            this.drafts = this.drafts.concat(loadedData.data);
+            this.calculateLastDraftId();
+            this.seeMoreDraftLoading = false;
+          }
+          this.blockInfiniteScroll = false;
+        }
+      );
+  }
+
+  setAuthorName() {
+    this.fullName = (this.author.fullName == '') ? ((this.isCurrentUser) ? this.translateService.instant('author.add_name') : '') : this.author.fullName;
+    return this.fullName;
+  }
+
+  showUploadedImage(event) {
+    this.showEditModeIcons = true;
+    const input = event.target;
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+      if (!this.validateFile(input.files[0], 7000000)) {
+        this.uiNotificationService.error(this.translateService.instant('author.max_file_size'), '');
+        return;
+      }
+      reader.onload = (e: any) => {
+        if (e && e.target) {
+          this.currentImage = e.target.result;
+          this.photo = input.files[0];
+        }
+      };
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+
+  validateFile(file, size) {
+    if ((file.type !== 'image/jpeg' && file.type !== 'image/png') || file.size > size) {
+      of(this.translateService.instant('author.invalid_file_size'))
+        .pipe(
+          delay(3000),
+          takeUntil(this.unsubscribe$)
+        )
+        .subscribe(() => { });
+      return;
+    }
+    return true;
+  }
+
+  getCurrentImage() {
+    return this.currentImage ? this.sanitizer.bypassSecurityTrustUrl(this.currentImage) : null;
+  }
+
+  onSubmit() {
+    if (this.publishedContent.length && !this.fullName.trim()) {
+      this.uiNotificationService.error(this.translateService.instant('author.error'), this.translateService.instant('author.cant_delete'));
+      return;
+    }
+
+    if (this.authorForm.invalid || this.author.publicKey != this.accountService.accountInfo.publicKey) {
+      return;
+    }
+    const formData = new FormData();
+    if (this.photo) {
+      formData.append('image', this.photo, this.photo.name);
+      formData.append('deleteImage', 'false');
+      this.photo = null;
+    } else if (this.currentImage === null) {
+      formData.append('deleteImage', 'true');
+    }
+    formData.append('firstName', this.authorForm.controls['firstName'].value ? this.authorForm.controls['firstName'].value : '');
+    formData.append('lastName', this.authorForm.controls['lastName'].value ? this.authorForm.controls['lastName'].value : '');
+    formData.append('bio', this.authorForm.controls['bio'].value ? this.authorForm.controls['bio'].value : '');
+    formData.append('listView', (this.listType == 'single') ? 'true' : '');
+
+    this.accountService.updateAccount(formData)
+      .subscribe(data => {
+        this.publishedContent = this.publishedContent.map((content: Content) => {
+          content.author.first_name = this.authorForm.controls['firstName'].value;
+          content.author.last_name = this.authorForm.controls['lastName'].value;
+          content.author.fullName = content.author.first_name + ' ' + content.author.last_name;
+          content.author.image = this.currentImage;
+          return content;
+        });
+        this.editMode = false;
+        this.editTitleIcon = false;
+        this.editBioIcon = false;
+        this.showEditModeIcons = false;
+        this.uiNotificationService.success(this.translateService.instant('author.success'), this.translateService.instant('author.account_successfully_updated'));
+      });
+  }
+
+  doDelete(data) {
+    if (!data.answer) {
+      this.showModal = !this.showModal;
+      return;
+    }
+    if (data.properties.action == ModalConfirmActions.DeleteOne.toString()) {
+      this.doDeleteOneDraft(data.properties);
+    } else {
+      this.doDeleteAllDrafts(data.properties);
+    }
+    this.showModal = !this.showModal;
+  }
+
+  private doDeleteOneDraft(props) {
+    if (!props['slug']) {
+      return;
+    }
+
+    this.draftService.delete(props['slug'])
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe(() => {
+        if (this.drafts && props['index'] in this.drafts) {
+          this.draftService.RefreshObserver = 'getUserDrafts';
+          this.drafts.splice(props['index'], 1);
+        }
+      });
+  }
+
+  private doDeleteAllDrafts(props) {
+    this.loading = true;
+    this.draftService.deleteAll()
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe(() => {
+        this.draftService.RefreshObserver = 'getUserDrafts';
+        this.drafts = [];
+        this.loading = false;
+      });
+  }
+
+  openPopup(flag: boolean, type?: number) {
+    this.showSecurityModal = flag;
+    if (this.showSecurityModal == false) {
+      this.passwordVerified = false;
+      this.passError = '';
+      this.password = '';
+    }
+    if (type == 1) {
+      this.showPrivateKey = true;
+      this.showPhase = false;
+    } else if (type == 2) {
+      this.showPhase = true;
+      this.showPrivateKey = false;
+    }
+  }
+
+  passwordValidator() {
+    if (this.password) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+  generatePrivateKey() {
+    this.decryptPK(this.accountService.brainKeyEncrypted);
+  }
+
+  decryptPK(brainKeyEncrypted) {
+    if (this.cryptService.checkPassword(brainKeyEncrypted, this.password)) {
+      const brainKey = this.cryptService.getDecryptedBrainKey(brainKeyEncrypted, this.password);
+      this.decriptedPrivateKey = this.cryptService.getPrivateKey(brainKey);
+      this.passwordVerified = true;
+    } else {
+      this.passError = this.translateService.instant('author.incorrect_password');
+      this.passwordVerified = false;
+    }
+  }
+
+  focusFunction() {
+    this.passError = '';
+    this.incorrectRecoverPhrase = '';
+  }
+
+  generateBK() {
+    this.decryptBK(this.accountService.brainKeyEncrypted);
+  }
+
+  decryptBK(brainKeyEncrypted) {
+    if (this.cryptService.checkPassword(brainKeyEncrypted, this.password)) {
+      this.decryptedBrainKey = this.cryptService.getDecryptedBrainKey(brainKeyEncrypted, this.password);
+      this.passwordVerified = true;
+    } else {
+      this.passError = this.translateService.instant('author.incorrect_password');
+      this.passwordVerified = false;
+    }
+  }
+
+  public keyupFunc(event: KeyboardEvent, callBackFunc: string): void {
+    this.focusFunction();
+    if ((event.code === 'Enter' || event.code === 'NumpadEnter') && !this.passwordValidator() && callBackFunc !== '') {
+      this[callBackFunc]();
+    }
+  }
+
+  changePublication(event, contentUri) {
+    if (!event) {
+      event = null;
+    }
+    this.contentService.updateContentPublication(event, contentUri)
+      .pipe(
+        switchMap(() => event === null ? of(null) : this.publicationService.getPublicationBySlug(event)),
+        takeUntil(this.unsubscribe$))
+      .subscribe(publication => {
+        this.publishedContent.forEach((content: Content) => {
+          if (content.uri === contentUri) {
+            content.publication = publication;
+          }
+        });
+        this.uiNotificationService.success(this.translateService.instant('author.success'), this.translateService.instant('author.publication_successfully_updated'));
+      });
+  }
+
+  follow() {
+    this.accountService.follow(this.author.publicKey)
+      .pipe(
+        takeUntil(this.unsubscribe$)
+      )
+      .subscribe((author: Account) => {
+        this.contentService.updateSearchData = true;
+        this.canFollow = false;
+      });
+  }
+
+  unfollow() {
+    if (!this.accountService.loggedIn()) {
+      this.router.navigate([`/user/login`]);
+      return false;
+    }
+
+    this.accountService.unfollow(this.author.publicKey)
+      .pipe(
+        takeUntil(this.unsubscribe$)
+      )
+      .subscribe((author: Account) => {
+        this.contentService.updateSearchData = true;
+        this.canFollow = true;
+      });
+  }
+
+  editStory(event) {
+    this.router.navigate([`/content/edit/${event}`]);
+  }
+
+  onRouteChange(event, data: Content) {
+    const BoostInfo = {
+      data: data.boosts,
+      type: this.boostType,
+      uri: data.uri
+    };
+    if (event == 'edit_story') {
+      this.router.navigate([`/content/edit/${data.uri}`]);
+    } else if (event == 'boost_story') {
+      this.onBoostModal(BoostInfo);
+    } else if (event == 'history_story') {
+      this.contentVersions = data.previousVersions;
+      this.showHistoryModal = true;
+    }
+  }
+
+  cancelBoostSubmit(password) {
+    if (password && this.selectedBoostData && this.selectedBoostData.type == 'cancel') {
+      this.contentService.cancelStoryBoosting(this.selectedBoostData.uri, this.selectedBoostData.transactionHash, this.feeWhole, this.feeFraction, this.currentTime, password)
+      .subscribe(data => {
+        this.uiNotificationService.success(this.translateService.instant('author.success'), this.translateService.instant('author.boost_successfully_canceled'));
+        this.closeBoostModal();
+        this.refreshStories();
+          this.getAllBoosts();
+      },
+      error => {
+        this.uiNotificationService.error(this.translateService.instant('author.error'), this.translateService.instant('author.boost_cancel_error'));
+      });
+    }
+  }
+
+  newBoostSubmit(boostData) {
+    if (boostData.password && this.selectedBoostData && this.selectedBoostData.type == 'boost') {
+      this.contentService.contentBoost(this.selectedBoostData.uri, boostData.boostPrice, boostData.boostDays, this.feeWhole, this.feeFraction, this.currentTime, boostData.password)
+        .subscribe(data => {
+          this.uiNotificationService.success(this.translateService.instant('author.success'), this.translateService.instant('author.boost_successfully_added'));
+            this.closeBoostModal();
+            this.refreshStories();
+            this.getAllBoosts();
+        },
+        error => {
+          this.uiNotificationService.error(this.translateService.instant('author.error'), this.translateService.instant('author.content_boost_error'));
+        });
+    }
+  }
+
+  onTagClick(tagName) {
+    this.router.navigate([`/content/t/`, tagName]);
+  }
+
+  clearData() {
+    this.articlesLoaded = false;
+    this.isCurrentUser = false;
+    this.passwordVerified = false;
+    this.publishedContent = [];
+    this.drafts = [];
+    this.author = null;
+  }
+
+  copy(text: string) {
+    this._clipboardService.copyFromContent(text);
+    this.uiNotificationService.success(this.translateService.instant('author.copied'));
+  }
+
+  animate(animate: boolean) {
+    this.animationAction = animate;
+  }
+
+  ngOnDestroy() {
+    this.clearData();
+    this.unsubscribe$.next();
+    this.unsubscribe$.complete();
+  }
+}
