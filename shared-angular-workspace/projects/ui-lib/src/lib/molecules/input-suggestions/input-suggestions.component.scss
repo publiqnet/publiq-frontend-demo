@@ -1,0 +1,37 @@
+@import "../../../assets/common";
+
+.suggestions {
+  position: absolute;
+  width: 100%;
+  border-radius: 0 0 7px 7px;
+  overflow: hidden;
+  font: 600 13px/18px $open-sans;
+
+  &-wrapper {
+    position: relative;
+  }
+
+  ::ng-deep .avatar {
+    width: 24px; height: 24px;
+    margin-right: 10px;
+  }
+
+  &__item {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    background-color: pbq-color($grey, 200);
+    transition: 300ms;
+    cursor: pointer;
+    user-select: none;
+
+    span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    &:focus, &:hover {
+      background-color: #ffffff;
+    }
+  }
+}

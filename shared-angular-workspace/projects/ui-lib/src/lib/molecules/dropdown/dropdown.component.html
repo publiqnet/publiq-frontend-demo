@@ -1,0 +1,79 @@
+<!--with icon-->
+<div class="dropdown with-icon" (click)="ToggleActive()" [ngClass]="[active ? 'active' : '']" *ngIf="type == 'withIcon'" [class]="className" (uiClickOutside)="toggleOpen()">
+  <div class="dropdown__select with-up-down">
+    <i class="icon-arrow-up-down with-dropdown-icon"></i>
+    <span *ngIf="!selectedOptionData" class="placeholder-text">{{addPlaceholder ? addPlaceholder : ('ui.dropdown.select_status' | translate)}}</span>
+    <i *ngIf="!selectedOptionData" class="icon-plus"></i>
+    <ng-container *ngIf="selectedOptionData">
+      <span class="dropdown__placeholder">
+        <ng-container *ngIf="selectedOptionData.text">{{selectedOptionData.text}}</ng-container>
+      </span>
+      <ui-avatar *ngIf="selectedOptionData.metaData.fullName || selectedOptionData.metaData.image" [size]="'xsmallPublication'" [avatarData]="selectedOptionData.metaData"></ui-avatar>
+    </ng-container>
+  </div>
+  <ul class="dropdown__dropdown--menu" *ngIf="optionsData && optionsData.length">
+    <li (click)="unsetOption()" *ngIf="isNone" class="none-design">{{isNoneText}}</li>
+    <li *ngFor="let item of optionsData" (click)="onOptionChange(item)">
+      <ui-avatar [size]="'xsmallPublication'" [avatarData]="item.metaData"></ui-avatar>
+      <span>{{item.text}}</span>
+    </li>
+  </ul>
+</div>
+
+<!--with icon after submit-->
+<div *ngIf="type == 'afterSubmit'" [class]="className">
+  <div class="dropdown with-icon" (click)="ToggleActive()" [ngClass]="[active ? 'active' : '']" (uiClickOutside)="toggleOpen()">
+    <div class="dropdown__select with-up-down">
+      <i class="icon-arrow-up-down with-dropdown-icon"></i>
+      <span *ngIf="!selectedOptionData" class="placeholder-text">{{addPlaceholder}}</span>
+      <i *ngIf="!selectedOptionData" class="icon-plus"></i>
+      <ng-container *ngIf="selectedOptionData">
+      <span class="dropdown__placeholder">
+        <ng-container *ngIf="selectedOptionData.text">{{selectedOptionData.text}}</ng-container>
+      </span>
+        <ui-avatar *ngIf="selectedOptionData.metaData.fullName || selectedOptionData.metaData.image" [size]="'xsmallPublication'" [avatarData]="selectedOptionData.metaData"></ui-avatar>
+      </ng-container>
+    </div>
+    <ul class="dropdown__dropdown--menu" *ngIf="optionsData && optionsData.length">
+      <li *ngIf="isNone" class="none-design" (click)="clearOption()">{{isNoneText}}</li>
+      <li *ngFor="let item of optionsData" (click)="onOptionEnter(item)">
+        <ui-avatar [size]="'xsmallPublication'" [avatarData]="item.metaData"></ui-avatar>
+        <span>{{item.text}}</span>
+      </li>
+    </ul>
+  </div>
+  <div class="dropdown__buttons">
+    <ui-button [type]="'ordinary'" [text]="'ui.dropdown.cancel' | translate" (btnClicked)="_onCloseDropdown()"></ui-button>
+    <ui-button [type]="'primary'" [text]="'ui.dropdown.submit' | translate" (btnClicked)="submitOption()"></ui-button>
+  </div>
+</div>
+
+<!--default-->
+<div class="dropdown default" (click)="ToggleActive()" [ngClass]="[active ? 'active' : '']" *ngIf="type == 'default'" [class]="className">
+  <div class="dropdown__select select-icon">
+    <i class="icon-arrow-up-down selector-icon"></i>
+    <span *ngIf="!selectedOptionData">{{addPlaceholder}}</span>
+    <ng-container *ngIf="selectedOptionData">
+      <span class="dropdown__placeholder">{{selectedOptionData.text}}</span>
+    </ng-container>
+  </div>
+  <ul class="dropdown__dropdown--menu" *ngIf="optionsData.length">
+    <li (click)="unsetOption()" *ngIf="isNone" class="none-design">{{isNoneText}}</li>
+    <li *ngFor="let item of optionsData" (click)="onOptionChange(item)">
+      <span>{{item.text}}</span>
+    </li>
+  </ul>
+</div>
+
+<!--role-->
+<div class="dropdown role" (click)="ToggleActive()" [ngClass]="[active ? 'active' : '']" *ngIf="type == 'role'" [class]="className" (uiClickOutside)="toggleOpen()">
+  <div class="dropdown__select" *ngIf="selectedRoleData">
+    <i *ngIf="!disableSelectChange" class="icon-arrow-right role-icon" [ngClass]="[openDropdown ? 'opened' : '']"></i>
+    <span class="dropdown__placeholder" >{{selectedRoleData.value}}</span>
+  </div>
+  <ul class="dropdown__dropdown--menu" *ngIf="!disableSelectChange && roleData && roleData.length">
+    <li *ngFor="let item of roleData; index as i" (click)="_onRoleChange(item.slug)" [style.display]="item.status ? 'none' : 'flex'">{{item.value}}</li>
+  </ul>
+</div>
+
+

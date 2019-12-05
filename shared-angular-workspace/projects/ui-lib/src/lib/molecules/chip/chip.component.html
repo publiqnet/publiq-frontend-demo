@@ -1,0 +1,5 @@
+<div class="chip" [ngClass]="className">
+  <ui-avatar [avatarData]="avatarData" *ngIf="avatarData"></ui-avatar>
+  <span>{{text}}</span>
+  <i class="icon-close" (click)="onRemove.emit()" *ngIf="removeButton"></i>
+</div>

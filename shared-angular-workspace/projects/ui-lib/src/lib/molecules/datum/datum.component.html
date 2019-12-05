@@ -1,0 +1,5 @@
+<div [ngClass]="['datum-container', className]">
+  <b class="datum-container__count">{{count}}</b>
+  <span class="datum-container__property">{{property}}</span>
+  <i *ngIf="iconClassName" class="icon-{{iconClassName}}"></i>
+</div>

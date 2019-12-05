@@ -1,0 +1,93 @@
+<div class="boost-content-single" [ngClass]="className">
+  <div class="boost-content-single__header">
+    <div class="boost-content-single__header--container">
+      <span class="boost-content-single__header--title" *ngIf="!boostContentData.cover">{{getTitleFirstChar()}}</span>
+      <div class="boost-content-single__header--cover" *ngIf="boostContentData && boostContentData.cover && boostContentData.cover.url">
+        <img [src]="boostContentData.cover.url" title="{{boostContentData.title}}" alt="{{boostContentData.title}}" (click)="onContentClick($event)" />
+      </div>
+    </div>
+    <div class="boost-content-single__header--data">
+      <div class="published-info">
+        <div *ngIf="boostContentData.boostSummary.balance && boostContentData.boosted; else noBalance">
+          <h3>{{'ui.boost-content-single.you_will_spend' | translate}}
+            <span>{{boostContentData.boostSummary.balance}} PBQ</span>
+          </h3>
+        </div>
+        <ng-template #noBalance>
+          <div>
+            <span class="published-info__placeholder">{{'ui.boost-content-single.published' | translate}}:</span>
+            <span class="published-info__date">{{boostContentData.published * 1000 | localizedDate:'MMM, dd'}}</span>
+          </div>
+        </ng-template>
+      </div>
+      <a [href]="'/s/' + boostContentData.uri" class="title-bold" (click)="onContentClick($event)">
+        <h4 class="title">{{boostContentData.title}}</h4>
+      </a>
+    </div>
+  </div>
+  <div class="boost-content-single__content--boosts" *ngIf="boostContentData">
+    <div class="all-counts">
+      <div class="total-view">
+        <i class="icon-preview"></i>
+        <b>{{boostContentData.views}}</b>
+      </div>
+      <div class="view">
+        <span>{{'ui.boost-content-single.views' | translate}}: <b>{{boostContentData.boostSummary.views}}</b></span>
+      </div>
+      <div class="channels-view">
+        <span>{{'ui.boost-content-single.channels' | translate}}: <b>{{boostContentData.boostSummary.channels}}</b></span>
+      </div>
+    </div>
+    <div class="boost-btn">
+      <ui-button type="'primary'" [text]="'ui.boost-content-single.boost_again' | translate" [className]="'boost-btn'" (btnClicked)="onBoostClick($event, 'boost')"></ui-button>
+    </div>
+  </div>
+  <div class="boost-content-single__footer">
+    <div class="boost-content-single__footer--boost-info">
+<!--      active list-->
+      <ng-container *ngFor="let boost of activeList">
+        <div class="boost-single-info">
+          <div class="boost-history" *ngIf="boost.status === 'active' || boost.status == 'pending' || boost.status == 'confirmed'">
+            <span class="boost-status-active" *ngIf="boost.status === 'active'">{{'ui.boost-content-single.boost' | translate}}</span>
+            <span>{{'ui.boost-content-single.from' | translate}}: <b>{{boost.startTimePoint * 1000 | localizedDate:'dd MMM, HH:mm': false}}</b></span>
+            <span>{{'ui.boost-content-single.to' | translate}}: <b>{{boost.endTimePoint * 1000 | localizedDate:'dd MMM, HH:mm': false}}</b></span>
+            <div class="total-block">
+              <span>{{'ui.boost-content-single.total_budget' | translate}}: <b>{{boost.balance}} PBQ</b></span>
+              <span>{{'ui.boost-content-single.amount_spent' | translate}}: <b>{{boost.summary.spentBalance}} PBQ</b></span>
+            </div>
+          </div>
+          <div class="boost-cancel" *ngIf="boost.status == 'active'">
+            <ui-button [className]="'boost-cancel'" [text]="'ui.boost-content-single.cancel' | translate" [type]="'primary'" (btnClicked)="onBoostClick($event, 'cancel', boost.transaction.transactionHash)"></ui-button>
+          </div>
+          <div class="boost-cancelled" *ngIf="boost.status == 'pending'">
+            <span>{{'ui.boost-content-single.pending' | translate}}</span>
+          </div>
+        </div>
+      </ng-container>
+<!--      passive list-->
+      <div class="history-dropdown" *ngIf="passiveList && passiveList.length">
+        <span (click)="toggleActive()">{{'ui.boost-content-single.view_history' | translate}}</span>
+        <i class="icon-arrow-right role-icon" [ngClass]="[openDropdown ? 'opened' : '']" (click)="toggleActive()"></i>
+      </div>
+      <ng-container *ngFor="let boost of passiveList">
+        <div class="boost-single-info history-list" [ngClass]="[openDropdown ? 'active' : '']">
+          <div class="boost-history history-list" *ngIf="boost.status !== 'active'">
+            <span class='boost-status-deactive' *ngIf="boost.status === 'finished' || boost.status === 'cancelled'">{{'ui.boost-content-single.boosted' | translate}}</span>
+            <span class='boost-status-deactive' *ngIf="boost.status == 'pending'">{{'ui.boost-content-single.pending' | translate}}</span>
+            <span>{{'ui.boost-content-single.from' | translate}}: <b>{{boost.startTimePoint * 1000 | localizedDate:'dd MMM, HH:mm': false}}</b></span>
+            <span>{{'ui.boost-content-single.to' | translate}}: <b>{{boost.endTimePoint * 1000 | localizedDate:'dd MMM, HH:mm': false}}</b></span>
+            <div class="total-block">
+              <span>{{'ui.boost-content-single.amount_spent' | translate}}: <b>{{boost.summary.spentBalance}} PBQ</b></span>
+            </div>
+          </div>
+          <div class="boost-cancelled" *ngIf="boost.status == 'cancelled'">
+            <span>{{'ui.boost-content-single.cancelled' | translate}}</span>
+          </div>
+          <div class="boost-cancelled" *ngIf="boost.status == 'finished'">
+            <span>{{'ui.boost-content-single.complete' | translate}}</span>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+  </div>
+</div>

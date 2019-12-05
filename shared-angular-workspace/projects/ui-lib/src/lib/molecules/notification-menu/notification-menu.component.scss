@@ -1,0 +1,187 @@
+@import "../../../assets/common";
+
+.notification-list {
+  max-width: 320px;
+  max-height: 350px;
+  width: 100vw;
+  font-size: 16px;
+  color: $grey;
+  font: 400 13px/18px $open-sans;
+  overflow-y: auto;
+  padding: 0 0 20px;
+  overscroll-behavior: none;
+
+  &__header {
+    display: flex;
+    width: 100%;
+    height: 70px;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 25px;
+    margin: 0 0 5px;
+    position: sticky;
+    top: 0; left: 0;
+    background-color: #fff;
+    z-index: 1;
+    border-radius: 15px 15px 0 0;
+
+    h5 {
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 22px;
+      color: pbq-color($lightgrey, 700);
+      margin: 0;
+    }
+
+    .mark-all-as-read {
+      font-weight: 600;
+      color: $blue;
+      cursor: pointer;
+      font-size: 11px;
+      &:focus{
+        outline: none;
+      }
+    }
+
+    &:after {
+      content: '';
+      width: 100%; height: 20px;
+      position: absolute;
+      top: 70px; left: 0;
+      //background-image: linear-gradient(to bottom, #fff, transparent);
+      background: transparent url("assets/images/notification-gradient.png");
+      background-size: contain;
+      background-repeat-y: no-repeat;
+      z-index: 1;
+    }
+  }
+
+  &__item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 0 0 0 25px;
+    word-break: break-all;
+    outline: none;
+
+    ::ng-deep .avatar {
+      margin: 0 15px 0 0;
+    }
+    > div:last-child{
+        position: absolute;
+        top: 7px;
+        right: 7px;
+        opacity: 0;
+        transition: .3s ease-out;
+      &:focus, &:active{
+        outline: none;
+      }
+        i{
+          font-size: 18px;
+          color: #C1C4CB;
+          &:focus, &:active{
+            outline: none;
+          }
+        }
+    }
+
+    &__content {
+      flex: 1;
+      padding: 18px 25px 16px 0;
+      border-bottom: 1px solid pbq-color($grey, 300);
+      word-break: break-word;
+      ::ng-deep {
+        a {
+          font-weight: 600;
+          color: pbq-color($grey, 600);
+
+          &:hover {
+            color: pbq-color($grey, 700);
+          }
+        }
+      }
+    }
+
+    &__circle {
+      position: absolute;
+      top: calc(50% - 7px); left: 7px;
+      width: 15px; height: 15px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      outline: none;
+
+      &:after {
+        content: '';
+        width: 5px; height: 5px;
+        border-radius: 50%;
+        background-color: $yellow;
+      }
+    }
+
+    &__date {
+      color: pbq-color($grey, 400);
+    }
+
+    &--read {
+      .notification-list__item {
+        &__circle:after {
+          background: pbq-color($grey, 300);
+        }
+      }
+    }
+
+    &:last-of-type {
+      .notification-list__item {
+        &__content {
+          border-bottom-width: 0;
+        }
+      }
+    }
+
+    &:hover{
+      > div:last-child{
+        opacity: 1;
+        transition: .3s ease-out;
+      }
+    }
+  }
+
+  &__loading {
+    text-align: center;
+    margin: 20px 0 0;
+  }
+
+  &--zero {
+    display: flex;
+    padding: 20px 25px;
+
+    > div {
+      &:first-of-type {
+        display: inline-flex;
+        flex: 0 0 40px;
+        height: 40px;
+        margin: 0 15px 0 0;
+        background-color: pbq-color($grey, 200);
+        border-radius: 10px;
+        justify-content: center;
+        align-items: center;
+        font-size: 24px;
+        color: $yellow;
+      }
+
+      &:last-of-type {
+        h4 {
+          font-weight: 700;
+          color: pbq-color($lightgrey, 700);
+          margin: 3px 0 5px;
+        }
+
+        p {
+          margin: 0;
+        }
+      }
+    }
+  }
+}

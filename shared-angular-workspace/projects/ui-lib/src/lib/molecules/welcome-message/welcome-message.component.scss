@@ -1,0 +1,175 @@
+@import "../../../assets/common";
+
+@keyframes bgAnim {
+  from { background-position: 400% 0; }
+  to { background-position: -400% 0; }
+}
+
+@mixin grey {
+  background-color: #fff;
+  background-image: -webkit-linear-gradient(-25deg, lighten(#ECF0F3, 5%) 0, lighten(#ECF0F3, 5%) 10%, lighten(#E4E7EA, 5%) 50%, lighten(#ECF0F3, 5%) 90%, lighten(#ECF0F3, 5%) 100%);
+  background-size: 140%;
+  background-position: 400% 0;
+  background-repeat: no-repeat;
+  animation: bgAnim 2s infinite;
+  opacity: .3;
+}
+
+.welcome-to-media {
+  width: 100%;
+  background-color: $blue;
+  border-radius: 15px;
+  font-family: $open-sans;
+  padding: 35px 25px 25px;
+  position: relative;
+  margin: 0 0 25px;
+
+  .icon-close {
+    font-weight: 700;
+    position: absolute;
+    top: 10px; right: 10px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 20px; height: 20px;
+    background-color: rgba(pbq-color($grey, 100), .15);
+    border-radius: 50%;
+    color: #ffffff;
+  }
+
+  &__heading {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+
+    > div {
+      display: inline-block;
+      width: 40px; height: 40px;
+      margin: 0 15px 0 0;
+      background: #ffffff url(/assets/images/welcome-icon.svg) center/90% no-repeat;
+      border-radius: 50%;
+      box-shadow: 0px 3px 7px rgba(25, 27, 30, 0.15);
+    }
+
+    h4 {
+      font: 700 20px/24px $vollkorn;
+      color: #ffffff;
+      margin: 0;
+    }
+  }
+
+  p {
+    font-size: 13px;
+    line-height: 18px;
+    color: rgba(#ffffff, .7);
+    margin: 10px 0 20px;
+  }
+
+  ::ng-deep input[type="email"] {
+    width: 100%;
+    background-color: rgba(#fff, .15);
+    color: #ffffff;
+
+    &:focus {
+      background-color: rgba(#fff, .15);
+    }
+
+    &::placeholder {
+      color: #ffffff;
+    }
+  }
+
+  ::ng-deep .input--invalid {
+    background-color: rgba(pbq-color($red, 400), .75) !important;
+  }
+
+  ::ng-deep .button--large {
+    width: 100%;
+    margin: 15px 0 0;
+    color: $blue;
+    font-weight: 600;
+    border-width: 0;
+    height: 45px;
+
+    &:hover {
+      color: $blue!important;
+    }
+  }
+
+  &--sent {
+    text-align: center;
+
+    h4 {
+      font: 700 20px/24px $vollkorn;
+      color: #ffffff;
+      margin: 30px 0 14px;
+    }
+
+    small {
+      display: block;
+      font: 600 14px/18px $open-sans;
+      margin: 0 0 14px;
+      color: #ffffff;
+      opacity: .75;
+    }
+  }
+
+  &--earning {
+    ::ng-deep .button--large {
+      margin: 5px 0 0;
+    }
+  }
+}
+
+.wtm_loading {
+  width: 100%;
+  background-color: $blue;
+  border-radius: 15px;
+  font-family: $open-sans;
+  padding: 35px 25px 25px;
+  position: relative;
+  margin: 0 0 25px;
+
+  &__heading {
+    display: flex;
+    align-items: center;
+    margin: 0 0 10px;
+
+    > div:last-child {
+      flex-grow: 1;
+      height: 24px;
+      border-radius: 10px;
+      @include grey;
+    }
+  }
+
+  &__circle {
+    display: inline-block;
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    margin: 0 15px 0 0;
+    @include grey;
+    animation: none;
+  }
+
+  &__multiline {
+    width: 100%;
+    height: 14px;
+    margin: 0 0 6px;
+    border-radius: 4px;
+    @include grey;
+
+    &:last-of-type {
+      width: 80%;
+      margin: 0 0 10px;
+    }
+  }
+
+  &__input {
+    width: 100%;
+    height: 50px;
+    border-radius: 10px;
+    margin: 15px 0 0;
+    @include grey;
+  }
+}

@@ -1,0 +1,284 @@
+@import "../../../assets/common";
+
+.follow-part, .list-part {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.follow-part {
+  @include media-md {
+    flex-direction: column;
+    align-items: stretch;
+
+    .follow-part &__button {
+      margin: 0;
+    }
+    .follow-part &__content {
+      width: 100%;
+      margin: 0px 0px 15px 0px;
+    }
+    ::ng-deep .avatar--large.avatar--squaric {
+      margin-bottom: 15px;
+    }
+  }
+  @include media-sm {
+    .follow-part &__content {
+      h3 {
+        font-size: 17px;
+        cursor: pointer;
+      }
+    }
+    ::ng-deep .avatar--large.avatar--squaric {
+      width: 50px;
+      height: 50px;
+    }
+    ::ng-deep .button.button--primary {
+      width: 100%;
+    }
+  }
+  div {
+    display: flex;
+    flex-direction: column;
+  }
+  &__content {
+    margin-left: 25px;
+    margin-right: auto;
+    max-width: 650px;
+    width: 0;
+    flex: 1;
+
+    h3 {
+      font: 700 20px/20px $vollkorn;
+      color: #000000;
+      margin: 0px 0px 5px 0px;
+      cursor: pointer;
+      width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    p {
+      font: 600 13px/18px $open-sans;
+      color: pbq-color($grey, 500);
+      margin: 0;
+      width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+  &__button {
+    margin-left: 25px;
+    flex: 0;
+  }
+}
+
+.inv-part {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  ::ng-deep .avatar.avatar--squaric {
+    border-radius: 15px;
+    @include media-md {
+      margin-bottom: 15px;
+    }
+  }
+  @include media-sm {
+    flex-direction: column;
+    align-items: stretch;
+    .inv-part &__content {
+      margin: 0px 0px 10px 0px;
+      h3 {
+        font-size: 17px;
+        cursor: pointer;
+      }
+    }
+    .inv-part &__buttons {
+      display: flex;
+      margin: 0;
+      ::ng-deep .inv-part__buttons--reject,
+      ::ng-deep .inv-part__buttons--accept
+      {
+        flex: 1;
+      }
+    }
+    ::ng-deep .avatar.avatar--squaric {
+      width: 50px;
+      height: 50px;
+    }
+    ::ng-deep {
+      .button {
+        width: 100%;
+      }
+    }
+  }
+  &__content {
+    font: 600 15px/20px $open-sans;
+    color: $grey;
+    margin-left: 20px;
+    h3 {
+      font: 700 20px/20px $vollkorn;
+      color: #000000;
+      margin-top: 0px;
+      margin-bottom: 2px;
+      cursor: pointer;
+
+      + div {
+        font-weight: 400;
+      }
+    }
+    a {
+      font-weight: 600;
+    }
+    span {
+      color: #8D929A;
+    }
+  }
+  &__buttons {
+      margin-left: auto;
+       ::ng-deep .inv-part__buttons--reject {
+          margin-left: 10px;
+      }
+  }
+}
+
+.list-part {
+  &__content {
+    margin-left: 10px;
+    overflow: hidden;
+    h3 {
+      font: 700 15px/20px $open-sans;
+      letter-spacing: 0.6px;
+      color: pbq-color($lightgrey, 700);
+      margin: 0 0 5px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: pointer;
+    }
+    p {
+      font: 400 12px/15px $open-sans;
+      color: rgba(40, 47, 54, 0.5);
+      margin: 0;
+    }
+  }
+  &__button {
+      height: 35px;
+      width: 35px;
+      border-radius: 17.5px;
+      margin-left: auto;
+      transition: 0.3s;
+      cursor: pointer;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+
+      &:hover {
+          background: pbq-color($grey, 100);
+      }
+  }
+}
+
+.staff-part {
+  background: #FFFFFF;
+  border: 1px solid pbq-color($grey, 200);
+  box-shadow: 0px 3px 7px rgba(0, 0, 0, 0.07);
+  border-radius: 15px;
+  position: relative;
+  width: 100%;
+  max-width: 285px;
+  padding-bottom: 25px;
+  &__roles {
+    display: flex;
+    justify-content: space-between;
+    position: absolute;
+    align-items: center;
+    width: 100%;
+    padding: 10px;
+  }
+  &__role {
+    list-style-type: none;
+    font: 600 12px/16px $open-sans;
+    text-align: center;
+    background: rgba(25, 27, 30, 0.35);
+    border-radius: 14px;
+    padding: 5px 10px;
+    color: #FFFFFF;
+    margin: 0;
+  }
+  &__dotes {
+    ::ng-deep {
+      .dropdown-item {
+        i {
+          color: #fff;
+        }
+      }
+      .dropdown-list {
+        min-width: 190px;
+      }
+    }
+  }
+  &__background {
+    background-repeat: no-repeat;
+    background-size: cover;
+    min-height: 85px;
+    background-color: #fff;
+    background-position: center;
+    border-radius: 15px 15px 0px 0px;
+  }
+  &__logo {
+    display: flex;
+    justify-content: center;
+    margin-top: -40px;
+    ::ng-deep {
+      .avatar--large.avatar--squaric {
+        width: 80px;
+        height: 80px;
+        cursor: pointer;
+        img {
+          border-radius: 20px !important;
+          cursor: pointer;
+        }
+      }
+    }
+  }
+  &__content {
+    font-style: normal;
+    text-align: center;
+    margin-bottom: 15px;
+    h3 {
+      font: 700 20px/20px $vollkorn;
+      color: #000000;
+      margin-top: 25px;
+      margin-bottom: 5px;
+      cursor: pointer;
+      word-break: break-all;
+      padding: 0px 25px;
+    }
+    ::ng-deep .staff-part__content--datum {
+      justify-content: center;
+      text-transform: none;
+      &__count {
+        font-weight: 600;
+        color: pbq-color($grey, 500);
+      }
+      &__count {
+        font: 500 12px/16px $open-sans;
+        color: pbq-color($grey, 500);
+        margin: 0;
+        text-transform: none;
+      }
+    }
+  }
+
+  &--coverless {
+    .staff-part__logo {
+      margin-top: 30px;
+    }
+  }
+}
+.ellipsis{
+  width: 220px;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

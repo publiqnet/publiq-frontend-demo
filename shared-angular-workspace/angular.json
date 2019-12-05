@@ -1,0 +1,78 @@
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "newProjectRoot": "projects",
+  "projects": {
+    "helper-lib": {
+      "root": "projects/helper-lib",
+      "sourceRoot": "projects/helper-lib/src",
+      "projectType": "library",
+      "prefix": "helper",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-ng-packagr:build",
+          "options": {
+            "tsConfig": "projects/helper-lib/tsconfig.lib.json",
+            "project": "projects/helper-lib/ng-package.json"
+          }
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "main": "projects/helper-lib/src/test.ts",
+            "tsConfig": "projects/helper-lib/tsconfig.spec.json",
+            "karmaConfig": "projects/helper-lib/karma.conf.js"
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": [
+              "projects/helper-lib/tsconfig.lib.json",
+              "projects/helper-lib/tsconfig.spec.json"
+            ],
+            "exclude": [
+              "**/node_modules/**"
+            ]
+          }
+        }
+      }
+    },
+    "ui-lib": {
+      "root": "projects/ui-lib",
+      "sourceRoot": "projects/ui-lib/src",
+      "projectType": "library",
+      "prefix": "ui",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-ng-packagr:build",
+          "options": {
+            "tsConfig": "projects/ui-lib/tsconfig.lib.json",
+            "project": "projects/ui-lib/ng-package.json"
+          }
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "main": "projects/ui-lib/src/test.ts",
+            "tsConfig": "projects/ui-lib/tsconfig.spec.json",
+            "karmaConfig": "projects/ui-lib/karma.conf.js"
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": [
+              "projects/ui-lib/tsconfig.lib.json",
+              "projects/ui-lib/tsconfig.spec.json"
+            ],
+            "exclude": [
+              "**/node_modules/**"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "defaultProject": "helper-lib"
+}

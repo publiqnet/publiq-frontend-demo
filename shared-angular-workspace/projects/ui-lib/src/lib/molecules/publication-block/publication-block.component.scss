@@ -1,0 +1,80 @@
+@import "../../../assets/common";
+
+.publication-widget {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 250px;
+  margin: 0px 0px 40px 0px;
+  background: #F7F8F9;
+  border-radius: 10px;
+  padding: 0px 10px 0px 15px;
+  &__list {
+    max-width: 250px;
+    ::ng-deep {
+      .list-part {
+        margin: 0px 0px 30px 0px;
+      }
+    }
+  }
+  &__title {
+    font-family: $open-sans;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 15px;
+    line-height: 22px;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: $blue;
+  }
+  &__buttons {
+    .refresh-list {
+      button {
+        border: none;
+        background: none;
+        &:focus {
+          outline: none;
+        }
+      }
+      svg {
+        transition: all 1s;
+        transition-timing: ease-in-out;
+        cursor: pointer;
+      }
+    }
+    ::ng-deep {
+      .button.button--icon {
+        transition: 300ms color;
+        color: pbq-color($grey, 400);
+        border: none;
+
+        i {font-size: 16px !important; }
+
+        &.left-arrow i {
+          transform: rotate(-90deg);
+        }
+
+        &.right-arrow i {
+          transform: rotate(90deg);
+        }
+
+        &:disabled {
+          color: #DEE2E6;
+          background: transparent;
+        }
+
+        &:not(:disabled):focus {
+          background: transparent;
+        }
+
+        &:hover {
+          background: transparent;
+        }
+
+        &:not(:disabled):hover {
+          color: pbq-color($lightgrey, 700);
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,30 @@
+@import "../../../assets/common";
+
+textarea {
+  //width: 100%;
+  border-width: $input-border-width;
+  border-style: $input-border-style;
+  background-color: $input-background-color;
+  padding: 15px 20px;
+  min-width: 120px;
+  max-height: auto;
+  font: $input-font-size $open-sans;
+  line-height: $input-line-height;
+  border-radius: 10px;
+  transition: $input-transition-duration background-color;
+  outline: none;
+  &:focus {
+    background-color: $input-focus-background-color;
+    outline: none;
+  }
+  &:active {
+    outline: none;
+  }
+
+  &.invalid {
+    background-color: $input-error-background-color;
+  }
+  @at-root &.textarea--resize {
+    resize: none;
+  }
+}

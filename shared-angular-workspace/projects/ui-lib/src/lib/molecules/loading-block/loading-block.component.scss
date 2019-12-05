@@ -1,0 +1,182 @@
+@import "../../../assets/common";
+
+@keyframes bgAnim {
+  from { background-position: 400% 0; }
+  to { background-position: -400% 0; }
+}
+
+@mixin grey {
+  background-color: pbq-color($grey, 200);
+  background-image: -webkit-linear-gradient(-25deg, #ECF0F3 0, #ECF0F3 10%, lighten(#DEE2E6, 2%) 50%, #ECF0F3 90%, #ECF0F3 100%);
+  background-size: 140%;
+  background-position: 400% 0;
+  background-repeat: no-repeat;
+  animation: bgAnim 2s infinite;
+}
+
+.loading-block__wrapper {
+  .loading-block {
+    &__image {
+      @include grey();
+      margin: 0 -15px;
+      min-height: 180px;
+      padding-top: 53.33%;
+      border-radius: 10px;
+    }
+
+    &__tags {
+      margin: 20px 0 0 0;
+      span {
+        @include grey();
+        display: inline-block;
+        border-radius: 8px;
+        margin: 0 12px 0 0;
+        height: 10px;
+        background-size: 250%;
+
+        &:first-child {
+          width: 12%;
+        }
+
+        &:nth-child(2) {
+          width: 20%;
+        }
+
+        &:last-child {
+          width: 17%;
+        }
+      }
+    }
+
+    &__title {
+      @each $d in from 1 to 2 {
+        &-#{$d} {
+          @include grey();
+          animation-duration: 2s;
+          @if $d == 1 {
+            width: 80%;
+          } @else {
+            width: 100%;
+          }
+          height: 15px;
+          border-radius: 7.5px;
+          margin: 10px 0 0;
+        }
+      }
+    }
+
+    &__avatar {
+      margin: 20px 0 0;
+      display: flex;
+      > div {
+        &:first-child {
+          @include grey();
+          background-size: 200% 200%;
+          margin: 0 10px 0 0;
+          width: 40px; height: 40px;
+          flex: 0 0 40px;
+          border-radius: 50%;
+        }
+
+        &:last-child {
+          position: relative;
+          top: 4px;
+        }
+
+        span {
+          @include grey();
+          display: block;
+          width: 100px; height: 10px;
+          border-radius: 5px;
+          margin: 5px 0 0;
+          &:last-child { width: 60px; }
+        }
+      }
+    }
+  }
+}
+
+:host(.loading-block--grid) {
+  display: inline-block;
+  width: calc(100% / 3 - 15px * 2/3);
+  @include media-xl {
+    width: calc(100% / 2 - 10px);
+  }
+  @include media-md {
+    width: calc(100% - 10px);
+  }
+
+  .loading-block__wrapper {
+    font-size: 0;
+    padding: 10px 25px 25px;
+    width: 100%;
+    vertical-align: top;
+    background-color: #ffffff;
+  }
+}
+
+:host(.loading-block--single) {
+  display: inline-block;
+  width: 100%;
+
+  .loading-block__wrapper {
+    width: 100%;
+    display: flex;
+    align-items: flex-start;
+    padding: 20px;
+
+    > div:not(.loading-block__image) {
+      width: 100%;
+
+      * { animation-delay: .4s; }
+    }
+
+    .loading-block {
+      &__image {
+        margin: 0 36px 0 0;
+        padding-top: 0;
+        min-height: 0;
+        width: 150px; height: 150px;
+        background-size: 160%;
+        flex-shrink: 0;
+      }
+
+      &__tags {
+        span {
+          min-width: 30px;
+          &:first-child {
+            width: 5%;
+          }
+
+          &:nth-child(2) {
+            width: 15%;
+          }
+
+          &:last-child {
+            width: 12%;
+          }
+        }
+      }
+
+      &__avatar {
+        > div:first-child { display: none; }
+      }
+
+      @include media-md {
+        &__image {
+          width: 100px;
+          height: 100px;
+          margin: 0 25px 0 0;
+        }
+
+        &__tags {
+          margin: 0;
+        }
+
+        &__avatar {
+          margin: 4px 0 0;
+        }
+      }
+    }
+  }
+}

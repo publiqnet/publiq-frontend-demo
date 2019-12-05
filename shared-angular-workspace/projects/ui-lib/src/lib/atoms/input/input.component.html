@@ -1,0 +1,1 @@
+<input class="input" [id]="inputId" (click)="handleBtnClick($event)" (input)="onInputChange($event)" (blur)="onChange($event.target.value)" [ngClass]="getClassNames()" [placeholder]="placeholder ? placeholder : 'ui.input.default_placeholder' | translate" [readonly]="readonly" [type]="type" [value]="inputValue" [disabled]="disabled" [class]="className"/>

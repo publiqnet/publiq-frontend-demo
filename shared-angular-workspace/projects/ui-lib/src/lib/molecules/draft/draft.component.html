@@ -1,0 +1,33 @@
+<div class="draft" [ngClass]="['draft--'+type, className]" *ngIf="draftData">
+  <div class="draft__header">
+    <div class="draft__image" (click)="_contentClick(draftData.slug)">
+      <span class="draft__image__letter" *ngIf="!draftData.image || draftData.hideCover" [style.color]='randomColor'>{{getDraftMainLetter()}}</span>
+      <img *ngIf="draftData.image && !draftData.hideCover" [src]="draftData.image">
+    </div>
+    <div class="draft__data">
+      <div class="draft__meta">
+        <div class="draft__meta-info">
+          <div class="draft__meta-info__date">
+            <span *ngIf="draftData.published" class="date"><b>{{'ui.draft.created' | translate}}</b> {{draftData.published * 1000 | localizedDate:'dd MMM, HH:mm'}}</span>
+          </div>
+          <div class="draft__meta-info__title" *ngIf="draftData.title || draftData.description">
+            <h2 (click)="_contentClick(draftData.slug)">
+              <ng-container *ngIf="draftData.title; else showDescription">
+                {{draftData.title}}
+              </ng-container>
+              <ng-template #showDescription>
+                {{utilService.charactersLimit(draftData.description, 50)}}
+              </ng-template>
+            </h2>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="draft__footer">
+    <div class="draft__footer-buttons">
+      <ui-button [type]="'ordinary'" [text]="'ui.draft.edit' | translate" [className]="'edit-btn'" (btnClicked)="onEditClick($event)"></ui-button>
+      <ui-button [type]="'ordinary'" [text]="'ui.draft.delete' | translate" [className]="'delete-btn'" (btnClicked)="onDeleteClick($event)"></ui-button>
+    </div>
+  </div>
+</div>

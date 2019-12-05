@@ -1,0 +1,5 @@
+<button [attr.aria-label]="text" [ngClass]="getClassNames()" (click)="handleBtnClick($event)" [disabled]="disabled" [name]="name">
+	<i *ngIf="iconClassName" class="icon-{{iconClassName}}"></i>
+	<span class="text-unfollow" *ngIf="isFollowing">{{'ui.button.unfollow' | translate}}</span>
+	<span *ngIf="!iconButton">{{text}}</span>
+</button>

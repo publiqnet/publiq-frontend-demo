@@ -1,0 +1,22 @@
+@import "../../../assets/common";
+
+.datum-container {
+  display: flex;
+  font-family: $open-sans;
+  font-size: 13px;
+  &__count {
+    font-weight: 700;
+    color: #2B2B2B;
+    margin-right: 7px;
+  }
+  &__property {
+    font-weight: 600;
+    color: #C1C4CB;
+    text-transform: uppercase;
+  }
+  i {
+    font-size: 15px;
+    margin: 0px 0px 0px 10px;
+    padding: 2px 0px 0px 0px;
+  }
+}

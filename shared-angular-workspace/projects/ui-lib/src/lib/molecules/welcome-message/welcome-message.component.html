@@ -1,0 +1,39 @@
+<div class="welcome-to-media" *ngIf="type === 'welcome_to_media'" [class.welcome-to-media--sent]="state === 'sent' || state === 'already_have'">
+  <ng-container *ngIf="state === 'default' || state === 'invalid'">
+    <i class="icon-close pointer" (click)="_onClosed()"></i>
+    <div class="welcome-to-media__heading">
+        <div></div>
+        <label for="email"><h4>{{'ui.welcome-message.create_and_earn' | translate}}</h4></label>
+    </div>
+    <p>{{'ui.welcome-message.info' | translate}}</p>
+    <ui-input [inputId]="'email'" type="email" [className]="state === 'invalid' ? 'input--invalid' : ''" (keypress)="$event.keyCode === 13 ? _onSubmit($event) : null"  placeholder="{{'ui.welcome-message.email' | translate}}" [(ngModel)]="emailAddress"></ui-input>
+    <ui-button size="large" text="{{'ui.welcome-message.sign_up' | translate}}" (btnClicked)="_onSubmit($event)"></ui-button>
+  </ng-container>
+  <ng-container *ngIf="state === 'sent' || state === 'already_have'">
+    <img src="/assets/images/email.svg">
+    <h4>{{'ui.welcome-message.check_your_email' | translate}}<br/>{{'ui.welcome-message.access_secure_link' | translate}}</h4>
+    <small>{{emailAddress}}</small>
+  </ng-container>
+</div>
+
+<div class="wtm_loading" *ngIf="type === 'welcome_to_media_loading'">
+  <div class="wtm_loading__heading">
+    <div class="wtm_loading__circle"></div>
+    <div></div>
+  </div>
+  <div class="wtm_loading__multiline"></div>
+  <div class="wtm_loading__multiline"></div>
+  <div class="wtm_loading__multiline"></div>
+  <div class="wtm_loading__input"></div>
+  <div class="wtm_loading__input"></div>
+</div>
+
+<div class="welcome-to-media welcome-to-media--earning" *ngIf="type === 'start_earning'">
+  <i class="icon-close pointer" (click)="_onClosed()"></i>
+  <div class="welcome-to-media__heading">
+      <div></div>
+      <h4>{{'ui.welcome-message.start_earning' | translate}}</h4>
+  </div>
+  <p>{{'ui.welcome-message.post_first_story' | translate}}</p>
+  <ui-button size="large" [text]="'ui.welcome-message.start_now' | translate" (btnClicked)="_onSubmit($event)"></ui-button>
+</div>

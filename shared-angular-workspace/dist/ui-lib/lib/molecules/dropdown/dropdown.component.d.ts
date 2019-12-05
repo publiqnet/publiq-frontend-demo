@@ -1,0 +1,36 @@
+import { EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
+import { FormControlHelper } from '../../../core/classes/formControlHelper';
+import { DropdownRoleDataOptions } from '../../../core/models/dropdownRoleData';
+import { DropdownDataOptions } from '../../../core/models/dropdownData';
+export declare class DropdownComponent extends FormControlHelper implements OnChanges {
+    type: string;
+    optionsData: DropdownDataOptions[];
+    roleData: DropdownRoleDataOptions[];
+    className: string;
+    selectedOptionValue: string;
+    addPlaceholder: string;
+    isOpen: boolean;
+    isNone: boolean;
+    isNoneText: string;
+    disableSelectChange: boolean;
+    onSelectChange: EventEmitter<any>;
+    onRoleChange: EventEmitter<any>;
+    onCloseDropdown: EventEmitter<any>;
+    isOpenChange: EventEmitter<any>;
+    active: boolean;
+    openDropdown: boolean;
+    selectedOptionData: DropdownDataOptions;
+    selectedRoleData: DropdownRoleDataOptions;
+    enteredItem: any;
+    lastSavedValue: any;
+    ngOnChanges(changes: SimpleChanges): void;
+    onOptionChange(item: any): void;
+    onOptionEnter(item: any): void;
+    clearOption(): void;
+    submitOption(): void;
+    unsetOption(): void;
+    _onCloseDropdown(): void;
+    _onRoleChange(slug: any): void;
+    ToggleActive(): void;
+    toggleOpen(): void;
+}

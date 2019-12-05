@@ -1,0 +1,19 @@
+<div class="tabber" [ngClass]="className" *ngIf="type === 'navigation'" #tabberNavigation>
+    <div class="tabber__underline" [style.left]="leftVal"></div>
+    <div class="tabber__item" [class.tabber__item--active]="tab.value === currentValue"
+         *ngFor="let tab of tabs,let i=index" (click)="changeTab(tab)" [attr.data-value]="tab.value">{{tab.text}}
+        <small *ngIf="tab.count">({{tab.count}})</small>
+    </div>
+</div>
+
+<div class="button-tabber" [ngClass]="className" *ngIf="type === 'buttons'" #tabberButtons>
+    <div class="button-tabber__background"
+         [style.left]="leftVal"
+         [style.width]="widthVal"
+         [style.height]="heightVal"></div>
+    <div class="button-tabber__item" [class.button-tabber__item--active]="tab.value === currentValue"
+         *ngFor="let tab of tabs,let i=index" (click)="changeTab(tab)"
+         [attr.data-value]="tab.value">{{tab.text}}
+        <small *ngIf="tab.count">({{tab.count}})</small>
+    </div>
+</div>

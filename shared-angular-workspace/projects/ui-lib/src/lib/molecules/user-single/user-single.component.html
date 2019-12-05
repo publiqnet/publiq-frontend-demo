@@ -1,0 +1,57 @@
+<!--followers-->
+<div [ngClass]="['followers-card', className]" *ngIf="type == 'followers'">
+    <ui-avatar [size]="'large'" [avatarData]="userData.user" (click)="userInfo(this.userData);"></ui-avatar>
+    <div class="content-part">
+        <h3 (click)="userInfo(this.userData);">{{userData.user.fullName ? userData.user.fullName : userData.user.slug}}</h3>
+        <p>{{userData.description}}</p>
+    </div>
+    <div class="button-part" *ngIf="showFollowButton">
+        <ui-button [text]="this.userData?.isFollowing ? ('ui.user-single.following' | translate) : ('ui.user-single.follow' | translate)" [isFollowing]="this.userData?.isFollowing" (btnClicked)="_onFollowChange(this.userData, !this.userData?.isFollowing)" [type]="'primary'"></ui-button>
+    </div>
+</div>
+
+<div class="two-actions" [ngClass]="className" *ngIf="type === 'two-actions'">
+    <div class="two-actions__avatar">
+        <ui-avatar [avatarData]="userData.user" (click)="userInfo(this.userData);"></ui-avatar>
+    </div>
+    <div class="two-actions__name">
+        <h3 (click)="userInfo(this.userData);">{{userData.user.fullName ? userData.user.fullName : userData.user.slug}}</h3>
+    </div>
+    <div class="two-actions__actions">
+        <ui-button type="primary" [text]="primaryButtonText" *ngIf="primaryButtonText" (btnClicked)="onPrimaryClicked.emit(this.userData)"></ui-button>
+        <ui-button [text]="secondaryButtonText" *ngIf="secondaryButtonText" (btnClicked)="onSecondaryClicked.emit(this.userData)"></ui-button>
+    </div>
+</div>
+
+<!--role-->
+<div [ngClass]="['role-card', className]" *ngIf="type == 'role'">
+    <ui-avatar [size]="'large'" [avatarData]="userData.user" (click)="userInfo(this.userData);"></ui-avatar>
+    <div class="role-card__content">
+        <h3 (click)="userInfo(this.userData);">{{userData.user.fullName ? userData.user.fullName : userData.user.slug}}</h3>
+    </div>
+    <div class="role-card__role">
+        <ui-dropdown [type]="'role'" [roleData]='userRoleData' (onRoleChange)="_onRoleClick($event)"></ui-dropdown>
+    </div>
+</div>
+
+<!--notification-->
+<div [ngClass]="['notification-card', className]" *ngIf="type == 'notification'" (mouseout)="_dropdownOpen()">
+    <div class="notification-card__dropdown" *ngIf="!isOwner && hasEditPermission">
+        <ui-dropdown-list [items]="userNotificationData" [type]="'default'" [icon]="'menu'" [position]="'bottom'" (onItemSelect)="_onNotificationClick($event)"></ui-dropdown-list>
+    </div>
+    <div class="notification-card__user" [ngClass]="{'owner-user': isOwner}">
+        <ui-avatar [size]="'large'" [avatarData]="userData.user" (click)="userInfo(this.userData);" [className]="'owner-background'"></ui-avatar>
+        <ng-container *ngIf="!isOwner && showFollowButton">
+            <ui-button [iconButton]="true" [iconClassName]="userData.followMember ? 'unfollow' : 'follow'" (btnClicked)="onFollow(!userData.followMember)"></ui-button>
+        </ng-container>
+    </div>
+    <div class="notification-card__content">
+        <h3 (click)="userInfo(this.userData);">{{userData.user.fullName ? userData.user.fullName : userData.user.slug}}</h3>
+    </div>
+    <div class="notification-card__role" *ngIf="!isOwner; else isOwnerTemplate">
+        <ui-dropdown [type]="'role'" [disableSelectChange]="!hasEditPermission" [roleData]='userRoleData' (onRoleChange)="_onRoleClick($event)" [(isOpen)]="!dropdownOpen"></ui-dropdown>
+    </div>
+    <ng-template #isOwnerTemplate>
+        <p class="notification-card__role__title">{{'ui.user-single.owner' | translate}}</p>
+    </ng-template>
+</div>
