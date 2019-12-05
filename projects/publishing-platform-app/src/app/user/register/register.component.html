@@ -1,0 +1,23 @@
+<div *ngIf="isDataLoaded" class="signinup__inner">
+  <div class="register-form" *ngIf="authStep == AuthStepStatusEnum.Init">
+    <h2>{{'register.title' | translate}}</h2>
+    <p>{{'register.enter_email' | translate  }}</p>
+    <form class="form" novalidate [formGroup]="registerForm">
+      <ui-input [placeholder]="'register.email_address' | translate" formControlName="email"></ui-input>
+      <ui-button [fullRadius]="true" [type]="'primary'" [text]="'register.button_text' | translate" [className]="'button button--large button--primary button--full-radius'" (btnClicked)="register()" [disabled]="!registerForm.valid"></ui-button>
+    </form>
+    <p class="error-message" *ngIf="emailError">{{emailError}}</p>
+  </div>
+
+  <div *ngIf="authStep == AuthStepStatusEnum.Success" class="signinup__inner signinup__inner--register">
+    <img src="../../../assets/images/email.svg" alt="Email Icon" title="Email Icon">
+    <h3 *ngIf="formView === 'successRegisterMessage';else needLoginMessage">{{'register.please_check_email' | translate}}</h3>
+    <ng-template #needLoginMessage>
+      <h3>{{ 'register.need_login_message' | translate}}</h3>
+    </ng-template>
+    <p class="signinup__register--email">{{registerForm.value.email}}</p>
+    <p>{{ 'register.verification_email_error' | translate }}
+      <a class="d-block" (click)="newRequest($event)">{{ 'register.verification_email_new_request' | translate }}</a>
+    </p>
+  </div>
+</div>

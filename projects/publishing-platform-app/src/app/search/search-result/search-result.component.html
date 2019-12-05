@@ -1,0 +1,49 @@
+
+<div class="container">
+  <div class="row">
+    <div class="offset-lg-2 col-lg-8 col-xl-9">
+      <div class="grid-style grid-style--tag">
+        <h2 class="shadowed-heading" [attr.data-shadow-text]="'search-result.title' | translate">{{"search-result.title" | translate}}</h2>
+        <div *ngIf="searchType === searchResultTypes.Articles" class="grid-style__items">
+          <i (click)="listType = 'grid'" class="grid-icon grid-icon--selected icon-multi-grid" [ngClass]="{'grid-icon--selected': (listType == 'grid')}"></i>
+          <i (click)="listType = 'single'" class="grid-icon icon-single-grid" [ngClass]="{'grid-icon--selected': (listType == 'single')}"></i>
+        </div>
+      </div>
+    </div>
+    <ng-container *ngIf="searchType === searchResultTypes.Articles">
+      <div *ngIf="listType == 'grid'" class="offset-lg-2 col-lg-8 col-xl-9 stories" [class.masonry]="isMasonryLoaded" (layoutComplete)="onLayoutComplete($event)" ngx-masonry [options]="myOptions">
+        <ui-content-single (accountClick)="onAccountClick($event)" (contentClick)="onContentClick($event)" (publicationClick)="onPublicationClick($event)" (tagClick)="onTagClick($event)"
+                           ngxMasonryItem [type]="listType" *ngFor="let content of searchResult?.article;" [contentData]="content"></ui-content-single>
+      </div>
+      <div *ngIf="listType == 'single'" class="offset-lg-2 col-lg-8 col-xl-9">
+        <ui-content-single (accountClick)="onAccountClick($event)" (contentClick)="onContentClick($event)" (publicationClick)="onPublicationClick($event)" (tagClick)="onTagClick($event)"
+                           [type]="listType" *ngFor="let content of searchResult?.article" [contentData]="content"></ui-content-single>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="searchType === searchResultTypes.Authors">
+      <div>
+        <div class="search-people" *ngFor="let authorItem of searchResult?.authors">
+          <ui-user-single (onUserClick)="onUserClick(authorItem)" [type]="'followers'"
+                          [showFollowButton]="contentService.isOwner(authorItem.publicKey)" [userData]="{user: authorItem, isFollowing: authorItem.subscribed}" (onFollowChange)="followUser($event)"></ui-user-single>
+        </div>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="searchType === searchResultTypes.Publications">
+      <div>
+        <div *ngFor="let publicationItem of searchResult?.publication">
+          <ui-publication-single [isOwner]="contentService.isOwner(publicationItem)" (getPublicationSlug)="changeRoute('/p/'+$event)" [className]="'search-publication'" [type]="'follow'" [publicationData]="publicationItem" (follow)="followPublication($event, publicationItem)"></ui-publication-single>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+  <div class="empty" *ngIf="seeMoreLoading">
+    <div style="display: inline-block">
+      <ui-loader [size]="100" [color]="'blue'"></ui-loader>
+    </div>
+  </div>
+  <ng-container *ngIf="seeMoreChecker">
+    <div class="search-results" infiniteScroll [infiniteScrollDistance]="1" [infiniteScrollThrottle]="50" [infiniteScrollDisabled]="blockInfiniteScroll" (scrolled)="seeMore()"></div>
+  </ng-container>
+</div>

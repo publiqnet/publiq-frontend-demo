@@ -1,0 +1,165 @@
+<div class="container container--froala">
+  <div class="row">
+    <div class=" offset-lg-2 col-lg-8 col-xl-9">
+      <form class="form" [formGroup]="contentForm">
+        <div class="post-field">
+          <!--content-->
+          <div id="editor-froala">
+            <textarea #titleInput maxlength="120" (keyup)="resizeTextareaElement($event.target)" class="title-input"
+                      formControlName="title" placeholder="{{'newcontent.write_title' | translate}}"
+                      rows="1"></textarea>
+            <textarea [froalaEditor]="contentOptions" rows="10" formControlName="content" required
+                      (froalaInit)="initFroala($event)"></textarea>
+          </div>
+        </div>
+        <div class="post-field-fixed">
+          <button class="button--publish" (click)="onShowStepForm(true)"
+                  [ngClass]="{'animate' : showStoryForm === true, 'with-submit' : boostField, 'mobile-hidden': isWhiteSpaceShown}">
+            <span
+              class="visible--span">{{(submitStep == 1) ? ('newcontent.button_next' | translate) : ('newcontent.button_publish' | translate)}}</span>
+            <i class="icon-arrow-link"></i>
+            <!--TODO: tooltip-->
+            <span class="no-content-warning" [class.no-content-warning--shown]="warningShown">
+              {{(contentLengthNotEnough) ? ('newcontent.content_min_length' | translate) : ('newcontent.empty_content' | translate)}}
+            </span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="publishing-space">
+  <div id="publishMain" [ngClass]="{'visible' : showStoryForm === true}" class="publish__main">
+    <span class="close-icon" (click)="onShowStepForm(false)"><i class="icon-close"></i></span>
+    <div class="publish__main--loading" *ngIf="loading">
+      <ui-loader [size]="100" [color]="'multi'"></ui-loader>
+    </div>
+    <div class="publish__main--white-space publish__main--white-space--desktop" [class.publish__main--white-space--shown]="isWhiteSpaceShown">
+      <div class="boost-drop-parent">
+        <h3 style="margin-bottom: 30px;" *ngIf="!boostField">{{ 'newcontent.preview' | translate }}</h3>
+        <ui-dropdown className="preview-tab" *ngIf="boostField" [type]="'role'" [roleData]='stepperData'
+                     (onRoleChange)="changeBoostView($event)"></ui-dropdown>
+        <p
+          *ngIf="!(!boostField || boostView == 'preview')">{{ 'newcontent.boost_fee' | translate }}{{': ' + (currentBoostFee | number : '0.0-8') + ' PBQ'}}</p>
+        <div class="boost-drop-parent__cover" *ngIf="!boostField || boostView == 'preview'">
+          <span>{{'newcontent.cover_photo' | translate }}</span>
+          <ui-toggle [isChecked]="!hideCover" (onToggle)="toggleCover()"></ui-toggle>
+        </div>
+      </div>
+      <ng-container *ngIf="(!boostField || boostView == 'preview'); else isBoosted">
+        <!--FOR ADDING OR CHANGING COVER PIC -->
+        <div class="add__cover" *ngIf="submitStep != 2 && !additionalCoverImage['uri'] && !this.hideCover">
+          <p>{{'newcontent.add_cover_image' | translate}}</p>
+          <label class="cover__img" for="coverPic">
+            <input type="file" (change)="uploadCover($event)" accept="image/gif,image/jpeg,image/png" id="coverPic">
+            <i class="icon-picture"></i>
+            <span>{{'newcontent.add_cover' | translate}}</span>
+          </label>
+        </div>
+        <ui-content-single [imageArrowsShown]="hasCoversList()" className="boost-post-img" type="grid"
+                           [contentData]="currentContentData"
+                           [changeImageShown]="!!additionalCoverImage['uri']"
+                           (changeImageClick)="changeImageClick($event)"
+                           (imageArrowClick)="imageSlideClick($event)">
+        </ui-content-single>
+        <div class="content-lang" *ngIf="detectedLanguage"><span>{{ 'newcontent.detected_language' | translate }} <b>{{detectedLanguage}}</b></span></div>
+        <!--<div class="publish__main&#45;&#45;language">Detected language is <b>English</b></div>-->
+      </ng-container>
+      <ng-template #isBoosted>
+        <!--for boosting-->
+        <div class="boost-progress">
+          <div class="boost-progress__item">
+            <span>{{ 'newcontent.total_budget' | translate }}</span>
+            <ui-progress [className]="'custom-class'" [minValue]="30" [maxValue]='100' [defaultValue]="boostPrice"
+                         [titleName]="'PBQ'" (onRange)="onRangeChange($event)"></ui-progress>
+          </div>
+          <ui-tab className="boost-tabber" [tabs]="boostTab" [type]="'buttons'" [currentValue]="''+boostDays"
+                  (onTabChange)="tabChange($event)" className="button-tabber--infloatable"></ui-tab>
+          <div class="boost-progress__balance">
+                        <span>{{'newcontent.your_balance' | translate }}
+                          <b>{{accountService.accountInfo.balance | number:'0.0-8'}}
+                            PBQ</b></span>
+            <div class="boost-progress__balance__amount">
+              {{'newcontent.you_will_spend' | translate}} <b>{{(boostPrice / boostDays) | number : '1.2-2'}}
+              PBQ</b> {{'newcontent.per_day' | translate}}
+            </div>
+          </div>
+          <div class="boost-progress__buttons">
+            <ui-button text="Cancel" (click)="resetBoostProgress()"></ui-button>
+            <ui-button type="primary" text="Confirm" (click)="isWhiteSpaceShown = false;"></ui-button>
+          </div>
+        </div>
+      </ng-template>
+    </div>
+    <div class="publish__main--white-space__shadow"></div>
+    <div class="publish__main--blue-space">
+      <div>
+        <h3 *ngIf="submitStep == 1">{{'newcontent.prepare_readers' | translate }}</h3>
+        <h3 *ngIf="boostField || submitStep == 2">{{'newcontent.new_story_submission_requirement' | translate }}</h3>
+        <p
+          *ngIf="(boostField || submitStep == 2)">{{'newcontent.new_story_fee' | translate}}{{': ' + (currentFee | number : '0.0-8') + ' PBQ'}}</p>
+      </div>
+      <div class="add-tag">
+        <!--step 1 (choose cover + story view)-->
+        <ng-container *ngIf="submitStep == 1">
+          <span class="add-tag__label">{{'newcontent.add_tags' | translate }}</span>
+          <app-chips-input [length]="24" [tagsArray]="tags"
+                           [placeholder]="tags.length < 3 ? ('newcontent.add_tag' | translate) : '' "
+                           (keyupEnter)="enterTag($event)" (remove)="removeTag($event)"
+                           (change)="textChange($event)"></app-chips-input>
+          <p class="error-msg" *ngIf="tagError">{{'newcontent.minimum_tag' | translate}}</p>
+
+          <span *ngIf="publicationsList.length"
+                class="add-tag__label">{{'newcontent.add_to_publication' | translate }}</span>
+          <ui-dropdown (onSelectChange)="publicationChange($event)" *ngIf="publicationsList.length"
+                       [optionsData]="publicationsList" [type]="'withIcon'"
+                       [selectedOptionValue]="selectedPublication?.value" [isNoneText]="'newcontent.empty' | translate"
+                       [isNone]="true"
+                       [addPlaceholder]="'newcontent.select_publication' | translate"></ui-dropdown>
+          <!--for mobile-->
+          <!--FOR ADDING OR CHANGING COVER PIC -->
+          <ng-container *ngIf="(!boostField || boostView == 'preview')">
+            <div class="add__cover add__cover--mobile" *ngIf="submitStep != 2">
+              <label class="cover__img" for="coverPic1">
+                <input type="file" (change)="uploadCover($event)" accept="image/gif,image/jpeg,image/png"
+                       id="coverPic1">
+                <i class="icon-picture"></i>
+                <span>{{'newcontent.add_cover' | translate }}</span>
+              </label>
+            </div>
+          </ng-container>
+          <!--end-->
+        </ng-container>
+
+        <!--boost step-->
+        <ng-container *ngIf="submitStep == 2">
+          <span class="add-tag__label">{{ 'newcontent.enter_password_to_submit_story' | translate }}</span>
+          <ui-input type="password" [ngClass]="{'password-error': submitError}"
+                    [placeholder]="'newcontent.input_password' | translate" [className]="'add-tag-input'"
+                    (_onChange)="onPasswordChange($event)"></ui-input>
+          <span *ngIf="submitError"
+                style="color: #FE3A52;padding-left: 2px;margin-top: 5px;display: block">{{'newcontent.invalid_password' | translate}}</span>
+          <div class="boost-story" *ngIf="!isFirstArticle">
+            <div class="boost-story__field">
+                            <span class="boost-story__field__icon">
+                <img src="assets/images/boost-icon.svg" alt="boost">
+              </span>
+              <div class="boost-story__field__text">
+                <h4>{{'newcontent.boost_story' | translate }}</h4>
+                <span>{{'newcontent.your_story' | translate }}</span>
+              </div>
+            </div>
+            <ui-toggle [isChecked]="boostField" (onToggle)="onBoostToggle()"></ui-toggle>
+          </div>
+        </ng-container>
+      </div>
+      <span class="continue-later" [hidden]="!boostField"
+            (click)="continueLater()">{{'newcontent.continue_later' | translate }}</span>
+    </div>
+    <span class="white-overlay" (click)="onShowStepForm(false)"></span>
+  </div>
+</div>
+<div *ngIf="openNamePopup">
+  <app-custom-dialog (closeConfirmModal)="saveName($event)" [case]="'set-name'"></app-custom-dialog>
+</div>

@@ -1,0 +1,141 @@
+<div class="vh-centered" *ngIf="loadingArticle">
+  <ui-loader [size]="60" [color]="'blue'"></ui-loader>
+</div>
+<div *ngIf="loadedContentsList[firstArticleUri] && loadedContentsList[firstArticleUri].nextVersions.length"
+     class="article__old-warning">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-8 offset-md-2">
+        {{ 'article.old_version' | translate }}<a
+        [routerLink]="[ '/s/', loadedContentsList[firstArticleUri].nextVersions[loadedContentsList[firstArticleUri].nextVersions.length-1].uri]">  {{ 'article.here' | translate }}</a>.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container"
+     *ngIf="loadedContentsList[firstArticleUri] && loadedContentsList[firstArticleUri].cover && loadedContentsList[firstArticleUri].cover.url">
+  <div class="article-cover">
+    <img id="blured" class="article-cover__blured" [src]="loadedContentsList[firstArticleUri].cover.url" alt="article cover">
+    <img id="visible" class="article-cover__visible" [src]="loadedContentsList[firstArticleUri].cover.url" alt="article cover"
+    (load)="isCoverLoaded = true" (error)="renderImgErrors(null, loadedContentsList[firstArticleUri].cover.uri + '-cover')">
+    <div *ngIf="!isCoverLoaded" [id]="loadedContentsList[firstArticleUri].cover.uri + '-cover'" class="img-skeleton"><i class="icon-picture"></i></div>
+  </div>
+</div>
+<div #content>
+  <ng-container *ngFor="let key of loadedContentsKeys;">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-8 offset-md-2">
+          <div class="article__author">
+            <ui-avatar [avatarData]="loadedContentsList[key].author"></ui-avatar>
+            <div>
+              <a href="#" (click)="redirect($event, loadedContentsList[key].author.slug)"
+                 class="article__author__name">{{loadedContentsList[key].author.fullName}}
+                <span *ngIf="loadedContentsList[key].publication">{{' ' + ('article.in' | translate) + ' '}} </span>
+                <a *ngIf="loadedContentsList[key].publication" href="#"
+                   (click)="onPublicationClick($event, loadedContentsList[key].publication.slug)"> {{loadedContentsList[key].publication.title}}</a>
+              </a>
+              <span class="article__author__date">{{loadedContentsList[key].published * 1000 | localizedDate:'dd MMM, HH:mm'}}</span>
+            </div>
+            <ui-button size="small" [type]="!loadedContentsList[key].author.subscribed ? 'primary' : ''"
+                       [text]="loadedContentsList[key].author.subscribed ? ('article.following' | translate) : ('article.follow' | translate)"
+                       *ngIf="!loadedContentsList[key].isMyArticle"
+                       [isFollowing]="loadedContentsList[key].author.subscribed"
+                       (btnClicked)="!loadedContentsList[key].author.subscribed ? follow(loadedContentsList[key].author, key) : unfollow(loadedContentsList[key].author, key)">
+            </ui-button>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-8 offset-md-2">
+          <h1 class="article__title">{{loadedContentsList[key].title}}</h1>
+          <div class="article__content" [innerHTML]="loadedContentsList[key].text | safeHtml"></div>
+        </div>
+      </div>
+      <div class="row article__footing" *ngIf="loadedContentsList[key].tags.length && !loadedContentsList[key].isMyArticle">
+        <div class="col-9 col-md-5 offset-md-2">
+          <div class="article__tag" *ngFor="let tag of loadedContentsList[key].tags;" (click)="onTagClick(tag)">{{tag}}</div>
+        </div>
+        <div class="col-3 col-md-3">
+          <div class="article__views">
+            <i class="icon-preview"></i>
+            <span>{{loadedContentsList[key].views || '0'}}</span>
+          </div>
+        </div>
+        <div class="col-3 col-md-3" *ngIf="false">
+          <span class="article__report">Report story</span>
+          <div class="article__likes">
+            <span>24 likes</span>
+            <ui-button [iconButton]="true" [iconClassName]="'like'" size="large"></ui-button>
+          </div>
+        </div>
+      </div>
+      <div class="row article__footing" *ngIf="loadedContentsList[key].isMyArticle">
+        <div class="col-9 col-md-5 offset-md-2">
+          <div class="article__tag" *ngFor="let tag of loadedContentsList[key].tags;" (click)="onTagClick(tag)">{{tag}}</div>
+        </div>
+        <div class="col-3 col-md-3">
+          <div class="article__views article__views--own">
+            <i class="icon-preview"></i>
+            <span>{{loadedContentsList[key].views || '0'}}</span>
+          </div>
+          <ui-button *ngIf="loadedContentsList[firstArticleUri] && !loadedContentsList[firstArticleUri].nextVersions.length"
+            [iconButton]="true" iconClassName="edit" size="large"
+            (click)="editArticle(loadedContentsList[key].uri)"></ui-button>
+        </div>
+      </div>
+      <div class="row article__versions">
+        <div class="col-md-8 offset-md-2">
+          <a class="article__version" tabindex="0" [routerLink]="['/s/', version.uri]" *ngFor="let version of loadedContentsList[key].previousVersions;">
+            <span>{{('article.updated' | translate) + ' '}} {{version.published * 1000 | localizedDate:'hh:mm, MMM dd'}}</span>
+            <h2>{{version.title}}</h2>
+            <i class="icon-arrow-right article__version__arrow"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+    <ng-container *ngIf="loadedContentsList[key].related.length > 0">
+      <div class="article__related__title">
+        <div class="container">
+          <div class="row">
+            <div class="col-md-8 offset-md-2">
+              <h2 class="shadowed-heading"
+                  [attr.data-shadow-text]="'article.related' | translate">{{ 'article.related' | translate }}</h2>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-12">
+            <drag-scroll class="article__related" #relatedBlock>
+              <div>
+                <ui-content-single type="related" (accountClick)="onAccountClick($event)"
+                                   (contentClick)="onContentClick($event)"
+                                   (publicationClick)="onPublicationClick(null, $event.slug)"
+                                   (tagClick)="onTagClick($event)"
+                                   *ngFor="let content of loadedContentsList[key].related;"
+                                   [contentData]="content">
+                </ui-content-single>
+              </div>
+              <section class="article__related--loading">
+                <ui-loader *ngIf="enableLoading" [size]="60" [color]="'blue'"></ui-loader>
+              </section>
+            </drag-scroll>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+  </ng-container>
+</div>
+
+<div *ngIf="isServer && seoData" [hidden]="true">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-8 offset-md-2">
+        <h1 class="article__title">{{seoData.title}}</h1>
+      </div>
+    </div>
+  </div>
+</div>

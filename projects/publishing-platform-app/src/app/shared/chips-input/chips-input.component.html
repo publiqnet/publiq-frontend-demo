@@ -1,0 +1,4 @@
+<div #chipdDiv>
+    <ui-chip [avatarData]="chip.fullName? chip : null" [text]="chip.fullName || chip.publicKey || chip" (onRemove)="removeChip(i)" *ngFor="let chip of tagsArray,let i=index"></ui-chip>
+    <input [readOnly]="tagsArray.length === 3" autofocus [formControl]="textControl" placeholder="{{placeholder}}" (keyup.enter)="enterKeyup()" (focusout)="enterKeyup()" (keyup)="keyup($event)" />
+</div>

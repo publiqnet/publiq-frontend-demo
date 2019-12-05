@@ -1,0 +1,212 @@
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "newProjectRoot": "projects",
+  "projects": {
+    "publishing-platform-app": {
+      "root": "projects/publishing-platform-app/",
+      "sourceRoot": "projects/publishing-platform-app/src",
+      "projectType": "application",
+      "prefix": "app",
+      "schematics": {},
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:browser",
+          "options": {
+            "preserveSymlinks": true,
+            "outputPath": "dist/publishing-platform-app",
+            "index": "projects/publishing-platform-app/src/index.html",
+            "main": "projects/publishing-platform-app/src/main.ts",
+            "polyfills": "projects/publishing-platform-app/src/polyfills.ts",
+            "tsConfig": "projects/publishing-platform-app/tsconfig.app.json",
+            "assets": [
+              "projects/publishing-platform-app/src/favicon.ico",
+              "projects/publishing-platform-app/src/assets",
+              "projects/publishing-platform-app/src/robots.txt"
+            ],
+            "styles": [
+              "projects/publishing-platform-app/src/styles.scss",
+              "projects/publishing-platform-app/src/assets/css/publiq.icons.css",
+              "projects/publishing-platform-app/src/assets/css/icon.css",
+              "node_modules/font-awesome/css/font-awesome.css",
+              "node_modules/froala-editor/css/froala_editor.pkgd.css",
+              "./node_modules/swiper/dist/css/swiper.css"
+            ],
+            "scripts": [
+              "node_modules/jquery/dist/jquery.min.js",
+              "node_modules/moment/min/moment.min.js",
+              "node_modules/froala-editor/js/froala_editor.pkgd.min.js",
+              "node_modules/froala-editor/js/languages/ja.js",
+              "node_modules/hammerjs/hammer.min.js",
+              "projects/publishing-platform-app/src/assets/js/masonry.pkgd.min.js",
+              "projects/publishing-platform-app/src/assets/js/isotope.pkgd.min.js",
+              "projects/publishing-platform-app/src/assets/js/imagesloaded.pkgd.min.js",
+              "projects/publishing-platform-app/src/assets/js/share_buttons.js",
+              "projects/publishing-platform-app/src/assets/js/touchScroll.js"
+            ],
+            "es5BrowserSupport": true
+          },
+          "configurations": {
+            "production": {
+              "fileReplacements": [
+                {
+                  "replace": "projects/publishing-platform-app/src/environments/environment.ts",
+                  "with": "projects/publishing-platform-app/src/environments/environment.prod.ts"
+                }
+              ],
+              "optimization": true,
+              "outputHashing": "all",
+              "sourceMap": false,
+              "extractCss": true,
+              "namedChunks": false,
+              "aot": true,
+              "extractLicenses": true,
+              "vendorChunk": false,
+              "buildOptimizer": true,
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "2mb",
+                  "maximumError": "10mb"
+                }
+              ]
+            },
+            "staging": {
+              "fileReplacements": [
+                {
+                  "replace": "projects/publishing-platform-app/src/environments/environment.ts",
+                  "with": "projects/publishing-platform-app/src/environments/environment.stage.ts"
+                }
+              ],
+              "optimization": true,
+              "outputHashing": "all",
+              "sourceMap": false,
+              "extractCss": true,
+              "namedChunks": false,
+              "aot": true,
+              "extractLicenses": true,
+              "vendorChunk": false,
+              "buildOptimizer": true,
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "2mb",
+                  "maximumError": "10mb"
+                }
+              ]
+            }
+          }
+        },
+        "serve": {
+          "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "browserTarget": "publishing-platform-app:build"
+          },
+          "configurations": {
+            "production": {
+              "browserTarget": "publishing-platform-app:build:production"
+            }
+          }
+        },
+        "extract-i18n": {
+          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "options": {
+            "browserTarget": "publishing-platform-app:build"
+          }
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "main": "projects/publishing-platform-app/src/test.ts",
+            "polyfills": "projects/publishing-platform-app/src/polyfills.ts",
+            "tsConfig": "projects/publishing-platform-app/tsconfig.spec.json",
+            "karmaConfig": "projects/publishing-platform-app/karma.conf.js",
+            "styles": [
+              "projects/publishing-platform-app/src/styles.css"
+            ],
+            "scripts": [],
+            "assets": [
+              "projects/publishing-platform-app/src/favicon.ico",
+              "projects/publishing-platform-app/src/assets",
+              "projects/publishing-platform-app/src/robots.txt"
+            ]
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": [
+              "projects/publishing-platform-app/tsconfig.app.json",
+              "projects/publishing-platform-app/tsconfig.spec.json"
+            ],
+            "exclude": [
+              "**/node_modules/**"
+            ]
+          }
+        },
+        "server": {
+          "builder": "@angular-devkit/build-angular:server",
+          "options": {
+            "outputPath": "dist/server",
+            "main": "projects/publishing-platform-app/src/main.server.ts",
+            "tsConfig": "projects/publishing-platform-app/tsconfig.server.json"
+          },
+          "configurations": {
+            "production": {
+              "fileReplacements": [
+                {
+                  "replace": "projects/publishing-platform-app/src/environments/environment.ts",
+                  "with": "projects/publishing-platform-app/src/environments/environment.prod.ts"
+                }
+              ]
+            },
+            "staging": {
+              "fileReplacements": [
+                {
+                  "replace": "projects/publishing-platform-app/src/environments/environment.ts",
+                  "with": "projects/publishing-platform-app/src/environments/environment.stage.ts"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "shared-lib": {
+      "root": "projects/shared-lib",
+      "sourceRoot": "projects/shared-lib/src",
+      "projectType": "library",
+      "prefix": "publiq",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-ng-packagr:build",
+          "options": {
+            "tsConfig": "projects/shared-lib/tsconfig.lib.json",
+            "project": "projects/shared-lib/ng-package.json"
+          }
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "main": "projects/shared-lib/src/test.ts",
+            "tsConfig": "projects/shared-lib/tsconfig.spec.json",
+            "karmaConfig": "projects/shared-lib/karma.conf.js"
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": [
+              "projects/shared-lib/tsconfig.lib.json",
+              "projects/shared-lib/tsconfig.spec.json"
+            ],
+            "exclude": [
+              "**/node_modules/**"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "defaultProject": "publishing-platform-app"
+}

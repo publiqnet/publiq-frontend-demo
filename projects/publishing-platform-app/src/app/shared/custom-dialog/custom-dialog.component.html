@@ -1,0 +1,54 @@
+<div class="modal-overlay--custom" [ngSwitch]="case">
+    <div class="custom-modal custom-modal--draft" *ngSwitchCase="'draft'">
+        <span class="custom-modal__close" (click)="closeModal(false)">
+        <i class="icon icon-close"></i>
+      </span>
+        <h3>{{properties?.title}}</h3>
+        <div class="custom-modal__buttons">
+            <ui-button [text]="('custom_dialog.no' | translate)" (btnClicked)="closeModal(false)" [className]="'cancel-modal'"></ui-button>
+            <ui-button [text]="('custom_dialog.yes' | translate)" (btnClicked)="closeModal(true)" [className]="'cancel-modal'" [type]="'primary'"></ui-button>
+        </div>
+    </div>
+
+    <div class="custom-modal custom-modal--draft" *ngSwitchCase="'remove-publication'">
+        <span class="custom-modal__close" (click)="closeModal(false)">
+        <i class="icon icon-close"></i>
+      </span>
+        <h3>{{'custom_dialog.are_you_sure' | translate}}</h3>
+        <div class="custom-modal__buttons">
+            <ui-button [text]="('custom_dialog.no' | translate)" (btnClicked)="closeModal(false)" [className]="'cancel-modal'"></ui-button>
+            <ui-button [text]="('custom_dialog.yes' | translate)" (btnClicked)="closeModal(true)" [className]="'cancel-modal'" [type]="'primary'"></ui-button>
+        </div>
+    </div>
+
+    <div class="custom-modal custom-modal--draft" *ngSwitchCase="'set-name'">
+        <span class="custom-modal__close" (click)="closeModal(false)">
+        <i class="icon icon-close"></i>
+      </span>
+        <h3>{{'custom_dialog.please_add_name' | translate}}</h3>
+        <ui-input [placeholder]="('custom_dialog.add_your_name' | translate)" [type]="'text'" [formControl]="nameControl"></ui-input>
+        <p style="color:red" *ngIf="nameError">{{'custom_dialog.required_field' | translate}}</p>
+        <div class="custom-modal__buttons">
+            <ui-button [text]="('custom_dialog.cancel' | translate)" (btnClicked)="closeModal(false)" [className]="'cancel-modal'"></ui-button>
+            <ui-button [text]="('custom_dialog.save' | translate)" (btnClicked)="closeModal(true)" [className]="'cancel-modal'" [type]="'primary'"></ui-button>
+        </div>
+    </div>
+
+  <div class="custom-modal custom-modal--draft story__edit--history" *ngSwitchCase="'history'"  appClickOutside (clickOutside)="onOutSideClick()">
+      <span class="custom-modal__close" (click)="closeModal(false)">
+        <i class="icon icon-close"></i>
+      </span>
+      <h3>{{'custom_dialog.history' | translate}}</h3>
+      <div class="story__edit--history--list">
+          <div class="story__edit--history--list--item" *ngFor="let item of properties">
+            <div class="content">
+              <span><b>{{('custom_dialog.updated' | translate | titlecase) + ' '}}</b>{{item.published * 1000 | localizedDate:'dd MMM, HH:mm'}}</span>
+              <a [routerLink]="['/s/' + item.uri]"><h2>{{item.title}}</h2></a>
+            </div>
+            <div class="read-more">
+              <ui-button [className]="'single-history-more'" [iconButton]="true" [iconClassName]="'arrow-right'" (click)="onHistoryClick(item.uri)"></ui-button>
+            </div>
+          </div>
+      </div>
+    </div>
+</div>

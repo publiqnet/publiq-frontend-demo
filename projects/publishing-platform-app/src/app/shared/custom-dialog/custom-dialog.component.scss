@@ -1,0 +1,324 @@
+@import "../../../assets/css/variables.scss";
+.modal-overlay--custom {
+    opacity: 1;
+    //pointer-events: none;
+    transition: .3s ease-out;
+    background: rgba(#F7F8F9, .9);
+    mix-blend-mode: normal;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    .custom-modal {
+        position: relative;
+        max-width: 520px;
+        min-height: 200px;
+        bottom: 0;
+        padding: 23px 30px;
+        background: #FFFFFF;
+        box-shadow: 1px 3px 7px rgba(43, 43, 43, 0.2);
+        border-radius: 15px;
+        width: 100%;
+        &--draft {
+            max-width: 440px;
+            @include media-sm {
+                max-width: calc(100% - 20px);
+            }
+        }
+        &__close {
+            position: absolute;
+            top: 25px;
+            right: 30px;
+            width: 30px;
+            height: 30px;
+            background-color: #ECF0F3;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 2;
+        }
+        h3 {
+            font-style: normal;
+            font-weight: bold;
+            font-size: 22px;
+            line-height: 34px;
+            color: #2B2B2B;
+            margin: 0 0 30px;
+            padding-right: 40px;
+            b {
+                color: #3365ff;
+            }
+            @include media-sm {
+                font-size: 20px;
+            }
+        }
+    }
+    .custom-modal__buttons {
+        display: flex;
+        margin-top: 40px;
+         ::ng-deep ui-button {
+            flex: 1;
+            &:first-child {
+                margin-right: 12px;
+            }
+            button {
+                width: 100%;
+            }
+        }
+        @include media-md {
+            flex-direction: column;
+            align-items: normal;
+             ::ng-deep ui-button {
+                margin: 0 0 12px;
+            }
+        }
+    }
+    &.open {
+        opacity: 1;
+        pointer-events: auto;
+        transition: .3s ease-out;
+        .custom-modal {
+            position: relative;
+            opacity: 1;
+            pointer-events: auto;
+            visibility: visible;
+        }
+    }
+
+}
+.story {
+    &__edit {
+        background-color: #fff;
+        box-shadow: 0px 7px 15px rgba(0, 0, 0, 0.07);
+        border-radius: 15px;
+        margin: 0 0 10px 0;
+        padding: 20px;
+        &--pending{
+            overflow: hidden;
+            pointer-events: none;
+            user-select: none;
+            position: relative;
+            &:after{
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                right: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(black, 0.1);
+                border-radius: 15px;
+            }
+            &:before{
+                content: '';
+                width: 0;
+                height: 4px;
+                border-radius: 15px 15px 0 0;
+                background-color: #3366FF;
+                animation: pendingStatus 3s ease-out infinite;
+                position: absolute;
+                top: 0;
+                right: 0;
+                left: 0;
+            }
+        }
+        &__header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            &--image {
+                flex: 0 0 150px;
+                width: 150px;
+                height: 150px;
+                margin-right: 35px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                img {
+                    width: 100%;
+                    height: 100%;
+                    -o-object-fit: cover;
+                    object-fit: cover;
+                    -o-object-position: center;
+                    object-position: center;
+                    border-radius: 10px
+                }
+            }
+            &--content {
+                h2 {
+                    font-family: $vollkorn;
+                    font-size: 20px;
+                    line-height: 28px;
+                    color: #2B2B2B;
+                    cursor: pointer;
+                }
+                span {
+                    font-family: $open-sans;
+                    font-style: normal;
+                    font-weight: 600;
+                    font-size: 12px;
+                    line-height: 15px;
+                    color: #C1C4CB;
+                    text-transform: none;
+                    &.publish-data {
+                        margin-right: 15px;
+                    }
+                    b {
+                        color: #8D929A;
+                    }
+                }
+            }
+            @include media-md {
+                flex-direction: column;
+                align-items: flex-start;
+                &--image {
+                    flex: 1;
+                    width: 100%;
+                    height: 100%;
+                    margin: 0px 0px 20px 0px;
+                }
+                &--content {
+                    display: flex;
+                    flex-direction: column;
+                }
+            }
+        }
+        &__footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            @include media-md{
+                flex-direction: column;
+                align-items: normal;
+            }
+            &--history {
+                &.toggle-icon {
+                    ::ng-deep {
+                        .button.show-history {
+                            i {
+                                -ms-transform: rotate(90deg); /* IE 9 */
+                                -webkit-transform: rotate(90deg); /* Safari 3-8 */
+                                transform: rotate(90deg);
+                            }
+                        }
+                    }
+                }
+                ::ng-deep {
+                    .button.show-history {
+                        border: none;
+                        display: inline-flex;
+                        padding: 10px 16px;
+                        align-items: center;
+                        flex-direction: row-reverse;
+                        font-family: $open-sans;
+                        font-style: normal;
+                        font-weight: 600;
+                        font-size: 13px;
+                        line-height: 15px;
+                        color: #565A60;
+                        &:focus {
+                            background: #E9EFFF;
+                        }
+                        i {
+                            margin-left: 8px!important;
+                            -ms-transform: rotate(270deg); /* IE 9 */
+                            -webkit-transform: rotate(270deg); /* Safari 3-8 */
+                            transform: rotate(270deg);
+                        }
+                    }
+                }
+                @include media-md{
+                    margin-top: 13px;
+                    order: 2;
+                    display: flex;
+                    justify-content: center;
+                }
+            }
+            &--buttons {
+                ::ng-deep {
+                    .button.boost-btn {
+                        color: #FFC300;
+                    }
+                    .button.edit-btn {
+                        color: $blue;
+                        margin-left: 10px;
+                    }
+                }
+            }
+            &--dropdown {
+                min-width: 200px;
+                @include media-md{
+                    margin-bottom: 13px;
+                }
+            }
+        }
+        &--history {
+            &--list {
+                margin-top: 35px;
+                &--item {
+                    margin-top: 20px;
+                    border-bottom: 1px solid #ECF0F3;
+                    padding: 0px 10px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    cursor: pointer;
+                    h2 {
+                        font-family: $vollkorn;
+                        font-style: normal;
+                        font-weight: normal;
+                        font-size: 20px;
+                        line-height: 28px;
+                        color: #565A60;
+                        margin-bottom: 20px;
+                    }
+                    span {
+                        font-family: $open-sans;
+                        font-style: normal;
+                        font-weight: 600;
+                        font-size: 12px;
+                        line-height: 15px;
+                        color: #C1C4CB;
+                        text-transform: none;
+                        b {
+                            color: #8D929A;
+                        }
+                    }
+                    .content {
+                        display: flex;
+                        flex-direction: column;
+                    }
+                    .read-more {
+                        ::ng-deep {
+                            .button {
+                                border: none;
+                                display: none;
+                                transition: 0.3s;
+                            }
+                        }
+                    }
+                    &:hover {
+                        .read-more {
+                            ::ng-deep {
+                                .button {
+                                    display: flex;
+                                    align-items: center;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,126 @@
+<div class="search">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-8 offset-md-2">
+
+        <!--when you begin typing in search bar-->
+        <ng-container *ngIf="searchResult">
+          <div class="search__tabber" *ngIf="searchResult.article.length || searchResult.publication.length || searchResult.authors.length">
+            <ui-tab [className]="'search-tabber'" [type]="'buttons'" [tabs]="[{value: 'all', text: ('header.all' | translate)}, {value: 'stories', text: ('header.stories' | translate)}, {value: 'publications', text: ('header.publications' | translate)}, {value: 'people', text: ('header.people' | translate)}]"
+                    (onTabChange)="changeTab($event)" [currentValue]="activeTab"></ui-tab>
+            <span class="search__tabber__results">
+              {{searchCount}} {{'search.results' | translate}}
+            </span>
+          </div>
+
+          <ng-container *ngIf="searchResult.article && searchResult.article.length && (activeTab === 'stories' || activeTab === 'all')">
+            <!--!!!!! not in default-->
+            <h3>{{'search.popular_stories' | translate}}</h3>
+            <div>
+              <div *ngFor="let articleItem of searchResult.article">
+                <ui-content-single [type]="'single'" [className]="'search-stories'" [contentData]="articleItem" (accountClick)="onAccountClick($event)" (contentClick)="onContentClick($event)" (publicationClick)="onPublicationClick($event)" (tagClick)="onTagClick($event)"></ui-content-single>
+              </div>
+            </div>
+            <div class="show-more-button" *ngIf="searchResult.articleMore">
+              <ui-button [text]="'search.show_more' | translate" (btnClicked)="showMore('article')"></ui-button>
+            </div>
+          </ng-container>
+            <div class="not-found" *ngIf="activeTab === 'stories' && !searchResult?.article.length && (searchResult.publication.length || searchResult.authors.length)">
+              <img src="assets/images/no_story.svg" alt="No story">
+              <b>{{'search.no_stories' | translate}}</b>
+            </div>
+
+          <ng-container  *ngIf="searchResult.publication && searchResult.publication.length && (activeTab === 'publications' || activeTab === 'all')">
+            <h3>{{'search.popular_publications' | translate}}</h3>
+            <div>
+              <div *ngFor="let publicationItem of searchResult.publication">
+                <ui-publication-single [isOwner]="contentService.isOwner(publicationItem)" (getPublicationSlug)="changeRoute('/p/'+$event)" [className]="'search-publication'" [type]="'follow'" [publicationData]="publicationItem" (follow)="followPublication($event, publicationItem)"></ui-publication-single>
+              </div>
+            </div>
+            <div class="show-more-button" *ngIf="searchResult.publicationMore">
+              <ui-button [text]="'search.show_more' | translate" (btnClicked)="showMore('publication')"></ui-button>
+            </div>
+          </ng-container>
+            <div class="not-found" *ngIf="activeTab === 'publications' && !searchResult?.publication.length && (searchResult.article.length || searchResult.authors.length)">
+              <img src="assets/images/no_publications.svg" alt="No publication">
+              <b>{{'search.no_publications' | translate}}</b>
+            </div>
+
+          <ng-container *ngIf="searchResult.authors && searchResult.authors.length && (activeTab === 'people' || activeTab === 'all') ">
+            <h3>{{'search.you_interest_authors' | translate}}</h3>
+            <div>
+              <div class="search-people" *ngFor="let authorItem of searchResult.authors">
+                <ui-user-single (onUserClick)="onUserClick(authorItem)" [type]="'followers'"
+                                [showFollowButton]="contentService.isOwner(authorItem.publicKey)" [userData]="{user: authorItem, isFollowing: authorItem.subscribed}" (onFollowChange)="followUser($event, authorItem)"></ui-user-single>
+              </div>
+            </div>
+            <div class="show-more-button" *ngIf="searchResult.authorsMore">
+              <ui-button [text]="'search.show_more' | translate" (btnClicked)="showMore('authors')"></ui-button>
+            </div>
+          </ng-container>
+            <div class="not-found" *ngIf="activeTab === 'people' && !searchResult.authors.length && (searchResult.publication.length || searchResult.article.length)">
+              <img src="assets/images/no_people.svg" alt="No author">
+
+              <b>{{'search.no_people' | translate}}</b>
+            </div>
+
+        </ng-container>
+
+        <!--<div #noSearchResult> No Search Result</div>-->
+
+        <!--when you just entered search component-->
+        <ng-container *ngIf="defaultSearchData && !searchResult">
+
+          <div class="publication-widget" *ngIf="false">
+            <h3>{{'search.resent_searches' | translate}}</h3>
+            <div class="publication-widget__buttons">
+              <span class="blue">{{'search.clear' | translate}}</span>
+            </div>
+          </div>
+
+          <div class="recent-searches" *ngIf="false">
+            <span>#STARTUPS</span>
+            <span>#HEALTH</span>
+            <span>#COMPUTER SCIENCE</span>
+            <span>#TECHNOLOGY</span>
+            <span>#SCIENCE</span>
+            <span>#SPODRT</span>
+            <span>#ESIGN</span>
+            <span>#WEATHER</span>
+          </div>
+
+          <div *ngIf="defaultSearchData?.publication?.length" class="popular">
+            <div class="publication-widget">
+              <h3>{{'search.popular_publications' | translate}}</h3>
+              <div *ngIf="false" class="publication-widget__buttons">
+                <ui-button [iconClassName]="'arrow-right'" [iconButton]="true" [className]="'left-arrow'"></ui-button>
+                <ui-button [iconClassName]="'arrow-right'" [iconButton]="true"></ui-button>
+              </div>
+            </div>
+
+            <div *ngFor="let publicationItem of defaultSearchData.publication">
+              <ui-publication-single [isOwner]="contentService.isOwner(publicationItem)" (getPublicationSlug)="changeRoute('/p/'+$event)" [className]="'popular__item'" [type]="'follow'" [publicationData]="publicationItem" (follow)="followPublication($event,publicationItem)"></ui-publication-single>
+            </div>
+          </div>
+
+          <div *ngIf="defaultSearchData?.authors?.length" class="popular">
+            <div class="publication-widget">
+              <h3>{{'search.you_interest_authors' | translate}}</h3>
+              <div *ngIf="false" class="publication-widget__buttons">
+                <ui-button [iconClassName]="'arrow-right'" [iconButton]="true" [className]="'left-arrow'"></ui-button>
+                <ui-button [iconClassName]="'arrow-right'" [iconButton]="true"></ui-button>
+              </div>
+            </div>
+            <div class="search-people" *ngFor="let authorItem of defaultSearchData.authors">
+              <ui-user-single [showFollowButton]="contentService.isOwner(authorItem.publicKey)" (onUserClick)="onUserClick(authorItem)" [type]="'followers'" [className]="" [userData]="{user: authorItem, isFollowing: authorItem.subscribed}" (onFollowChange)="followUser($event, authorItem)"></ui-user-single>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+      <div class="no-search-result" *ngIf="(searchResult && !searchResult.totalCount && !searchAction) || (!defaultSearchData?.publication?.length && !defaultSearchData?.authors?.length && !searchResult)">
+        <img src="assets/images/no_result.svg" alt="No search result">
+        <span>{{'search.no_search_content_yet' | translate}}</span>
+      </div>
+    </div>
+  </div>
+</div>

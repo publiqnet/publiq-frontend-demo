@@ -1,0 +1,31 @@
+@import "../../../assets/css/variables.scss";
+
+.grid-style--tag{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  i{
+    font-size: 24px;
+    margin-left: 12px;
+    cursor: pointer;
+    color: #C1C4CB;
+    transition: .2s ease-out;
+    &:hover{
+      color: #2b2b2b;
+      transition: .2s ease-out;
+    }
+  }
+  .grid-icon--selected{
+    color: #3366FF;
+  }
+  .grid-style__items{
+    @include media-sm{
+      display: none;
+    }
+  }
+}
+
+.shadowed-heading {
+  width: 100%;
+}
+
