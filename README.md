@@ -43,6 +43,27 @@
      explorerAddress: 'https://explorer.publiq.network', (explorer website url)
      coinName: 'TPBQ' (coin name, for production mode it's PBQ)
   ```
+  
+### How to configure Nginx to serve our angular app (example)
+```
+   server {
+       listen 443 ssl;
+       server_name *.example.org;
+   
+       # SSL configuration here
+       ssl_certificate     example.com.rsa.crt;
+       ssl_certificate_key example.com.rsa.key;
+   
+       location / {
+           proxy_pass $host (put your host here);
+           proxy_http_version 1.1;
+           proxy_set_header Upgrade $http_upgrade;
+           proxy_set_header Connection 'upgrade';
+           proxy_set_header Host $host;
+           proxy_cache_bypass $http_upgrade;
+       }
+   }
+```
 
 ## Running project
  + Run
