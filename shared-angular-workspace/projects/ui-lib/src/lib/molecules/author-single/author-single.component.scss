@@ -1,0 +1,46 @@
+@import "../../../assets/common";
+
+.list-part {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  ::ng-deep {
+    .avatar {
+      cursor: pointer;
+    }
+  }
+  &__content {
+    margin-left: 10px;
+    overflow: hidden;
+    h3 {
+      font: 700 15px/20px $open-sans;
+      letter-spacing: 0.6px;
+      color: pbq-color($lightgrey, 700);
+      margin: 0 0 5px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: pointer;
+      width: 220px;
+    }
+    p {
+      font: 400 12px/15px $open-sans;
+      color: rgba(40, 47, 54, 0.5);
+      margin: 0;
+    }
+  }
+  &__button {
+    height: 35px;
+    width: 35px;
+    border-radius: 17.5px;
+    margin-left: auto;
+    transition: 0.3s;
+    cursor: pointer;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+
+    &:hover {
+      background: pbq-color($grey, 100);
+    }
+  }
+}

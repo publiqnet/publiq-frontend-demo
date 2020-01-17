@@ -17,11 +17,32 @@
       <span class="mark-all-as-read" tabindex="0" (click)="selectItem($event, {action: 'mark-all-as-read', stayOpen: true})" (keydown)="$event.keyCode === 13 ? selectItem($event, {action: 'mark-all-as-read', stayOpen: true}) : null">{{'ui.notification-menu.mark_all' | translate}}</span>
       <span class="mark-all-as-read" tabindex="0" (click)="selectItem($event, {action: 'delete-all-notifications', stayOpen: true})" (keydown)="$event.keyCode === 13 ? selectItem($event, {action: 'delete-all-notifications', stayOpen: true}) : null">{{'ui.notification-menu.delete_all' | translate}}</span>
     </div>
-    <div *ngFor="let notification of items;" class="notification-list__item" tabindex="0" [class.notification-list__item--read]="notification.isRead" (click)="selectItem($event, {action: 'redirect', slug: notification})" (keydown)="$event.keyCode === 13 ? selectItem($event, {action: 'redirect', slug: notification}) : null">
-      <ui-avatar [avatarData]="notification.actionFrom"></ui-avatar>
+    <div *ngFor="let notification of items;" class="notification-list__item" tabindex="0" [class.notification-list__item--read]="notification.isRead" [class.notification-list__item--social]="notification.type === 'share_article'" (click)="selectItem($event, {action: 'redirect', slug: notification})" (keydown)="$event.keyCode === 13 ? selectItem($event, {action: 'redirect', slug: notification}) : null">
+      <ui-avatar *ngIf="notification.actionFrom; else defaultAvatar" [avatarData]="notification.actionFrom"></ui-avatar>
+      <ng-template #defaultAvatar>
+        <ui-avatar [avatarData]="{image: 'assets/announcement.svg'}"></ui-avatar>
+      </ng-template>
       <div class="notification-list__item__content">
         <div (click)="onBodyClick($event)" [innerHTML]="(translateService.currentLang === 'en' ? notification.langOptions.bodyEn : notification.langOptions.bodyJp) | safeHtml"></div>
         <span class="notification-list__item__date">{{notification.date | localizedDate:'dd MMM, HH:mm'}}</span>
+      </div>
+      <div class="notification-list__item__social" *ngIf="notification.type === 'share_article'">
+        <div *ngIf="{notAnimated: true}; let animation" (mouseover)="animation.notAnimated = false;" (mouseout)="animation.notAnimated = true;" (click)="selectItem($event, {action: 'share', platform: 'facebook', data: notification?.contentUnit})">
+          <ui-icon [animationOptions]="{name: 'facebook', type: 'social'}" [size]="20" [action]="false" [style.display]="animation.notAnimated ? 'inline-block' : 'none'"></ui-icon>
+          <ui-icon [animationOptions]="{name: 'facebookNextState', type: 'social'}" [size]="20" [action]="!animation.notAnimated" [style.display]="!animation.notAnimated ? 'inline-block' : 'none'"></ui-icon>
+        </div>
+        <div *ngIf="{notAnimated: true}; let animation" (mouseover)="animation.notAnimated = false;" (mouseout)="animation.notAnimated = true;" (click)="selectItem($event, {action: 'share', platform: 'twitter', data: notification?.contentUnit})">
+          <ui-icon [animationOptions]="{name: 'twitter', type: 'social'}" [size]="20" [action]="false" [style.display]="animation.notAnimated ? 'inline-block' : 'none'"></ui-icon>
+          <ui-icon [animationOptions]="{name: 'twitterNextState', type: 'social'}" [size]="20" [action]="!animation.notAnimated" [style.display]="!animation.notAnimated ? 'inline-block' : 'none'"></ui-icon>
+        </div>
+        <div *ngIf="{notAnimated: true}; let animation" (mouseover)="animation.notAnimated = false;" (mouseout)="animation.notAnimated = true;" (click)="selectItem($event, {action: 'share', platform: 'linkedin', data: notification?.contentUnit})">
+          <ui-icon [animationOptions]="{name: 'linkedin', type: 'social'}" [size]="20" [action]="false" [style.display]="animation.notAnimated ? 'inline-block' : 'none'"></ui-icon>
+          <ui-icon [animationOptions]="{name: 'linkedinNextState', type: 'social'}" [size]="20" [action]="!animation.notAnimated" [style.display]="!animation.notAnimated ? 'inline-block' : 'none'"></ui-icon>
+        </div>
+        <div *ngIf="{notAnimated: true}; let animation" (mouseover)="animation.notAnimated = false;" (mouseout)="animation.notAnimated = true;" (click)="selectItem($event, {action: 'share', platform: 'reddit', data: notification?.contentUnit})">
+          <ui-icon [animationOptions]="{name: 'reddit', type: 'social'}" [size]="20" [action]="false" [style.display]="animation.notAnimated ? 'inline-block' : 'none'"></ui-icon>
+          <ui-icon [animationOptions]="{name: 'redditNextState', type: 'social'}" [size]="20" [action]="!animation.notAnimated" [style.display]="!animation.notAnimated ? 'inline-block' : 'none'"></ui-icon>
+        </div>
       </div>
       <div class="notification-list__item__circle" tabindex="0" (click)="selectItem($event, {action: notification.isRead ? 'mark-as-unread' : 'mark-as-read', slug: notification, stayOpen: true})" (keydown)="$event.keyCode === 13 ? selectItem($event, {action: notification.isRead ? 'mark-as-unread' : 'mark-as-read', slug: notification, stayOpen: true}) : null"></div>
       <div class="mark-all-as-read" tabindex="0" (click)="selectItem($event, {action: 'delete-notification', slug: notification, stayOpen: true})" (keydown)="$event.keyCode === 13 ? selectItem($event, {action: 'delete-notification', slug: notification, stayOpen: true}) : null"><i class="icon-close"></i></div>

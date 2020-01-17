@@ -21,7 +21,6 @@ export declare class DropdownComponent extends FormControlHelper implements OnCh
     openDropdown: boolean;
     selectedOptionData: DropdownDataOptions;
     selectedRoleData: DropdownRoleDataOptions;
-    enteredItem: any;
     lastSavedValue: any;
     ngOnChanges(changes: SimpleChanges): void;
     onOptionChange(item: any): void;

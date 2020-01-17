@@ -2,8 +2,8 @@ import { EventEmitter, Inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpHeaders, HttpUrlEncodingCodec } from '@angular/common/http';
 
-import { forkJoin, Observable, of, Subject } from 'rxjs';
-import { flatMap, map } from 'rxjs/operators';
+import { Observable, Subject } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 import { AccountService } from './account.service';
 import { environment } from '../../../environments/environment';
@@ -12,13 +12,14 @@ import { ErrorService } from './error.service';
 import { Account } from './models/account';
 import { CryptService } from './crypt.service';
 import { HttpHelperService, HttpMethodTypes, HttpObserverService } from 'helper-lib';
-import { Content, ContentOptions } from './models/content';
+import { Content } from './models/content';
 import { Search } from './models/search';
 import { TranslateService } from '@ngx-translate/core';
-import { Author, AuthorOptions } from './models/author';
-import { Publication, PublicationOptions } from './models/publication';
+import { Author } from './models/author';
+import { Publication } from './models/publication';
 import { Tag } from './models/tag';
 import { UtilsService } from '../../../../../shared-lib/src/lib/service/utils.service';
+import { Image, ImageOptions } from './models/gallery-image';
 
 export enum OrderOptions {
   author_desc = <any>'+author',
@@ -39,7 +40,7 @@ export enum OrderOptions {
 export const CoinName = 'PBQ';
 export const CoinPrecision = 8;
 export const asset_id = '1.3.0';
-export interface SearchData {article?: ContentOptions[]; publication?: PublicationOptions[]; authors?: AuthorOptions[]; more: boolean; }
+export interface SearchData {article?: Content[]; publication?: Publication[]; authors?: Author[]; more: boolean; }
 
 @Injectable()
 export class ContentService {
@@ -52,6 +53,8 @@ export class ContentService {
   private observers: object = {
     'getDefaultSearchData': { name: '_getDefaultSearchData', refresh: false }
   };
+
+  public translationsReady: boolean = false;
 
   private feedback: Feedback;
   feedbackChanged = new Subject<Feedback>();
@@ -394,11 +397,11 @@ export class ContentService {
     };
   }
 
-  signFiles(files: Array<string>, feeWhole, feeFraction, currentTime, password): Observable<any> {
+  signFiles(files: Array<string>, feeWhole, feeFraction, currentTime, draftId, password): Observable<any> {
     const brainKey = this.cryptService.getDecryptedBrainKey(this.accountService.brainKeyEncrypted, password);
     const data = (files.length) ? files.map(f => this.signFile(f, brainKey, feeWhole, feeFraction, currentTime)) : [];
     const url = this.fileUrl + `/sign`;
-    return this.httpHelperService.call(HttpMethodTypes.post, url, { files: data, feeWhole: feeWhole, feeFraction: feeFraction });
+    return this.httpHelperService.call(HttpMethodTypes.post, url, { files: data, feeWhole: feeWhole, feeFraction: feeFraction, draftId: draftId });
   }
 
   uploadImageFiles(file: object | FormData): Observable<any> {
@@ -449,21 +452,9 @@ export class ContentService {
     return this.httpHelperService.call(HttpMethodTypes.post, url, requestData);
   }
 
-  publish(uri: string, contentId): Observable<any> {
+  publish(uri: string, contentId, draftId): Observable<any> {
     const url = environment.backend + '/api/content/publish';
-    return this.httpHelperService.call(HttpMethodTypes.post, url, { uri, contentId });
-  }
-
-  getMyContents(fromUri = null, count: number = 10, boostedCount: number = 0): Observable<any> {
-    const url = `${environment.backend}/api/contents/${count}/${boostedCount}/${fromUri}`;
-    return this.httpHelperService.call(HttpMethodTypes.get, url)
-      .pipe(map(contentData => {
-        contentData.data = contentData.data.map(nextContent => {
-          nextContent['canEditContent'] = true;
-          return new Content(nextContent);
-        });
-        return contentData;
-      }));
+    return this.httpHelperService.call(HttpMethodTypes.post, url, { uri, contentId, draftId });
   }
 
   getBoostsData(): Observable<{active: Content[], passive: Content[], summary: any}> {
@@ -482,6 +473,7 @@ export class ContentService {
         }
         if (boostData.summary.hasOwnProperty('whole') && boostData.summary.hasOwnProperty('fraction')) {
           boostData.summary.balance = UtilsService.calculateBalance(boostData.summary.whole, boostData.summary.fraction);
+          boostData.summary.spentbalance = UtilsService.calculateBalance(boostData.summary.spentWhole, boostData.summary.spentFraction);
         }
         return boostData;
       }));
@@ -489,7 +481,7 @@ export class ContentService {
 
   getContents(publickey, fromUri = null, count: number = 10, boostedCount: number = 0): Observable<any> {
     const url = `${environment.backend}/api/contents/${publickey}/${count}/${boostedCount}/${fromUri}`;
-    return this.httpHelperService.customCall(HttpMethodTypes.get, url).pipe(map(contentData => {
+    return this.httpHelperService.call(HttpMethodTypes.get, url).pipe(map(contentData => {
       contentData.data = contentData.data.map(nextContent => new Content(nextContent));
       return contentData;
     }));
@@ -497,21 +489,42 @@ export class ContentService {
 
   getHomePageContents(fromUri = null, count: number = 10, boostedCount: number = 3): Observable<any> {
     const url = `${environment.backend}/api/contents/${count}/${boostedCount}/${fromUri}`;
-    return this.httpHelperService.customCall(HttpMethodTypes.get, url)
+    return this.httpHelperService.call(HttpMethodTypes.get, url)
       .pipe(map(contentData => {
         contentData.data = contentData.data.map(nextContent => new Content(nextContent));
         return contentData;
       }));
   }
 
-  getRecommendations(fromUri = null, count: number = 10) {
-    const url = `${environment.backend}/api/user/recommendations/${count}/${fromUri}`;
+  getHomePageData(): Observable<any> {
+    const url = `${environment.backend}/api/user/homepage-data`;
     return this.httpHelperService.call(HttpMethodTypes.get, url)
-      .pipe(map(recommendationData => {
-        recommendationData.author = recommendationData.author.map(nextContent => (nextContent instanceof Content) ? nextContent : new Content(nextContent));
-        recommendationData.tag = recommendationData.tag.map(nextContent => (nextContent instanceof Content) ? nextContent : new Content(nextContent));
-        recommendationData.publications = recommendationData.publications.map(nextPublication => (nextPublication instanceof Publication) ? nextPublication : new Publication(nextPublication));
-        return recommendationData;
+      .pipe(map(homepageData => {
+        if (homepageData.trending.authors && homepageData.trending.authors.length) {
+          homepageData.trending.authors = homepageData.trending.authors.map(nextAuthor => (nextAuthor instanceof Author) ? nextAuthor : new Author(nextAuthor));
+        }
+        if (homepageData.trending.publications && homepageData.trending.publications.length) {
+          homepageData.trending.publications = homepageData.trending.publications.map(nextPublication => (nextPublication instanceof Publication) ? nextPublication : new Publication(nextPublication));
+        }
+        if (homepageData.recommended.authors && homepageData.recommended.authors.length) {
+          homepageData.recommended.authors = homepageData.recommended.authors.map(nextAuthor => (nextAuthor instanceof Author) ? nextAuthor : new Author(nextAuthor));
+        }
+        if (homepageData.recommended.publications && homepageData.recommended.publications.length) {
+          homepageData.recommended.publications = homepageData.recommended.publications.map(nextPublication => (nextPublication instanceof Publication) ? nextPublication : new Publication(nextPublication));
+        }
+        if (homepageData.preferences.author && homepageData.preferences.author.length) {
+          homepageData.preferences.author = homepageData.preferences.author.map(nextContent => (nextContent instanceof Content) ? nextContent : new Content(nextContent));
+        }
+        if (homepageData.preferences.tag && homepageData.preferences.tag.length) {
+          homepageData.preferences.tag = homepageData.preferences.tag.map(nextContent => (nextContent instanceof Content) ? nextContent : new Content(nextContent));
+        }
+        if (homepageData.articleToBoost) {
+          homepageData.articleToBoost = (homepageData.articleToBoost instanceof Content) ? homepageData.articleToBoost : new Content(homepageData.articleToBoost);
+        }
+        if (homepageData.highlights && homepageData.highlights.length) {
+          homepageData.highlights = homepageData.highlights.map(nextContent => (nextContent instanceof Content) ? nextContent : new Content(nextContent));
+        }
+        return homepageData;
       }));
   }
 
@@ -544,10 +557,12 @@ export class ContentService {
       now = new Date(currentTime * 1000);
     }
     const now_1h = new Date(now.getTime() + (60 * 60 * 1000));
+    const amountData = this.cryptService.amountStringToWholeFraction(price);
     const requestData = {
       'signature': signBoostData.signature,
       'uri': uri,
-      'amount': price,
+      'whole': amountData.whole,
+      'fraction': amountData.fraction,
       'hours': days * 24,
       'currentTransactionHash': signBoostData.transactionHash,
       'startTimePoint': Math.floor(now.getTime() / 1000),
@@ -557,6 +572,11 @@ export class ContentService {
       'feeFraction': feeFraction
     };
     return this.httpHelperService.call(HttpMethodTypes.post, url, requestData);
+  }
+
+  contentHighlight(uri: string, background: string, font: string, tagClass: string): Observable<any> {
+    const url = this.url + `/content-highlight`;
+    return this.httpHelperService.call(HttpMethodTypes.post, url, {uri, background, font, tagClass});
   }
 
   getDefaultSearchData(): Observable<any> {
@@ -608,7 +628,7 @@ export class ContentService {
     const encodedWord = this.urlEncodingCodec.encodeValue(word);
     const url = this.url + `/search/publication/${encodedWord}/${count}/${fromSlug}`;
     return this.httpHelperService.call(HttpMethodTypes.post, url)
-      .pipe(map((data: {publication: PublicationOptions[], more: false}) => ({publication: data.publication.length ?
+      .pipe(map((data: {publication: Publication[], more: false}) => ({publication: data.publication.length ?
           data.publication.map(publication => new Publication(publication)) : [], more: data.more})));
   }
 
@@ -617,7 +637,7 @@ export class ContentService {
     const encodedWord = this.urlEncodingCodec.encodeValue(word);
     const url = this.url + `/search/article/${encodedWord}/${count}/${fromUri}`;
     return this.httpHelperService.call(HttpMethodTypes.post, url)
-      .pipe(map((data: {article: ContentOptions[], more: boolean}) => ({article : data.article.length ?
+      .pipe(map((data: {article: Content[], more: boolean}) => ({article : data.article.length ?
           data.article.map(content => new Content(content)) : [], more: data.more}) ));
   }
 
@@ -626,10 +646,28 @@ export class ContentService {
     const encodedWord = this.urlEncodingCodec.encodeValue(word);
     const url = this.url + `/search/authors/${encodedWord}/${count}/${fromPublicKey}`;
     return this.httpHelperService.call(HttpMethodTypes.post, url)
-      .pipe(map((data: {authors: AuthorOptions[], more: boolean}) => ({authors: data.authors.length ?
+      .pipe(map((data: {authors: Author[], more: boolean}) => ({authors: data.authors.length ?
           data.authors.map(author => new Author(author)) : [], more: data.more })));
   }
 
+  getGalleryImages(fromUri: string, count: number): Observable<{images: Image[], more: boolean}> {
+    const url = environment.backend + '/api/files/' + `${count}/${fromUri}`;
+    return this.httpHelperService.call(HttpMethodTypes.get, url)
+      .pipe(map((items) => {
+        items.data.map((item) => new Image(item));
+        return {images: items.data, more: items.more};
+  }));
+  }
+
+  getGalleryImagesByTag(tag: string, fromUri: string, count: number) {// /api/files-by-tag/{tag}/{count}/{fromUri}
+    const encodedTag = this.urlEncodingCodec.encodeValue(tag);
+    const url = environment.backend + '/api/files-by-tag/' + `${encodedTag}/${count}/${fromUri}`;
+    return this.httpHelperService.call(HttpMethodTypes.get, url)
+      .pipe(map((items) => {
+        items.data.map((item) => new Image(item));
+        return {images: items.data, more: items.more};
+      }));
+  }
   /*
 * Ignore myself(owner) when showing follow button
 */

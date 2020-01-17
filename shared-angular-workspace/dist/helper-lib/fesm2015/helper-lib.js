@@ -206,7 +206,6 @@ class OauthService {
      * @return {?}
      */
     signupComplete(stringToSign, code, password) {
-        KeyPair.setRandomKey(this.randomKey);
         /** @type {?} */
         const keyPair = new KeyPair();
         /** @type {?} */
@@ -459,6 +458,7 @@ class OauthService {
             /** @type {?} */
             const encodedAverageHash = stringToSha256(averageHash).substring(0, 8);
             this.randomKey = parseInt(encodedAverageHash, 16);
+            KeyPair.setRandomKey(this.randomKey);
         }));
     }
 }

@@ -29,8 +29,8 @@ export class SearchComponent implements OnChanges, OnDestroy, OnInit {
   @Input('searchWord') searchWord: string = null;
   public activeTab = 'all';
   public searchCount = 0;
-  searchAction = true;
-  private searchResultList = { 'stories': 'articleCount', 'publications': 'publicationCount', 'people': 'authorsCount' };
+  public searchAction = true;
+  private firstTime: boolean = true;
   private unsubscribe$ = new ReplaySubject<void>(1);
 
   constructor(private accountService: AccountService, private utilService: UtilService,
@@ -42,6 +42,7 @@ export class SearchComponent implements OnChanges, OnDestroy, OnInit {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (this.searchResult) {
+      this.firstTime = false;
       this.searchAction = true;
       this.activeTab = 'all';
       this.searchCount = this.searchResult.totalCount;
@@ -116,6 +117,12 @@ export class SearchComponent implements OnChanges, OnDestroy, OnInit {
   showMore(searchType: string) {
     this.closeSearchBar.emit(false);
     this.router.navigate([`/search/result/`, searchType], {queryParams : {searchWord: this.searchWord}});
+  }
+
+  get checkForExistence() {
+    return !this.firstTime && ((this.searchResult && !this.searchResult.totalCount && !this.searchAction) ||
+      (this.defaultSearchData && this.defaultSearchData.publication && this.defaultSearchData.authors &&
+        !this.defaultSearchData.publication.length && this.defaultSearchData.authors.length && !this.searchResult));
   }
 
   ngOnDestroy() {

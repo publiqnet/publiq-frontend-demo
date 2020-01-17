@@ -9,10 +9,8 @@ export declare class PublicationBlockComponent implements OnChanges {
     getPublication: EventEmitter<any>;
     onFollow: EventEmitter<any>;
     showData: PublicationDataOptions[];
-    goRight: boolean;
     refreshAnimate: boolean;
-    counterFrom: number;
-    counterTo: number;
+    private lastIndex;
     rotateDeg: number;
     ngOnChanges(changes: SimpleChanges): void;
     _getPublication(event: any): void;

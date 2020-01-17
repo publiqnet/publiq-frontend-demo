@@ -1,15 +1,15 @@
-import { Component, OnInit, OnDestroy, HostListener, Input, ViewChild, ElementRef, Inject, PLATFORM_ID } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, Inject, Input, OnDestroy, OnInit, PLATFORM_ID, Renderer2, Sanitizer, SecurityContext, ViewChild } from '@angular/core';
 import { NgxMasonryComponent, NgxMasonryOptions } from 'ngx-masonry';
-import { switchMap, takeUntil, distinctUntilChanged, mergeMap, filter, delay, debounce, tap } from 'rxjs/operators';
-import { Params, ActivatedRoute, Router, ParamMap, RouterEvent, NavigationStart, NavigationEnd } from '@angular/router';
+import { debounce, delay, distinctUntilChanged, filter, map, mergeMap, switchMap, takeUntil, takeWhile, tap } from 'rxjs/operators';
+import { ActivatedRoute, NavigationEnd, ParamMap, Router, RouterEvent } from '@angular/router';
 import { Publication } from '../../core/services/models/publication';
-import { ReplaySubject, of, Subject, timer } from 'rxjs';
+import { fromEvent, interval, merge, Observable, of, ReplaySubject, Subject, Subscription, timer } from 'rxjs';
 import { AccountService } from '../../core/services/account.service';
 import { PublicationService } from '../../core/services/publication.service';
 import { UtilService } from '../../core/services/util.service';
 import { SeoService } from '../../core/services/seo.service';
 import { Content } from '../../core/services/models/content';
-import { FormGroup, FormBuilder, FormControl, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { ValidationService } from '../../core/validator/validator.service';
 import { UiNotificationService } from '../../core/services/ui-notification.service';
 import { isPlatformBrowser, isPlatformServer } from '@angular/common';
@@ -20,35 +20,38 @@ import { ContentService } from '../../core/services/content.service';
 import { environment } from '../../../environments/environment';
 import { SharedDataService } from '../../core/services/shared-data.service';
 import { TranslateService } from '@ngx-translate/core';
+import { getImageSize } from '../../content/froala-configs/froala-editor-custom-configs';
+import { DomSanitizer } from '@angular/platform-browser';
+import { Publications } from '../../core/services/models/publications';
 
 @Component({
   selector: 'app-publication',
   templateUrl: './publication.component.html',
   styleUrls: ['./publication.component.scss']
 })
-export class PublicationComponent implements OnInit, OnDestroy {
-  public coverMenuItems = [];
-  public pubSelectData = [];
+export class PublicationComponent implements OnInit, AfterViewInit, OnDestroy {
   @Input('autoresize') maxHeight: number;
-  @ViewChild('publicationTitle', { static: false }) set publicationTitle(el: ElementRef | null) {
+
+  @ViewChild('publicationTitle', {static: false}) set publicationTitle(el: ElementRef | null) {
     if (!el) {
       return;
     }
-
     this.resizeTextareaElement(el.nativeElement);
   }
-  @ViewChild('publicationDescription', { static: false }) set publicationDescription(el: ElementRef | null) {
+
+  @ViewChild('publicationDescription', {static: false}) set publicationDescription(el: ElementRef | null) {
     if (!el) {
       return;
     }
-
     this.resizeTextareaElement(el.nativeElement);
   }
 
   @ViewChild('titleTextarea', {static: false}) titleTextarea: ElementRef;
   @ViewChild('descriptionTextarea', {static: false}) descriptionTextarea: ElementRef;
+  @ViewChild('coverContainer', {static: false}) coverContainer: ElementRef;
   @ViewChild(NgxMasonryComponent, {static: false}) masonry: NgxMasonryComponent;
-
+  public coverMenuItems = [];
+  public pubSelectData = [];
   public publicationForm: FormGroup;
   public searchForm: FormGroup;
   public isMyPublication = false;
@@ -56,11 +59,10 @@ export class PublicationComponent implements OnInit, OnDestroy {
   public editTitle = false;
   public editDesc = false;
   public imageLoaded = false;
-  public firstContentBlock = [];
   public followers = [];
   public requests = [];
   public listType = 'grid';
-  public logoData = {};
+  public logoData: any = {};
   public showModal = false;
   public masonryOptions: NgxMasonryOptions = {
     transitionDuration: '0s',
@@ -89,6 +91,14 @@ export class PublicationComponent implements OnInit, OnDestroy {
   public isBrowser = false;
   public documentElement: any = null;
   public animationAction: boolean = false;
+  // draggable part
+  public showDraggable: boolean = false;
+  public coverPosX: string = '0';
+  public coverPosY: string = '0';
+  public cover: string;
+  public isImageWide: boolean;
+  public reposition$: Subscription;
+  // ------
   slug: string;
   stories: Content[] = [];
   textChanging: boolean;
@@ -103,6 +113,23 @@ export class PublicationComponent implements OnInit, OnDestroy {
   isMasonryLoaded: boolean = false;
   openInput: boolean;
   filterControl: FormControl = new FormControl();
+  // draggable part
+  private elBounds: { w: number, h: number };
+  private coverHeight: string;
+  private coverWidth: string;
+  private bounds: any;
+  private origin: any = {x: 0, y: 0};
+  private draggableActive: boolean = false;
+  private moveContinue: boolean = false;
+  public boostType: string = 'boost';
+  public showBoostModal: boolean = false;
+  public showHighlightModal: boolean = false;
+  public showHistoryModal: boolean = false;
+  public selectedBoostData: any = {};
+  showBoostModalType: string = 'boost';
+  public contentVersions = [];
+  public publicationsList = [];
+  // ------
   private unsubscribe$ = new ReplaySubject<void>(1);
 
   constructor(
@@ -118,6 +145,8 @@ export class PublicationComponent implements OnInit, OnDestroy {
     public translateService: TranslateService,
     private seoService: SeoService,
     private sharedData: SharedDataService,
+    private renderer: Renderer2,
+    public sanitizer: DomSanitizer,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
   }
@@ -136,6 +165,11 @@ export class PublicationComponent implements OnInit, OnDestroy {
           text: this.translateService.instant('publication.hide_cover'),
           value: 'hide-cover',
         },
+        {
+          icon: 'reposition',
+          text: this.translateService.instant('publication.reposition'),
+          value: 'reposition',
+        },
       ];
 
       this.pubSelectData = [
@@ -145,7 +179,7 @@ export class PublicationComponent implements OnInit, OnDestroy {
         },
         {
           'value': '3',
-          'text':  this.translateService.instant('publication.contributor'),
+          'text': this.translateService.instant('publication.contributor'),
         }
       ];
     });
@@ -173,10 +207,49 @@ export class PublicationComponent implements OnInit, OnDestroy {
           this.publication.following = publication.following;
         }
       });
+    if (!this.publicationsList.length) {
+      this.loading = true;
+      this.getMyPublications();
+    }
+  }
+
+  ngAfterViewInit(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      interval(100).pipe(
+        tap(() => {
+          if (this.coverContainer) {
+            this.elBounds = {
+              w: Number.parseInt(this.coverContainer.nativeElement.clientWidth, 10),
+              h: Number.parseInt(this.coverContainer.nativeElement.clientHeight, 10)
+            };
+          }
+          if (this.publication) {
+            if (!this.publication.cover) { return; }
+            getImageSize(this.publication && this.publication.cover)
+              .pipe(
+                tap((img: { height: string, width: string }) => {
+                  this.coverHeight = img.height;
+                  this.coverWidth = img.width;
+                }),
+                takeWhile(() => !!(this.coverHeight && this.coverWidth))
+              ).subscribe();
+          }
+          if (this.coverContainer && this.publication) {
+            this.isImageWide = +this.coverHeight / +this.coverWidth < this.elBounds.h / this.elBounds.w ? true : false;
+          }
+        }),
+        takeWhile(() => !this.coverContainer || !this.publication)
+      ).subscribe();
+    }
   }
 
   initDefaultData() {
     this.coverMenuItems = [
+      {
+        icon: 'reposition',
+        text: this.translateService.instant('publication.reposition'),
+        value: 'reposition',
+      },
       {
         icon: 'delete',
         text: this.translateService.instant('publication.delete'),
@@ -196,7 +269,7 @@ export class PublicationComponent implements OnInit, OnDestroy {
       },
       {
         'value': '3',
-        'text':  this.translateService.instant('publication.contributor'),
+        'text': this.translateService.instant('publication.contributor'),
       }
     ];
   }
@@ -321,9 +394,9 @@ export class PublicationComponent implements OnInit, OnDestroy {
       } else {
         this.publicationService.leavePublication(this.publication.slug)
           .subscribe(() => {
-            this.showModal = false;
-            this.getPublication();
-          }
+              this.showModal = false;
+              this.getPublication();
+            }
           );
       }
     }
@@ -333,6 +406,9 @@ export class PublicationComponent implements OnInit, OnDestroy {
     this.route.paramMap
       .pipe(
         switchMap((data: ParamMap) => {
+          if (this.slug && this.slug != data.get('slug')) {
+            this.publication = null;
+          }
           this.slug = data.get('slug');
           return this.accountService.accountUpdated$;
         }),
@@ -343,50 +419,103 @@ export class PublicationComponent implements OnInit, OnDestroy {
         takeUntil(this.unsubscribe$)
       )
       .subscribe((pub: Publication) => {
-        this.publication = pub;
-        if (isPlatformServer(this.platformId)) {
-          this.publicationService.getPublicationSeoBySlug(this.slug)
-            .subscribe((data: any) => {
-              this.updateSeoTags(data);
-            });
-        }
-        this.listType = this.publication.listView ? 'single' : 'grid';
-        this.buildForm();
-        this.isMyPublication = this.publication.memberStatus == 1;
-        this.updateHeaderPublicationData(pub);
-        if (this.publication.memberStatus == 2) {
-          this.pubSelectData = [
-            {
-              'value': '3',
-              'text': this.translateService.instant('publication.contributor'),
-            }
-          ];
-        }
-        if (this.isMyPublication || this.publication.memberStatus == 2) {
-          this.requests = this.publication.requests;
-          this.pendings = this.publication.invitations;
-          this.subscribers = this.publication.subscribers;
-          this.members = this.publication.editors.concat(this.publication.contributors);
-          this.allMembers = this.members.slice();
-          this.separateMembers();
-        } else {
-          this.publicationForm.disable();
-        }
-        if (this.publication.logo) {
-          this.logoData = {
-            image: this.publication.logo
-          };
-        } else {
-          this.logoData = {
-            fullName: this.publication.title
-          };
-        }
-        this.getPublicationStories();
-      },
+          this.publication = pub;
+          this.cover = !pub.hideCover ? pub.cover : null;
+          this.coverPosX = pub.coverPositionX || '0';
+          this.coverPosY = pub.coverPositionY || '0';
+          if (isPlatformServer(this.platformId)) {
+            this.publicationService.getPublicationSeoBySlug(this.slug)
+              .subscribe((data: any) => {
+                this.updateSeoTags(data);
+              });
+          }
+          this.listType = this.publication.listView ? 'single' : 'grid';
+          this.buildForm();
+          this.isMyPublication = this.publication.memberStatus == 1;
+          this.updateHeaderPublicationData(pub);
+          if (this.publication.memberStatus == 2) {
+            this.pubSelectData = [
+              {
+                'value': '3',
+                'text': this.translateService.instant('publication.contributor'),
+              }
+            ];
+          }
+          if (this.isMyPublication || this.publication.memberStatus == 2) {
+            this.requests = this.publication.requests;
+            this.pendings = this.publication.invitations;
+            this.subscribers = this.publication.subscribers;
+            this.members = this.publication.editors.concat(this.publication.contributors);
+            this.allMembers = this.members.slice();
+            this.separateMembers();
+          } else {
+            this.publicationForm.disable();
+          }
+          if (this.publication.logo) {
+            this.logoData = {
+              image: this.publication.logo
+            };
+          } else {
+            this.logoData = {
+              fullName: this.publication.title
+            };
+          }
+          this.getPublicationStories();
+        },
         error => {
           this.loading = false;
           this.router.navigate([`/page-not-found`]);
         });
+  }
+
+  getMyPublications() {
+    this.publicationsList = [];
+    this.publicationService.getMyPublications()
+      .pipe(
+        map((publicationsData: Publications) => {
+          const publicationsList = [...publicationsData.membership, ...publicationsData.owned];
+          return publicationsList;
+        }),
+        takeUntil(this.unsubscribe$)
+      )
+      .subscribe(publicationsList => {
+        if (publicationsList.length) {
+          publicationsList.forEach(publication => {
+            const text = publication.title ? publication.title : publication.description;
+            const nextPublication = {
+              'value': publication.slug,
+              'text': text,
+              'metaData': {
+                'image': publication.logo ? publication.logo : publication.cover,
+                'first_name': text,
+                'last_name': '',
+                'fullName': text
+              }
+            };
+            this.publicationsList.push(nextPublication);
+          });
+        }
+        this.loading = false;
+      });
+  }
+
+  changePublication(event, contentUri) {
+    if (!event) {
+      event = null;
+    }
+    this.contentService.updateContentPublication(event, contentUri)
+      .pipe(
+        switchMap(() => event === null ? of(null) : this.publicationService.getPublicationBySlug(event)),
+        takeUntil(this.unsubscribe$))
+      .subscribe(publication => {
+        this.stories.forEach((content: Content) => {
+          if (content.uri === contentUri) {
+            content.publication = publication;
+          }
+        });
+        this.uiNotificationService.success(this.translateService.instant('author.success'), this.translateService.instant('author.publication_successfully_updated'));
+        this.getPublication();
+      });
   }
 
   updateHeaderPublicationData(publication) {
@@ -397,7 +526,7 @@ export class PublicationComponent implements OnInit, OnDestroy {
       'views': publication.views,
       'storiesCount': publication.storiesCount,
       'subscribersCount': publication.subscribersCount,
-      'membersList': publication.membersCount,
+      'membersCount': publication.membersCount,
       'following': publication.following,
       'memberStatus': publication.memberStatus,
       'slug': publication.slug
@@ -471,6 +600,7 @@ export class PublicationComponent implements OnInit, OnDestroy {
     )
       .subscribe(
         () => {
+          this.publication.subscribersCount += this.publication.following ? -1 : 1;
           this.contentService.updateSearchData = true;
           this.publication.following = !this.publication.following;
           this.updateHeaderPublicationData(this.publication);
@@ -542,7 +672,8 @@ export class PublicationComponent implements OnInit, OnDestroy {
           delay(3000),
           takeUntil(this.unsubscribe$)
         )
-        .subscribe(() => { });
+        .subscribe(() => {
+        });
       return;
     }
     return true;
@@ -559,7 +690,14 @@ export class PublicationComponent implements OnInit, OnDestroy {
       myReader.onloadend = (loadEvent: any) => {
         this.imageLoaded = true;
         this.coverFile = input.files[0];
-        this.edit();
+        const img = new Image();
+        img.src = <string>myReader.result;
+        img.onload = () => {
+          this.cover = img.src;
+          this.coverPosY = '0';
+          this.coverPosX = '0';
+          this.reposition$ = this.triggerReposition(img).subscribe();
+        };
       };
       myReader.readAsDataURL(input.files[0]);
     }
@@ -609,6 +747,8 @@ export class PublicationComponent implements OnInit, OnDestroy {
     if (this.coverFile) {
       formData.append('cover', this.coverFile);
     }
+    formData.append('coverPositionX', this.coverPosX);
+    formData.append('coverPositionY', this.coverPosY);
     if (this.logoFile) {
       formData.append('logo', this.logoFile);
     }
@@ -620,6 +760,9 @@ export class PublicationComponent implements OnInit, OnDestroy {
     this.publicationService.editPublication(formData, this.publication.slug)
       .subscribe(
         (result: Publication) => {
+          if (this.reposition$) {
+            this.removeDraggableOptions();
+          }
           this.editMode = false;
           this.textChanging = false;
           this.editDesc = false;
@@ -628,8 +771,12 @@ export class PublicationComponent implements OnInit, OnDestroy {
           this.publication.title = result.title;
           this.publication.description = result.description;
           this.publication.cover = result.cover;
+          // this.cover = result.cover;
           this.publication.logo = result.logo;
+          this.publication.coverPositionX = result.coverPositionX;
+          this.publication.coverPositionY = result.coverPositionY;
           this.uiNotificationService.success(this.translateService.instant('publication.success'), this.translateService.instant('publication.successfully_updated'));
+          this.updateHeaderPublicationData(this.publication);
         },
         err => {
           this.editMode = false;
@@ -706,16 +853,79 @@ export class PublicationComponent implements OnInit, OnDestroy {
     if ($event == 'delete') {
       this.deleteCover = '1';
       this.coverFile = null;
+      this.cover = null;
       this.edit();
     }
     if ($event == 'hide-cover') {
       this.publication.hideCover = 'true';
+      this.cover = null;
       this.edit();
     }
+    if ($event === 'reposition') {
+      this.reposition$ = this.triggerReposition().subscribe();
+    }
+  }
+
+  hideOverflow(elem) {
+    elem ? document.querySelector('html').classList.add('overflow-hidden') : document.querySelector('html').classList.remove('overflow-hidden');
+  }
+
+  onBoostModal(data) {
+    this.selectedBoostData = {};
+    if (data && data.type == 'cancel' && data['boostData'] && data['boostData'].length) {
+      data['boostData'].forEach(boost => {
+        if (['pending', 'active'].includes(boost.status)) {
+          this.selectedBoostData['transactionHash'] = boost['transaction']['transactionHash'];
+        }
+      });
+    }
+    this.selectedBoostData['uri'] = data.uri;
+    this.selectedBoostData['type'] = data.type;
+    this.showBoostModal = true;
+    this.hideOverflow(this.showBoostModal);
+    this.hideOverflow(this.showHighlightModal);
+    this.showBoostModalType = data.type == 'cancel' ? 'cancel-boost' : 'boost';
+  }
+
+  onRouteChange(event: any, data: Content) {
+    const BoostInfo = {
+      data: data.boosts,
+      type: this.boostType,
+      uri: data.uri
+    };
+    if (event == 'edit_story') {
+      this.router.navigate([`/content/edit/${data.uri}`]);
+    } else if (event == 'boost_story') {
+      this.onBoostModal(BoostInfo);
+    } else if (event == 'history_story') {
+      this.contentVersions = data.previousVersions;
+      this.showHistoryModal = true;
+    }
+  }
+
+  closeHighlightModal() {
+    this.showHighlightModal = false;
+    document.querySelector('body').classList.remove('no-scroll');
+  }
+
+  closeHistoryModal(event) {
+    if (event.closeHistory) { this.showHistoryModal = false; }
+    this.hideOverflow(this.showHistoryModal);
+  }
+
+  submittedBoost() {
+    this.closeBoostModal();
+    this.showHighlightModal = true;
+  }
+
+  closeBoostModal() {
+    this.showBoostModal = false;
+    this.hideOverflow(this.showBoostModal);
   }
 
   showCover() {
     this.publication.hideCover = '';
+    this.cover = this.publication.cover;
     this.edit();
   }
 
@@ -734,7 +944,8 @@ export class PublicationComponent implements OnInit, OnDestroy {
       publicKey: member.publicKey,
       status: e.slug
     }).subscribe(
-      () => { }
+      () => {
+      }
     );
   }
 
@@ -756,6 +967,7 @@ export class PublicationComponent implements OnInit, OnDestroy {
       () => {
         if (action == 'accept') {
           e.user.memberStatus = 3;
+          this.publication.membersCount++;
           this.members.length % 2 == 0 ? this.membersOdd.push(e.user) : this.membersEven.push(e.user);
         }
         this.requests.splice(index, 1);
@@ -782,10 +994,6 @@ export class PublicationComponent implements OnInit, OnDestroy {
     );
   }
 
-  leavePublication() {
-
-  }
-
   updateSeoTags(publication) {
     this.seoService.updateTags({
       title: publication.title,
@@ -798,11 +1006,11 @@ export class PublicationComponent implements OnInit, OnDestroy {
 
   private buildForm() {
     this.publicationForm = this.formBuilder.group({
-      title: new FormControl(this.publication.title, [Validators.required]),
-      description: new FormControl(this.publication.description, []),
-      tags: new FormControl(this.publication.tags, [])
-    },
-      { validator: ValidationService.noSpaceValidator }
+        title: new FormControl(this.publication.title, [Validators.required]),
+        description: new FormControl(this.publication.description, []),
+        tags: new FormControl(this.publication.tags, [])
+      },
+      {validator: ValidationService.noSpaceValidator}
     );
   }
 
@@ -829,6 +1037,128 @@ export class PublicationComponent implements OnInit, OnDestroy {
 
   animate(animate: boolean) {
     this.animationAction = animate;
+  }
+
+  private triggerReposition(img?): Observable<any> {
+    if (this.coverContainer) {
+      this.showDraggable = true;
+      this.draggableActive = true;
+      this.renderer.setStyle(this.coverContainer.nativeElement, 'cursor', 'grab');
+      let height, width;
+      if (img) {
+        height = img.height;
+        width = img.width;
+      } else {
+        height = this.coverHeight;
+        width = this.coverWidth;
+      }
+
+      this.bounds = {w: this.elBounds.h / height * width - this.elBounds.w, h: this.elBounds.w / width * height - this.elBounds.h};
+      const moveByAxis = height / width > this.elBounds.h / this.elBounds.w ? 'y' : 'x';
+      if (img) {
+        this.isImageWide = moveByAxis === 'x' ? true : false;
+      }
+      const mousedown = fromEvent(this.coverContainer.nativeElement, 'mousedown');
+      const mouseup = fromEvent(this.coverContainer.nativeElement, 'mouseup');
+      const mouseleave = fromEvent(this.coverContainer.nativeElement, 'mouseleave');
+      return merge(mousedown, mouseleave, mouseup)
+        .pipe(
+          tap((event: Event) => {
+            if (event.type === 'mouseup') {
+              this.renderer.setStyle(this.coverContainer.nativeElement, 'cursor', 'grab');
+            }
+            return this.doReposition(event, moveByAxis);
+          }),
+          takeWhile(() => this.draggableActive));
+    }
+  }
+
+  private doReposition(e, moveByAxis: string = 'y') {
+    this.moveContinue = false;
+    this.coverContainer.nativeElement.removeEventListener('mousemove', this.moveImage);
+
+    if (e.type == 'mousedown') {
+      this.renderer.setStyle(this.coverContainer.nativeElement, 'cursor', 'grabbing');
+      this.origin.x = e.clientX;
+      this.origin.y = e.clientY;
+      this.moveContinue = true;
+      fromEvent(this.coverContainer.nativeElement, 'mousemove')
+        .pipe(
+          tap((event) => {
+            this.moveImage(event, moveByAxis);
+          }),
+          takeWhile(() => this.draggableActive)
+        )
+        .subscribe();
+    } else {
+      window.document.body.focus();
+    }
+
+    e.stopPropagation();
+    return false;
+  }
+
+  private moveImage(e, moveByAxis: string = 'y') {
+    const inbounds = {x: false, y: false},
+      offset = {
+        x: +this.coverPosX - (this.origin.x - e.clientX),
+        y: +this.coverPosY - (this.origin.y - e.clientY)
+      };
+    inbounds.x = offset.x < 0 && (offset.x * -1) < this.bounds.w;
+    inbounds.y = offset.y < 0 && (offset.y * -1) < this.bounds.h;
+    const inboundsCheck = moveByAxis === 'y' ? inbounds.y : inbounds.x;
+    if (this.moveContinue && inboundsCheck) {
+      if (moveByAxis === 'y') {
+        this.coverPosY = `${offset.y}`;
+        this.renderer.setStyle(this.coverContainer.nativeElement, 'background-position', '0 ' + this.coverPosY + 'px');
+      } else {
+        this.coverPosX = `${offset.x}`;
+        this.renderer.setStyle(this.coverContainer.nativeElement, 'background-position', this.coverPosX + 'px' + ' 0');
+      }
+    }
+    this.origin.x = e.clientX;
+    this.origin.y = e.clientY;
+
+    e.stopPropagation();
+    return;
+  }
+
+  public onCancelReposition() {
+    this.removeDraggableOptions();
+    this.imageLoaded = false;
+    this.coverPosX = this.publication.coverPositionX || '0';
+    this.coverPosY = this.publication.coverPositionY || '0';
+    this.cover = this.publication.cover;
+    this.renderer.setStyle(this.coverContainer.nativeElement, 'background-position', this.coverPosX + 'px ' + this.coverPosY + 'px');
+  }
+
+  public onSaveReposition() {
+    this.edit();
+  }
+
+  private removeDraggableOptions() {
+    this.renderer.setStyle(this.coverContainer.nativeElement, 'cursor', 'auto');
+    this.showDraggable = false;
+    this.coverContainer.nativeElement.removeEventListener('mousemove', this.moveImage);
+    this.draggableActive = false;
+    this.reposition$.unsubscribe();
+  }
+
+  inviteActionResult($event) {
+    if ($event) {
+      this.publicationService.acceptInvitationBecomeMember(this.publication.slug).subscribe(
+        () => {
+          this.publication.inviter = null;
+          this.getPublication();
+        }
+      );
+    } else {
+      this.publicationService.rejectInvitationBecomeMember(this.publication.slug).subscribe(
+        () => {
+          this.publication.inviter = null;
+        }
+      );
+    }
   }
 
   ngOnDestroy() {

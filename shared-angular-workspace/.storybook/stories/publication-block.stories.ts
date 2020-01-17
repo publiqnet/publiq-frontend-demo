@@ -29,7 +29,7 @@ storiesOf('Publiq Design|Molecules.Publication Block', module)
       component: PublicationBlockComponent,
       props: {
         hasMore: boolean('Has More Publications', false),
-        countByPage: number('Publications count by page', 4),
+        countByPage: number('Publications count by page', 2),
         data: object('publication data', [
           {
             title: 'UX Topics 1',
@@ -39,122 +39,49 @@ storiesOf('Publiq Design|Molecules.Publication Block', module)
             slug: 'ux_topics',
             subscribersCount: 1234,
             following: true,
-            status: 0
-          },
-          {
-            title: 'UX Topics 2',
-            description: 'Tips & News on Social Media Marketing, Online Advertising, Search Engine Optimization, Content Marketing, Growth Hacking, Branding, Start-Ups and more.',
-            logo: '',
-            cover: '',
-            slug: 'ux_topics',
-            subscribersCount: 1234,
-            following: true,
-            status: 0
-          },
-          {
-            title: 'UX Topics 3',
-            description: 'Tips & News on Social Media Marketing, Online Advertising, Search Engine Optimization, Content Marketing, Growth Hacking, Branding, Start-Ups and more.',
-            logo: 'http://via.placeholder.com/120x120',
-            cover: 'https://images.pexels.com/photos/326055/pexels-photo-326055.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
-            slug: 'ux_topics',
-            subscribersCount: 1234,
-            following: false,
-            status: 0
-          },
-          {
-            title: 'UX Topics 4',
-            description: 'Tips & News on Social Media Marketing, Online Advertising, Search Engine Optimization, Content Marketing, Growth Hacking, Branding, Start-Ups and more.',
-            logo: 'http://via.placeholder.com/120x120',
-            cover: 'https://images.pexels.com/photos/326055/pexels-photo-326055.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
-            slug: 'ux_topics',
-            subscribersCount: 1234,
-            following: false,
-            status: 0
-          },
-          {
-            title: 'UX Topics 5',
-            description: 'Tips & News on Social Media Marketing, Online Advertising, Search Engine Optimization, Content Marketing, Growth Hacking, Branding, Start-Ups and more.',
-            logo: 'http://via.placeholder.com/120x120',
-            cover: 'https://images.pexels.com/photos/326055/pexels-photo-326055.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
-            slug: 'ux_topics',
-            subscribersCount: 1234,
-            following: false,
-            status: 0
-          },
-          {
-            title: 'UX Topics 6',
-            description: 'Tips & News on Social Media Marketing, Online Advertising, Search Engine Optimization, Content Marketing, Growth Hacking, Branding, Start-Ups and more.',
-            logo: 'http://via.placeholder.com/120x120',
-            cover: 'https://images.pexels.com/photos/326055/pexels-photo-326055.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
-            slug: 'ux_topics',
-            subscribersCount: 1234,
-            following: false,
-            status: 0
-          },
-          {
-            title: 'UX Topics 7',
-            description: 'Tips & News on Social Media Marketing, Online Advertising, Search Engine Optimization, Content Marketing, Growth Hacking, Branding, Start-Ups and more.',
-            logo: 'http://via.placeholder.com/120x120',
-            cover: 'https://images.pexels.com/photos/326055/pexels-photo-326055.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
-            slug: 'ux_topics',
-            subscribersCount: 1234,
-            following: false,
-            status: 0
-          },
-          {
-            title: 'UX Topics 8',
-            description: 'Tips & News on Social Media Marketing, Online Advertising, Search Engine Optimization, Content Marketing, Growth Hacking, Branding, Start-Ups and more.',
-            logo: 'http://via.placeholder.com/120x120',
-            cover: 'https://images.pexels.com/photos/326055/pexels-photo-326055.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
-            slug: 'ux_topics',
-            subscribersCount: 1234,
-            following: false,
-            status: 0
-          },
-          {
-            title: 'UX Topics 9',
-            description: 'Tips & News on Social Media Marketing, Online Advertising, Search Engine Optimization, Content Marketing, Growth Hacking, Branding, Start-Ups and more.',
-            logo: 'http://via.placeholder.com/120x120',
-            cover: 'https://images.pexels.com/photos/326055/pexels-photo-326055.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
-            slug: 'ux_topics',
-            subscribersCount: 1234,
-            following: false,
-            status: 0
-          },
-          {
-            title: 'UX Topics 10',
-            description: 'Tips & News on Social Media Marketing, Online Advertising, Search Engine Optimization, Content Marketing, Growth Hacking, Branding, Start-Ups and more.',
-            logo: 'http://via.placeholder.com/120x120',
-            cover: 'https://images.pexels.com/photos/326055/pexels-photo-326055.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
-            slug: 'ux_topics',
-            subscribersCount: 1234,
-            following: false,
-            status: 0
-          },
-          {
-            title: 'UX Topics 11',
-            description: 'Tips & News on Social Media Marketing, Online Advertising, Search Engine Optimization, Content Marketing, Growth Hacking, Branding, Start-Ups and more.',
-            logo: 'http://via.placeholder.com/120x120',
-            cover: 'https://images.pexels.com/photos/326055/pexels-photo-326055.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
-            slug: 'ux_topics',
-            subscribersCount: 1234,
-            following: false,
-            status: 0
-          },
-          {
-            title: 'UX Topics 12',
-            description: 'Tips & News on Social Media Marketing, Online Advertising, Search Engine Optimization, Content Marketing, Growth Hacking, Branding, Start-Ups and more.',
-            logo: 'http://via.placeholder.com/120x120',
-            cover: 'https://images.pexels.com/photos/326055/pexels-photo-326055.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
-            slug: 'ux_topics',
-            subscribersCount: 1234,
-            following: false,
-            status: 0
+            status: 0,
+            membersList: [
+              {
+                slug: '1.0.2',
+                first_name: 'test 1',
+                last_name: 'A',
+                image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQzlDPRr1xSW0lukY2EmVpAx5Ye1S8H5luUVOK2IqFdcsjCDQxK'
+              },
+              {
+                slug: '1.0.2',
+                first_name: 'test 2',
+                last_name: 'B',
+                image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQzlDPRr1xSW0lukY2EmVpAx5Ye1S8H5luUVOK2IqFdcsjCDQxK'
+              },
+              {
+                slug: '1.0.2',
+                first_name: 'test 3',
+                last_name: 'C',
+                image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQzlDPRr1xSW0lukY2EmVpAx5Ye1S8H5luUVOK2IqFdcsjCDQxK'
+              },
+              {
+                slug: '1.0.2',
+                first_name: 'test 4',
+                last_name: 'D',
+                image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQzlDPRr1xSW0lukY2EmVpAx5Ye1S8H5luUVOK2IqFdcsjCDQxK'
+              },
+              {
+                slug: '1.0.2',
+                first_name: 'test 5',
+                last_name: 'E',
+                image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQzlDPRr1xSW0lukY2EmVpAx5Ye1S8H5luUVOK2IqFdcsjCDQxK'
+              },
+              {
+                slug: '1.0.2',
+                first_name: 'test 6',
+                last_name: 'G',
+                image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQzlDPRr1xSW0lukY2EmVpAx5Ye1S8H5luUVOK2IqFdcsjCDQxK'
+              }
+            ]
           }
         ]),
         getPublication: action('Publication clicked'),
         onFollow: action('Followed'),
-        loadMore: action('👊On Load More Publications Click')
       }
     };
   }, {

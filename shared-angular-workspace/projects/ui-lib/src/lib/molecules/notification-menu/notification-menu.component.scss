@@ -124,10 +124,60 @@
       color: pbq-color($grey, 400);
     }
 
+    &__social {
+      flex-basis: calc(100% - 55px);
+      padding: 0 0 15px;
+      margin: -3px 0 0;
+      border-bottom: 1px solid pbq-color($grey, 300);
+
+      > div {
+        display: inline-flex;
+        width: 30px; height: 30px;
+        justify-content: center;
+        align-items: center;
+        border-radius: 50%;
+        background-color: pbq-color($grey, 200);
+        font-size: 24px;
+        color: rgba(#000, .6);
+
+        ui-icon {
+          pointer-events: none;
+          opacity: .6;
+        }
+
+        &:not(:last-child) {
+          margin-right: 10px;
+        }
+
+        &:hover, &:focus {
+          color: #000;
+
+          ui-icon {
+            opacity: 1;
+          }
+        }
+      }
+    }
+
     &--read {
       .notification-list__item {
         &__circle:after {
           background: pbq-color($grey, 300);
+        }
+      }
+    }
+
+    &--social {
+      flex-wrap: wrap;
+      justify-content: flex-end;
+
+      .notification-list__item {
+        &__content {
+          border-bottom: 0;
+        }
+
+        &__circle {
+          transform: translateY(-23px);
         }
       }
     }

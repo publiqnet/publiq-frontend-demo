@@ -10,10 +10,10 @@ import { contentRoutes } from './content-routing.module';
 import { NgxUsefulSwiperModule } from 'ngx-useful-swiper';
 import { NewContentComponent } from './newcontent/newcontent.component';
 import { EditContentComponent } from './edit-content/edit-content.component';
+import { GalleryModalComponent } from './gallery-modal/gallery-modal.component';
 import { TagComponent } from './tag/tag.component';
 import { NgxMasonryModule } from 'ngx-masonry';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
-
 
 @NgModule({
   imports: [
@@ -26,12 +26,13 @@ import { InfiniteScrollModule } from 'ngx-infinite-scroll';
     RouterModule.forChild(contentRoutes),
     NgxUsefulSwiperModule,
     NgxMasonryModule,
-    InfiniteScrollModule
+    InfiniteScrollModule,
   ],
   declarations: [
     NewContentComponent,
     EditDraftComponent,
     EditContentComponent,
+    GalleryModalComponent,
     TagComponent
   ]
 })

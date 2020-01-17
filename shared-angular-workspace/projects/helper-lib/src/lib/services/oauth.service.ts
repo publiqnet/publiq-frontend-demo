@@ -59,7 +59,6 @@ export class OauthService {
   }
 
   signupComplete(stringToSign, code, password) {
-    KeyPair.setRandomKey(this.randomKey);
     const keyPair = new KeyPair();
     const encryptedBrainKey = keyPair.getEncryptedBrainKeyByPassword(password);
     const publicKey = keyPair.PpublicKey;
@@ -218,6 +217,7 @@ export class OauthService {
       const encodedAverageHash = stringToSha256(averageHash).substring(0, 8);
 
       this.randomKey = parseInt(encodedAverageHash, 16);
+      KeyPair.setRandomKey(this.randomKey);
     });
   }
 }

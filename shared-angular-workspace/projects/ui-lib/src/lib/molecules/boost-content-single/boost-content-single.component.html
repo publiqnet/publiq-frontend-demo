@@ -10,7 +10,7 @@
       <div class="published-info">
         <div *ngIf="boostContentData.boostSummary.balance && boostContentData.boosted; else noBalance">
           <h3>{{'ui.boost-content-single.you_will_spend' | translate}}
-            <span>{{boostContentData.boostSummary.balance}} PBQ</span>
+            <span>{{boostContentData.boostSummary.spentBalance}} PBQ</span>
           </h3>
         </div>
         <ng-template #noBalance>

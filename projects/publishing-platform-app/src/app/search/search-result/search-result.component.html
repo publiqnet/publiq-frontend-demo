@@ -12,12 +12,35 @@
     </div>
     <ng-container *ngIf="searchType === searchResultTypes.Articles">
       <div *ngIf="listType == 'grid'" class="offset-lg-2 col-lg-8 col-xl-9 stories" [class.masonry]="isMasonryLoaded" (layoutComplete)="onLayoutComplete($event)" ngx-masonry [options]="myOptions">
-        <ui-content-single (accountClick)="onAccountClick($event)" (contentClick)="onContentClick($event)" (publicationClick)="onPublicationClick($event)" (tagClick)="onTagClick($event)"
-                           ngxMasonryItem [type]="listType" *ngFor="let content of searchResult?.article;" [contentData]="content"></ui-content-single>
+        <ui-content-single
+          (accountClick)="onAccountClick($event)"
+          (contentClick)="onContentClick($event)"
+          (publicationClick)="onPublicationClick($event)"
+          (tagClick)="onTagClick($event)"
+          ngxMasonryItem
+          [type]="listType"
+          *ngFor="let content of searchResult?.article;"
+          [canEditContent]="accountService.loggedIn() && accountService.accountInfo.publicKey === content.author.publicKey"
+          [publicationList]="publicationsList"
+          (onTagItemSelect)="onRouteChange($event, content)"
+          (onPublicationSelect)="changePublication($event, content.uri)"
+          [contentData]="content">
+        </ui-content-single>
       </div>
       <div *ngIf="listType == 'single'" class="offset-lg-2 col-lg-8 col-xl-9">
-        <ui-content-single (accountClick)="onAccountClick($event)" (contentClick)="onContentClick($event)" (publicationClick)="onPublicationClick($event)" (tagClick)="onTagClick($event)"
-                           [type]="listType" *ngFor="let content of searchResult?.article" [contentData]="content"></ui-content-single>
+        <ui-content-single
+          (accountClick)="onAccountClick($event)"
+          (contentClick)="onContentClick($event)"
+          (publicationClick)="onPublicationClick($event)"
+          (tagClick)="onTagClick($event)"
+          [type]="listType"
+          *ngFor="let content of searchResult?.article"
+          [canEditContent]="accountService.loggedIn() && accountService.accountInfo.publicKey === content.author.publicKey"
+          [publicationList]="publicationsList"
+          (onTagItemSelect)="onRouteChange($event, content)"
+          (onPublicationSelect)="changePublication($event, content.uri)"
+          [contentData]="content">
+        </ui-content-single>
       </div>
     </ng-container>
 
@@ -46,4 +69,18 @@
   <ng-container *ngIf="seeMoreChecker">
     <div class="search-results" infiniteScroll [infiniteScrollDistance]="1" [infiniteScrollThrottle]="50" [infiniteScrollDisabled]="blockInfiniteScroll" (scrolled)="seeMore()"></div>
   </ng-container>
+
+  <div *ngIf="showBoostModal" class="publishing-space publishing-space--edit-boost">
+    <app-boost-modal [modalType]="showBoostModalType"
+                     (closeBoostedModal)="closeBoostModal()"
+                     (submittedBoost)="submittedBoost()"
+                     [contentUri]="selectedBoostData.uri">
+    </app-boost-modal>
+  </div>
+  <div *ngIf="showHighlightModal" class="publishing-space publishing-space--edit-boost">
+    <app-create-highlight (closeHighlightedModal)="closeHighlightModal()" [contentUri]="selectedBoostData.uri"></app-create-highlight>
+  </div>
+  <div *ngIf="showHistoryModal">
+    <app-custom-dialog [case]="'history'" [properties]="contentVersions" (closeConfirmModal)="closeHistoryModal($event)"></app-custom-dialog>
+  </div>
 </div>

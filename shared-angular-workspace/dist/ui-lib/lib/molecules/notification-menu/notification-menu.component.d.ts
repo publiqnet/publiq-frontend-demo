@@ -4,12 +4,8 @@ import { TranslateService } from '@ngx-translate/core';
 export declare enum Actions {
     User = "performer",
     Publication = "target",
-    New_Request = "publication_request_new",
-    New_Invitation = "publication_invitation_new",
     Redirect_User = "redirect-user",
-    Redirect_Publication = "redirect-publication",
-    Redirect_PB_Request = "redirect-pb-requests",
-    Redirect_Invitation = "redirect-invitations"
+    Redirect_Publication = "redirect-publication"
 }
 export declare class NotificationMenuComponent implements OnInit, OnChanges {
     translateService: TranslateService;
@@ -26,7 +22,6 @@ export declare class NotificationMenuComponent implements OnInit, OnChanges {
     seeMoreNots(event: any): void;
     private transform;
     private changeKeys;
-    private changeTypes;
     onBodyClick(event: any): void;
     private makeAction;
 }

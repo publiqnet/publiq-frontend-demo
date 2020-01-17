@@ -65,6 +65,10 @@ import { ClickOutsideDirective } from './directives/click-outside.directive';
 import { LocalizedDatePipe } from '../core/pipes/localized-date.pipe';
 import localeJa from '@angular/common/locales/ja';
 import { TransformContentPipe } from './pipes/transform-content.pipe';
+import { CropImageComponent } from './crop-image/crop-image.component';
+import { ImageCropperModule } from 'ngx-image-cropper';
+import { DraggableComponent } from './draggable/draggable.component';
+import { CreateHighlightComponent } from '../core/create-highlight/create-highlight.component';
 
 registerLocaleData(localeJa);
 
@@ -122,6 +126,7 @@ export function createTranslateLoader(http: HttpClient) {
     HelperLibModule,
     UiLibModule,
     LazyLoadImagesModule,
+    ImageCropperModule,
     TranslateModule.forChild({
       loader: {
         provide: TranslateLoader,
@@ -149,8 +154,11 @@ export function createTranslateLoader(http: HttpClient) {
     ChipsInputComponent,
     CustomDialogComponent,
     ClickOutsideDirective,
+    DraggableComponent,
     LocalizedDatePipe,
-    TransformContentPipe
+    TransformContentPipe,
+    CropImageComponent,
+    CreateHighlightComponent
   ],
   exports: [
     PerfectScrollbarModule,
@@ -209,8 +217,11 @@ export function createTranslateLoader(http: HttpClient) {
     BoostModalComponent,
     ChipsInputComponent,
     CustomDialogComponent,
+    DraggableComponent,
+    CropImageComponent,
     ClickOutsideDirective,
-    LocalizedDatePipe
+    LocalizedDatePipe,
+    CreateHighlightComponent
   ],
   providers: [
     DecimalPipe,

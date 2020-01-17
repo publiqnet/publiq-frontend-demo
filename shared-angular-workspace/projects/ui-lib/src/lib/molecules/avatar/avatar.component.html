@@ -1,5 +1,5 @@
 <div class="avatar" [class]="className" [class.avatar--squaric]="isSquaric" [ngClass]="getClassNames()">
-  <span *ngIf="showLetters()">{{utilService.formatFirstLetters(avatarData.fullName)}}</span>
+  <span *ngIf="showLetters()">{{utilService.formatFirstLetters(avatarData.fullName, multiLetters ? 2 : 1)}}</span>
 
   <img *ngIf="showOriginal()" [src]="avatarData.image" [ngStyle]="{opacity: !originalImageLoaded ? 0 : null, maxHeight: !originalImageLoaded ? '1px' : null}"
               [alt]="avatarData.fullName" (load)="onImageLoaded($event, 'img')" (error)="onImageError($event, 'img')">

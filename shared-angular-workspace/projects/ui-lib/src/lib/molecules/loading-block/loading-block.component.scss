@@ -7,8 +7,17 @@
 
 @mixin grey {
   background-color: pbq-color($grey, 200);
-  background-image: -webkit-linear-gradient(-25deg, #ECF0F3 0, #ECF0F3 10%, lighten(#DEE2E6, 2%) 50%, #ECF0F3 90%, #ECF0F3 100%);
+  background-image: -webkit-linear-gradient(-25deg, pbq-color($grey, 200) 0, pbq-color($grey, 200) 10%, lighten(pbq-color($grey, 300), 2%) 50%, pbq-color($grey, 200) 90%, pbq-color($grey, 200) 100%);
   background-size: 140%;
+  background-position: 400% 0;
+  background-repeat: no-repeat;
+  animation: bgAnim 2s infinite;
+}
+
+@mixin grey-darker {
+  background-color: pbq-color($grey, 300);
+  background-image: -webkit-linear-gradient(-25deg, pbq-color($grey, 300) 0, pbq-color($grey, 300) 10%, lighten(pbq-color($grey, 400), 10%) 50%, pbq-color($grey, 300) 90%, pbq-color($grey, 300) 100%);
+  background-size: 180%;
   background-position: 400% 0;
   background-repeat: no-repeat;
   animation: bgAnim 2s infinite;
@@ -98,12 +107,12 @@
 
 :host(.loading-block--grid) {
   display: inline-block;
-  width: calc(100% / 3 - 15px * 2/3);
+  width: 33.333%;
   @include media-xl {
-    width: calc(100% / 2 - 10px);
+    width: 50%;
   }
   @include media-md {
-    width: calc(100% - 10px);
+    width: 100%;
   }
 
   .loading-block__wrapper {
@@ -179,4 +188,205 @@
       }
     }
   }
+}
+
+.loading-item-list {
+  &__title {
+    display: inline-block;
+    width: 100%;
+    height: 18px;
+    margin: 6px 0 25px;
+    max-width: 150px;
+    border-radius: 4px;
+    @include grey();
+  }
+
+  &__item {
+    display: flex;
+    width: 100%;
+    margin: 0 0 25px;
+  }
+
+  &__texts {
+    flex-grow: 1;
+
+    span {
+      border-radius: 4px;
+      width: 100%;
+      display: inline-block;
+      @include grey();
+
+      &:first-child {
+        height: 20px;
+      }
+
+      &:last-child {
+        width: 60%;
+        height: 15px;
+      }
+    }
+  }
+
+  &__avatar {
+    width: 40px; height: 40px;
+    flex: 0 0 40px;
+    margin-right: 10px;
+    border-radius: 50%;
+    @include grey();
+  }
+}
+
+.loading-boostable {
+  padding: 15px;
+  background-color: pbq-color($grey, 200);
+  border-radius: 15px;
+
+  &__part {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    &:first-of-type {
+      margin: 0 0 35px;
+    }
+  }
+
+  &__avatar {
+    width: 64px; height: 64px;
+    flex: 0 0 64px;
+    border-radius: 10px;
+    margin-right: 15px;
+    @include grey-darker();
+  }
+
+  &__title {
+    display: inline-flex;
+    flex-direction: column;
+    flex-grow: 1;
+
+    span {
+      display: inline-block;
+      width: 100%;
+      height: 18px;
+      border-radius: 4px;
+      @include grey-darker();
+
+      &:first-child {
+        margin-bottom: 4px;
+      }
+    }
+  }
+
+  &__hint {
+    display: inline-flex;
+    flex-grow: 2;
+    height: 18px;
+    margin-right: 25px;
+    border-radius: 4px;
+    max-width: 120px;
+    @include grey-darker();
+  }
+
+  &__button {
+    display: inline-flex;
+    flex-grow: 1;
+    height: 35px;
+    max-width: 100px;
+    border-radius: 4px;
+    @include grey-darker();
+  }
+}
+
+.loading-recommended {
+  display: flex;
+  flex-wrap: wrap;
+
+  &__title {
+    flex: 0 0 100%;
+
+    span {
+      display: inline-block;
+      width: 100%;
+      height: 18px;
+      margin: 10px 0 25px;
+      max-width: 150px;
+      border-radius: 4px;
+      @include grey();
+    }
+  }
+  &__single {
+    font-size: 0;
+    flex: 1;
+    display: inline-flex;
+    flex-direction: column;
+    padding: 15px;
+    align-items: center;
+    border-radius: 15px;
+    background-color: pbq-color($grey, 200);
+
+    &:last-child {
+      margin-left: 10px;
+    }
+  }
+
+  &__avatar {
+    display: inline-block;
+    width: 64px;
+    height: 64px;
+    border-radius: 15px;
+    margin: 0 0 10px;
+    @include grey-darker();
+  }
+
+  &__name {
+    display: inline-block;
+    width: 75%;
+    height: 20px;
+    border-radius: 4px;
+    margin: 0 0 4px;
+    @include grey-darker();
+  }
+
+  &__hint {
+    display: inline-block;
+    width: 50%;
+    height: 12px;
+    border-radius: 4px;
+    margin: 6px 0 0;
+    @include grey-darker();
+  }
+
+  &__button {
+    display: inline-block;
+    width: 60%;
+    height: 35px;
+    border-radius: 7px;
+    margin: 15px 0 0;
+    @include grey-darker();
+  }
+}
+
+.loading-highlight {
+  width: 158px; height: 200px;
+  border-radius: 25px;
+  padding: 24px;
+  @include grey();
+
+  span {
+    display: inline-block;
+    width: 100%;
+    height: 16px;
+    margin: 2px 0;
+    border-radius: 4px;
+    @include grey-darker();
+
+    &:last-child {
+      width: 70%;
+    }
+  }
+}
+
+.loading-line {
+  display: inline-block;
+  @include grey();
 }

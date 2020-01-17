@@ -1,35 +1,37 @@
-<div *ngIf="loading" class="row justify-content-center align-items-center spinner no-gutters">
-  <ui-loader [size]="100" [color]="'blue'"></ui-loader>
+<div *ngIf="loading" class="vh-centered">
+  <ui-loader [size]="60" [color]="'blue'"></ui-loader>
 </div>
-<div class="container" *ngIf="!loading">
+<div class="container" *ngIf="!loading && publication">
   <div class="row publication-cover publication-cover--editable"
-       [ngClass]="{'publication-cover--editable--no-img' : !publication.cover, 'no-cover': (!publication.cover && publication.memberStatus !==2 && !isMyPublication)}"
-       *ngIf="publication && !publication.hideCover"
+       [ngClass]="{'publication-cover--editable--no-img': !cover, 'publication-cover--draggable': showDraggable,
+       'publication-cover--hideCover' : (!cover && publication.memberStatus !==2 && !isMyPublication || publication?.hideCover)}"
+       [style.background-image]="sanitizer.bypassSecurityTrustStyle('url(' + cover + ')')"
+       [ngStyle]="{'background-position': coverPosX + 'px ' + coverPosY + 'px', 'background-size': isImageWide ? 'auto 100%' : '100% auto'}"
        #coverContainer>
+
+    <!--todo: SAMVEL from ALEX-->
+    <app-draggable *ngIf="showDraggable" (cancelReposition)="onCancelReposition()" (saveReposition)="onSaveReposition()"></app-draggable>
+
     <!-- style="background-image: url(https://via.placeholder.com/1320x340);" -->
-    <img class="publication-cover-blured" *ngIf="publication && publication.cover" [src]="publication.cover"
-         alt="cover">
-    <img class="publication-cover-visible" *ngIf="publication && publication.cover" [src]="publication.cover"
-         alt="cover">
     <div class="col-lg-8 offset-lg-2">
-      <div class="publication-cover__guide"
-           *ngIf="publication && !publication.cover && (isMyPublication || publication.memberStatus == 2)">
+      <div *ngIf="!cover && !publication?.hideCover && (isMyPublication || publication.memberStatus == 2)" class="publication-cover__guide">
         <div class="icon-profile upload-icon"></div>
         <div class="publication-cover__guide__texts">
           <h4>{{'publication.drop_upload' | translate}}</h4>
           <p>{{('publication.img_types' | translate) + ' ' + ('publication.recommended' | translate)}}.</p>
         </div>
       </div>
-      <div class="publication-cover__actions"
-           *ngIf="(isMyPublication || publication.memberStatus == 2) && !imageLoaded">
+
+      <div *ngIf="(isMyPublication || publication.memberStatus == 2) && !imageLoaded && !showDraggable" class="publication-cover__actions">
+
         <label for="addCover">
           <div class="cover__upload">
-            <input type="file" (change)="uploadCover($event, coverContainer)">
+            <input type="file" (change)="uploadCover($event)" id="addCover">
             <ui-button iconClassName="picture" text="{{'publication.upload' | translate}}">
             </ui-button>
           </div>
         </label>
-        <ui-dropdown-list *ngIf="publication && publication.cover" [isDark]="true"
+        <ui-dropdown-list *ngIf="cover" [isDark]="true"
                           (onItemSelect)="dropdownSelect($event)" delta="0" position="top" icon="menu"
                           [items]="coverMenuItems"></ui-dropdown-list>
         <!-- <ui-button [iconButton]="true" size="small" iconClassName="menu"></ui-button> -->
@@ -140,6 +142,11 @@
       </div>
     </div>
   </div>
+  <div class="row" *ngIf="publication && publication.inviter">
+    <div class="col-12 col-lg-8 offset-lg-2">
+      <ui-invitation-actions [inviter]="publication.inviter" (inviterClicked)="utilService.routerChangeHelper('account', $event.slug)" (actionSelected)="inviteActionResult($event)"></ui-invitation-actions>
+    </div>
+  </div>
   <div class="row">
 
     <div class="col-12 col-lg-8 offset-lg-2 tabber-container" [class.editable-disabled]="editMode" *ngIf="searchForm">
@@ -185,6 +192,10 @@
                                (publicationClick)="utilService.routerChangeHelper('publication',$event.slug)"
                                (tagClick)="onTagClick($event)"
                                [type]="'grid'"
+                               [publicationList]="publicationsList"
+                               [canEditContent]="accountService.loggedIn() && accountService.accountInfo.publicKey === content.author.publicKey"
+                               (onTagItemSelect)="onRouteChange($event, content)"
+                               (onPublicationSelect)="changePublication($event, content.uri)"
                                [contentData]="content"></ui-content-single>
           </ngxMasonryItem>
         </ngx-masonry>
@@ -194,6 +205,10 @@
                            (accountClick)="utilService.routerChangeHelper('account', $event.slug)"
                            (contentClick)="utilService.routerChangeHelper('content', $event)"
                            (publicationClick)="utilService.routerChangeHelper('publication', $event.slug)"
+                           [canEditContent]="accountService.loggedIn() && accountService.accountInfo.publicKey === content.author.publicKey"
+                           (onTagItemSelect)="onRouteChange($event, content)"
+                           [publicationList]="publicationsList"
+                           (onPublicationSelect)="changePublication($event, content.uri)"
                            (tagClick)="onTagClick($event)" [contentData]="content"></ui-content-single>
       </div>
       <div class="not-found local" *ngIf="!loading && !stories.length">
@@ -207,10 +222,10 @@
   <div class="row">
     <div class="col-12 col-lg-8 offset-lg-2 tab-heading tab-heading--members">
       <h2>{{'publication.members' | translate}}</h2>
-      <!-- memberneri filter -->
+      <!-- members filter -->
       <div class="tab-heading__inner">
-        <i class="icon-search" (click)="openFilter($event)"></i>
-        <input type="text" [class.mw-200]="openInput" [formControl]="filterControl">
+        <!--<i class="icon-search" (click)="openFilter($event)"></i>-->
+        <!--<input type="text" [class.mw-200]="openInput" [formControl]="filterControl">-->
       </div>
       <form class="form" novalidate [formGroup]="searchForm">
         <div class="invite-member-space" *ngIf="activeTab === 'members'">
@@ -318,8 +333,9 @@
 </div>
 
 <!--create story-->
-<div class="container container--new-story container--new-story" *ngIf="currentUser && publication">
+<div class="container container--new-story" *ngIf="currentUser && publication">
   <div class="new-story new-story--publication-inner"
+       [class.new-story__current]="isMyPublication"
        [routerLink]="'/content/newcontent'"
        [queryParams]="{publication: publication.slug}">
     <!--<ui-icon [size]="25" [animationOptions]="{name: 'createArticle', type: 'profile', loop: 0.45}" [action]="animationAction"></ui-icon>-->
@@ -327,6 +343,20 @@
   </div>
 </div>
 <!--end-->
+
+<div *ngIf="showBoostModal" class="publishing-space publishing-space--edit-boost">
+  <app-boost-modal [modalType]="showBoostModalType"
+                   (closeBoostedModal)="closeBoostModal()"
+                   (submittedBoost)="submittedBoost()"
+                   [contentUri]="selectedBoostData.uri">
+  </app-boost-modal>
+</div>
+<div *ngIf="showHighlightModal" class="publishing-space publishing-space--edit-boost">
+  <app-create-highlight (closeHighlightedModal)="closeHighlightModal()" [contentUri]="selectedBoostData.uri"></app-create-highlight>
+</div>
+<div *ngIf="showHistoryModal">
+  <app-custom-dialog [case]="'history'" [properties]="contentVersions" (closeConfirmModal)="closeHistoryModal($event)"></app-custom-dialog>
+</div>
 
 <div *ngIf="showModal">
   <app-custom-dialog (closeConfirmModal)="doDelete($event)" [case]="'remove-publication'"></app-custom-dialog>

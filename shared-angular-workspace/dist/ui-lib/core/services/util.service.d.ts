@@ -5,6 +5,6 @@ export declare class UtilService {
     utcMoment: moment_.Moment;
     constructor(translateService: TranslateService);
     charactersLimit(string: any, limit?: number): any;
-    formatFirstLetters(fullName: string): string;
+    formatFirstLetters(fullName: string, count?: number): string;
     dateToName(value: any): any;
 }

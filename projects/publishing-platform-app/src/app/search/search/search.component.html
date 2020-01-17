@@ -117,7 +117,7 @@
           </div>
         </ng-container>
       </div>
-      <div class="no-search-result" *ngIf="(searchResult && !searchResult.totalCount && !searchAction) || (!defaultSearchData?.publication?.length && !defaultSearchData?.authors?.length && !searchResult)">
+      <div class="no-search-result" *ngIf="checkForExistence">
         <img src="assets/images/no_result.svg" alt="No search result">
         <span>{{'search.no_search_content_yet' | translate}}</span>
       </div>

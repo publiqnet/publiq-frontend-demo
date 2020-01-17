@@ -12,7 +12,7 @@ export interface AuthorOptions {
     thumbnail?: string;
     thumbnailHeight?: number;
     thumbnailWidth?: number;
-
+    subscribersCount?: number | string;
 }
 
 export class Author {
@@ -30,6 +30,7 @@ export class Author {
     thumbnail?: string;
     thumbnailHeight: number;
     thumbnailWidth: number;
+    subscribersCount: number | string;
     constructor(options?: AuthorOptions) {
         for (const i in options) {
             if (options.hasOwnProperty(i)) {
@@ -37,6 +38,8 @@ export class Author {
                     this['last_name'] = options[i] ? options[i] : '';
                 } else if (i == 'firstName') {
                     this['first_name'] = options[i] ? options[i] : '';
+                } else if (i == 'subscribersCount') {
+                  this.subscribersCount = options[i] ? options[i] : '';
                 } else if (i == 'publicKey') {
                     this['slug'] = options[i] ? options[i] : '';
                     this[i] = options[i] ? options[i] : '';

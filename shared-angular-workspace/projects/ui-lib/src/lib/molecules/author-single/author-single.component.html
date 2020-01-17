@@ -1,0 +1,11 @@
+<div [ngClass]="[className]" class="list-part">
+  <ui-avatar [size]="'Medium'" [isSquaric]="false" [avatarData]="authorData" (click)="getAuthorData($event)"></ui-avatar>
+  <div class="list-part__content">
+    <h3 (click)="getAuthorData($event)">{{authorData?.fullName}}</h3>
+    <p>{{authorData?.subscribersCount + ' ' + ('ui.author-single.followers' | translate)}}</p>
+  </div>
+  <div *ngIf="authorData.slug !== currUserPbKey" class="list-part__button" (click)="onFollow(!authorData.subscribed)" (mouseover)="animate(true)" (mouseleave)="animate(false)">
+    <ui-icon [size]="20" [action]="animationAction" [animationOptions]="createOptions('userFollow')" [ngStyle]="{'display' : authorData.subscribed ? 'none': 'block'}"></ui-icon>
+    <ui-icon [size]="20" [action]="animationAction" [animationOptions]="createOptions('userUnFollow')" [ngStyle]="{'display' : !authorData.subscribed ? 'none': 'block'}"></ui-icon>
+  </div>
+</div>

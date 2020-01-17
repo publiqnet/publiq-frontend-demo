@@ -11,7 +11,8 @@ export interface PublicationDataOptions {
   inviter: InviterDataOptions;
   following: boolean;
   status: number;
-  membersList: Avatar[];
+  membersList?: Avatar[];
+  membersCount?: number;
   storiesCount: number;
   hideCover: boolean;
   views?: number;

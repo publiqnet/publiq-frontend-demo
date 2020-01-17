@@ -19,6 +19,7 @@ export declare class ContentSingleComponent implements OnInit, OnChanges {
     hasBoost: boolean;
     imageArrowsShown: boolean;
     canEditContent: boolean;
+    canOnlyDelete: boolean;
     tagItems: HeaderLoggedDataOptions[];
     loadOriginalImg: boolean;
     onTagItemSelect: EventEmitter<any>;

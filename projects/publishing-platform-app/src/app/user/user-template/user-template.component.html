@@ -1,65 +1,73 @@
 <div class="signinup">
-    <div class="signinup__side signinup__side--light">
-        <div *ngIf="isDataLoaded" class="signinup__header">
-            <img src="/assets/images/publiq-media-white.svg" class="signinup__header__logo d-none d-lg-none d-sm-inline-block">
-            <ui-tab  *ngIf="['login', 'register'].includes(activeRoute)" [type]="'navigation'" [currentValue]="activeRoute" [className]="'tabber'" (onTabChange)="changeTab($event)" [tabs]="tabberData"></ui-tab>
-        </div>
-        <div class="signinup__content">
-            <div class="signinup__inner">
-                <router-outlet></router-outlet>
-            </div>
-        </div>
-        <div class="signinup__footer">
-            <a href="#" *ngIf="activeRoute == 'login'" class="" (click)="changeRoute($event, '/user/recover')">{{'user-template.forgot_password' | translate}}</a>
-            <p class="signinup__footer--terms d-none">{{'user-template.agree_to'| translate}}<a href="">{{'user-template.terms_and_conditions'| translate}}</a></p>
-            <a href="#" *ngIf="activeRoute != 'login'" (click)="changeRoute($event, '/user/login')">{{'user-template.back_to_login' | translate }}  <i class="icon-arrow-right"></i></a>
-        </div>
+  <div class="signinup__side signinup__side--light">
+    <div class="signinup__header">
+      <a [routerLink]="['/']"><img src="/assets/images/publiq-media.svg"
+                                   class="signinup__header__logo d-lg-none d-sm-inline-block"></a>
+      <ui-tab *ngIf="['login', 'register'].includes(activeRoute) && tabberData" [type]="'navigation'"
+              [currentValue]="activeRoute" [className]="'tabber'" (onTabChange)="changeTab($event)"
+              [tabs]="tabberData"></ui-tab>
     </div>
-    <div class="signinup__side signinup__side--dark d-none d-sm-inline-block">
-        <div class="signinup__header">
-            <a [routerLink]="['/']"> <img src="../../../assets/images/publiq-media-white.svg" class="signinup__header__logo d-none d-lg-inline-block pointer" alt="PUBLIQ">
-            </a>
-            <div class="signinup__header__language">
-                <span [ngClass]="{'language--active': translateService.currentLang == 'en'}" (click)="useLang('en')">EN</span>
-                <span [ngClass]="{'language--active': translateService.currentLang == 'jp'}" (click)="useLang('jp')">JP</span>
-            </div>
-        </div>
+    <div class="signinup__content">
+      <div class="signinup__inner">
+        <router-outlet></router-outlet>
+      </div>
+    </div>
+    <div *ngIf="contentService.translationsReady" class="signinup__footer">
+      <a href="#" *ngIf="activeRoute == 'login'" class=""
+         (click)="changeRoute($event, '/user/recover')">{{'user-template.forgot_password' | translate}}</a>
+      <p class="signinup__footer--terms d-none">{{'user-template.agree_to'| translate}}<a
+        href="">{{'user-template.terms_and_conditions'| translate}}</a></p>
+      <a href="#" *ngIf="activeRoute != 'login'"
+         (click)="changeRoute($event, '/user/login')">{{'user-template.back_to_login' | translate }}  <i
+        class="icon-arrow-right"></i></a>
+    </div>
+  </div>
+  <div class="signinup__side signinup__side--dark d-none d-sm-inline-block">
+    <div class="signinup__header">
+      <a [routerLink]="['/']"> <img src="../../../assets/images/publiq-media-white.svg"
+                                    class="signinup__header__logo d-none d-lg-inline-block pointer" alt="PUBLIQ">
+      </a>
+      <div class="signinup__header__language">
+        <span [ngClass]="{'language--active': translateService.currentLang == 'en'}" (click)="useLang('en')">EN</span>
+        <span [ngClass]="{'language--active': translateService.currentLang == 'jp'}" (click)="useLang('jp')">JP</span>
+      </div>
+    </div>
 
-        <div *ngIf="isDataLoaded" class="signinup__content">
-            <div class="signinup__slider swiper-container">
-                <div class="signinup__slider__bullets d-md-inline-block d-lg-none"></div>
-                <swiper [config]="swiperConfig">
-                    <div class="swiper-wrapper">
-                        <div class="signinup__slider__item swiper-slide">
-                            <img src="assets/images/slides/typewritter.png" alt="">
-                            <div class="signinup__slider__item__texts">
-                                <div>{{'user-template.text_safe_place_first' | translate }}</div>
-                                <div>{{'user-template.text_decentralized_platform_first' | translate}}</div>
-                            </div>
-                        </div>
-                        <div class="signinup__slider__item swiper-slide">
-                            <img src="assets/images/slides/typewritter.png" alt="">
-                            <div class="signinup__slider__item__texts">
-                                <div>{{'user-template.text_safe_place_second' | translate }}</div>
-                                <div>{{'user-template.text_decentralized_platform_second' | translate}}</div>
-                            </div>
-                        </div>
-                        <div class="signinup__slider__item swiper-slide">
-                            <img src="assets/images/slides/typewritter.png" alt="">
-                            <div class="signinup__slider__item__texts">
-                                <div>{{'user-template.text_safe_place_third' | translate }}</div>
-                                <div>{{'user-template.text_decentralized_platform_third' | translate}}</div>
-                            </div>
-                        </div>
-                    </div>
-                </swiper>
-                <div class="signinup__slider__bullets d-none d-lg-inline-block"></div>
+    <div class="signinup__content">
+      <div class="signinup__slider swiper-container">
+        <div class="signinup__slider__bullets d-md-inline-block d-lg-none"></div>
+        <swiper [config]="swiperConfig">
+          <div class="swiper-wrapper">
+            <div class="signinup__slider__item swiper-slide">
+              <img src="assets/images/slides/typewritter.png" alt="">
+              <div class="signinup__slider__item__texts">
+                <div>{{'user-template.text_safe_place_first' | translate }}</div>
+                <div>{{'user-template.text_decentralized_platform_first' | translate}}</div>
+              </div>
             </div>
-        </div>
-        <!--<div class="signinup__footer">-->
-            <!--<a href="#">{{ 'user-template.about' | translate }}</a>-->
-            <!--<a href="#">{{ 'user-template.privacy' | translate }}</a>-->
-            <!--<a href="#">{{ 'user-template.terms' | translate }}</a>-->
-        <!--</div>-->
+            <div class="signinup__slider__item swiper-slide">
+              <img src="assets/images/slides/typewritter.png" alt="">
+              <div class="signinup__slider__item__texts">
+                <div>{{'user-template.text_safe_place_second' | translate }}</div>
+                <div>{{'user-template.text_decentralized_platform_second' | translate}}</div>
+              </div>
+            </div>
+            <div class="signinup__slider__item swiper-slide">
+              <img src="assets/images/slides/typewritter.png" alt="">
+              <div class="signinup__slider__item__texts">
+                <div>{{'user-template.text_safe_place_third' | translate }}</div>
+                <div>{{'user-template.text_decentralized_platform_third' | translate}}</div>
+              </div>
+            </div>
+          </div>
+        </swiper>
+        <div class="signinup__slider__bullets d-none d-lg-inline-block"></div>
+      </div>
     </div>
+    <!--<div class="signinup__footer">-->
+    <!--<a href="#">{{ 'user-template.about' | translate }}</a>-->
+    <!--<a href="#">{{ 'user-template.privacy' | translate }}</a>-->
+    <!--<a href="#">{{ 'user-template.terms' | translate }}</a>-->
+    <!--</div>-->
+  </div>
 </div>

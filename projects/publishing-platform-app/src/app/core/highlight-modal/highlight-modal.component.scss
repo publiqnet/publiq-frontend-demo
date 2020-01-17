@@ -1,0 +1,220 @@
+@import "../../../assets/css/variables.scss";
+@import "../../../assets/css/highlight.fonts.css";
+
+@keyframes highlight-timer {
+  from { stroke-dasharray: 0, 168; }
+  to { stroke-dasharray: 168, 168; }
+}
+
+:host {
+  width: 100vw; height: 100vh;
+  position: fixed;
+  top: 0; left: 0;
+  background-color: rgba(pbq-color($grey, 100), .6);
+  z-index: 10;
+}
+
+.highlight {
+  &-wrapper {
+    position: absolute;
+    width: auto; height: 90%;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 0;
+    background-color: pbq-color($grey, 100);
+    background-size: cover;
+    background-position: center;
+    max-height: 720px;
+    border-radius: 15px;
+    box-shadow: 1px 10px 35px 0 rgba(#434343,.2);
+    overflow: hidden;
+
+    @include media-sm {
+      width: 100%; height: 100%;
+      max-height: unset;
+      border-radius: 0
+    }
+  }
+
+  &-adjuster {
+    height: 100%;
+  }
+}
+
+.highlight {
+  position: absolute;
+  width: 100%; height: 100%;
+  top: 0; left: 0;
+  display: inline-flex;
+  flex-direction: column;
+  padding: 11% 7.5% 2.5%;
+  user-select: none;
+  z-index: 1;
+
+  &__closer {
+    position: absolute;
+    top: 8px; right: 8px;
+    font-size: 24px;
+    color: #ffffff;
+    cursor: pointer;
+  }
+
+  &__title {
+    display: -webkit-box;
+    color: #ffffff;
+    font: 700 40px/1.125 $vollkorn;
+    text-decoration: none;
+    max-height: 9*40px;
+    margin: 0;
+    text-overflow: ellipsis;
+    text-shadow: 0 2px 8px rgba(#000,.1);
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 8;
+    overflow: hidden;
+
+    @media (max-height: 540px) {
+      font-size: 34px;
+      max-height: 9*34px;
+    }
+  }
+
+  &__tags {
+    margin: 25px 0 auto;
+  }
+
+  &__tag {
+    display: inline-block;
+    word-break: break-word;
+    border-radius: 5px;
+    padding: 9px 10px;
+    font: italic 600 20px/1.35 $open-sans;
+    text-decoration: none;
+    color: rgba(#fff, .8);
+    background-color: rgba(pbq-color($grey, 700), .5);
+    margin: 0 10px 10px 0;
+    cursor: pointer;
+    &.transparent {
+      opacity: 0.8;
+      border: 2px solid #FFFFFF;
+      border-radius: 5px;
+      background: transparent;
+    }
+    &.red-text {
+      color: #FC5D49;
+      background: #FFFFFF;
+      border-radius: 5px;
+      border: 2px solid transparent;
+    }
+    &.white-border {
+      border: 2px solid #FFFFFF;
+      border-radius: 5px;
+      background: transparent;
+    }
+
+    @media (max-height: 540px) {
+      font-size: 16px;
+      padding: 6px 8px;
+    }
+  }
+
+  &__author {
+    display: flex;
+    width: 100%;
+    flex: 0 0 100px;
+    height: 100px;
+    align-items: center;
+
+    > div {
+      &:first-child {
+        display: inline-flex;
+        position: relative;
+        flex: 0 0 65px;
+        width: 80px;
+        height: 100%;
+        align-items: center;
+        justify-content: center;
+        z-index: 1;
+
+        ::ng-deep .avatar {
+          width: 56px; height: 56px;
+          box-shadow: 0 2px 8px 0 rgba(#000,.1);
+          cursor: pointer;
+
+          @media (max-height: 620px) {
+            width: 45px; height: 45px;
+          }
+        }
+
+        svg {
+          width: 78px; height: 78px;
+          position: absolute;
+          z-index: -1;
+
+          @media (max-height: 620px) {
+            width: 65px; height: 65px;
+          }
+        }
+
+        @media (max-height: 620px) {
+          width: 64px;
+          flex: 0 0 64px;
+        }
+      }
+
+      &:last-child {
+        width: 0;
+        flex: 1 0 0;
+        margin-left: 15px;
+
+        h5 {
+          font: 600 17px/1.33 $open-sans;
+          color: #ffffff;
+          margin: 0 0 4px;
+          width: 100%;
+          overflow: hidden;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+          text-shadow: 0 2px 8px rgba(#000,.1);
+
+          a { color: inherit; }
+
+          i { font-weight: 500; }
+        }
+
+        small {
+          font: 500 13px/1.25 $open-sans;
+          color: rgba(#fff, .5);
+        }
+      }
+    }
+  }
+
+  &__timer {
+    animation: 5s linear highlight-timer forwards;
+    animation-play-state: paused;
+    stroke-dasharray: 0, 168;
+  }
+
+  &--active {
+    .highlight__timer {
+      animation-play-state: running;
+    }
+  }
+
+  &--picture:after {
+    content: '';
+    position: absolute;
+    width: 100%; height: 100%;
+    top: 0; left: 0;
+    z-index: -1;
+    background-image: linear-gradient(179deg, rgba(25,27,30,0.60) 0%, rgba(25,27,30,0.00) 100%);
+  }
+
+  &:active {
+    .highlight {
+      &__timer {
+        animation-play-state: paused;
+      }
+    }
+  }
+}

@@ -1,17 +1,18 @@
-import { Component, HostListener, Inject, OnDestroy, OnInit, PLATFORM_ID } from '@angular/core';
+import { AfterViewInit, Component, HostListener, Inject, OnDestroy, OnInit, PLATFORM_ID } from '@angular/core';
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 
 import { ReplaySubject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { ContentService } from '../services/content.service';
 import { AccountService } from '../services/account.service';
+import { BrowserNotificationService } from '../services/browser-notification.service';
 
 @Component({
   selector: 'app-template',
   templateUrl: './template.component.html',
   styleUrls: ['./template.component.scss']
 })
-export class TemplateComponent implements OnInit, OnDestroy {
+export class TemplateComponent implements OnInit, AfterViewInit, OnDestroy {
   account: any = true;
   navIsFixed: boolean;
   isBrowser = false;
@@ -24,6 +25,7 @@ export class TemplateComponent implements OnInit, OnDestroy {
     @Inject(DOCUMENT) private document: Document,
     private contentService: ContentService,
     private accountService: AccountService,
+    private browserNotificationService: BrowserNotificationService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
   }
@@ -61,6 +63,12 @@ export class TemplateComponent implements OnInit, OnDestroy {
       ) {
         this.navIsFixed = false;
       }
+    }
+  }
+
+  ngAfterViewInit(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      this.browserNotificationService.requestPermission();
     }
   }
 

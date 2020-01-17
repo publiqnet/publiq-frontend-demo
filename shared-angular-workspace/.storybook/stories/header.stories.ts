@@ -106,18 +106,18 @@ storiesOf('Publiq Design|Organisms.Header', module)
               }
             }
           ],
-          // userData: {
-          //   user: {
-          //     fullName: 'Sarkis Andreyan',
-          //     image: 'http://via.placeholder.com/120x120',
-          //   },
-          //   info: [
-          //     {count: '11', property: 'Stories', icon: 'profile'},
-          //     {count: '12', property: 'Views'},
-          //     {count: '13', property: 'Members'},
-          //     {count: '1K', property: 'Followers'},
-          //   ]
-          // },
+          userData: {
+            user: {
+              fullName: 'Sarkis Andreyan',
+              image: 'http://via.placeholder.com/120x120',
+            },
+            info: [
+              {count: '11', property: 'Stories', icon: 'profile'},
+              {count: '12', property: 'Views'},
+              {count: '13', property: 'Members'},
+              {count: '1K', property: 'Followers'},
+            ]
+          },
           userLoggedData: [
             {
               'icon': 'pbq',

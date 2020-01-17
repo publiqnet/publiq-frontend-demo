@@ -11,14 +11,13 @@ import { NewPublicationComponent } from './new/new-publication.component';
 import { NgxMasonryModule } from 'ngx-masonry';
 import { PublicationModalComponent } from './publication-modal/publication-modal.component';
 
-
 @NgModule({
   imports: [
     CommonModule,
     SharedModule,
     PublicationRoutingModule,
     TranslateModule.forChild(),
-    NgxMasonryModule
+    NgxMasonryModule,
   ],
   declarations: [
     PublicationComponent,

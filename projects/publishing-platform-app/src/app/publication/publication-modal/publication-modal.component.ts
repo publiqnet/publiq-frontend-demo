@@ -6,6 +6,7 @@ import { takeUntil, tap, delay } from 'rxjs/operators';
 import { ValidationService } from '../../core/validator/validator.service';
 import { UiNotificationService, NotificationTypeList } from '../../core/services/ui-notification.service';
 import { TranslateService } from '@ngx-translate/core';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-publication-modal',
@@ -33,6 +34,7 @@ export class PublicationModalComponent implements OnInit, OnDestroy {
   constructor(private FormBuilder: FormBuilder,
     private notificationService: UiNotificationService,
     public translateService: TranslateService,
+    private router: Router,
     private publicationService: PublicationService) {
     this.buildForm();
   }
@@ -150,13 +152,13 @@ export class PublicationModalComponent implements OnInit, OnDestroy {
     reader.readAsDataURL(file);
   }
 
-  removeCover(coverInput) {
+  removeCover() {
     this.coverImage = null;
     this.coverFile = null;
     this.publicationForm.controls['cover'].reset();
   }
 
-  removeLogo(logoInput) {
+  removeLogo() {
     this.logoImage = null;
     this.logoFile = null;
     this.publicationForm.controls['logo'].reset();
@@ -196,4 +198,11 @@ export class PublicationModalComponent implements OnInit, OnDestroy {
     this.unsubscribe$.complete();
   }
 
+  getPublication(uri) {
+    this.router.navigate([`/p/${uri}`]);
+  }
+
+  getMember(uri) {
+    this.router.navigate([`/a/${uri}`]);
+  }
 }

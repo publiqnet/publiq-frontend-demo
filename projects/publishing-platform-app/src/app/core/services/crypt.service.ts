@@ -43,7 +43,6 @@ export class CryptService {
     const now_1h = new Date(now.getTime() + (60 * 60 * 1000));
 
     const amountData = this.amountStringToWholeFraction(amount);
-
     const boostObj =  new PubliqSponsorContentUnit( {
       sponsorAddress: fromPublicKey,
       uri: uri,

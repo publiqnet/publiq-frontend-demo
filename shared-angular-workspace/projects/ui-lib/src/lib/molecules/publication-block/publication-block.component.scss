@@ -4,16 +4,16 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 250px;
-  margin: 0px 0px 40px 0px;
-  background: #F7F8F9;
+  max-width: 310px;
+  margin: 0px 0px 10px 0px;
   border-radius: 10px;
-  padding: 0px 10px 0px 15px;
   &__list {
     max-width: 250px;
+    display: flex;
     ::ng-deep {
       .list-part {
-        margin: 0px 0px 30px 0px;
+        margin: 0px 10px 25px 0px;
+        // max-width: 133px;
       }
     }
   }
@@ -26,18 +26,35 @@
     letter-spacing: 0.6px;
     text-transform: uppercase;
     color: $blue;
+    position: relative;
+    &:after {
+      content: attr(data-shadow-text);
+      color: pbq-color($grey, 100);
+      font: 700 25px/25px $open-sans;
+      position: absolute;
+      white-space: nowrap;
+      top: 0; left: 0;
+      z-index: -1;
+      @include media-md{
+        font: 700 25px/45px "Open Sans",sans-serif;
+      }
+      @include media-sm {
+        content: none;
+      }
+    }
   }
   &__buttons {
     .refresh-list {
       button {
         border: none;
         background: none;
+        padding-top: 9px;
         &:focus {
           outline: none;
         }
       }
       svg {
-        transition: all 1s;
+        transition: all 1.8s;
         transition-timing: ease-in-out;
         cursor: pointer;
       }

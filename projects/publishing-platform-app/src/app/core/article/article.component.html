@@ -13,7 +13,7 @@
   </div>
 </div>
 
-<div class="container"
+<!-- <div class="container"
      *ngIf="loadedContentsList[firstArticleUri] && loadedContentsList[firstArticleUri].cover && loadedContentsList[firstArticleUri].cover.url">
   <div class="article-cover">
     <img id="blured" class="article-cover__blured" [src]="loadedContentsList[firstArticleUri].cover.url" alt="article cover">
@@ -21,7 +21,7 @@
     (load)="isCoverLoaded = true" (error)="renderImgErrors(null, loadedContentsList[firstArticleUri].cover.uri + '-cover')">
     <div *ngIf="!isCoverLoaded" [id]="loadedContentsList[firstArticleUri].cover.uri + '-cover'" class="img-skeleton"><i class="icon-picture"></i></div>
   </div>
-</div>
+</div> -->
 <div #content>
   <ng-container *ngFor="let key of loadedContentsKeys;">
     <div class="container">
@@ -30,29 +30,31 @@
           <div class="article__author">
             <ui-avatar [avatarData]="loadedContentsList[key].author"></ui-avatar>
             <div>
-              <a href="#" (click)="redirect($event, loadedContentsList[key].author.slug)"
-                 class="article__author__name">{{loadedContentsList[key].author.fullName}}
-                <span *ngIf="loadedContentsList[key].publication">{{' ' + ('article.in' | translate) + ' '}} </span>
-                <a *ngIf="loadedContentsList[key].publication" href="#"
-                   (click)="onPublicationClick($event, loadedContentsList[key].publication.slug)"> {{loadedContentsList[key].publication.title}}</a>
-              </a>
+              <div class="article__author__name">
+                <a href="#" (click)="redirect($event, loadedContentsList[key].author.slug)">{{loadedContentsList[key].author.fullName}}</a>
+                <ui-button size="small" [type]="!loadedContentsList[key].author.subscribed ? 'primary' : ''"
+                           [text]="loadedContentsList[key].author.subscribed ? ('article.following' | translate) : ('article.follow' | translate)"
+                           *ngIf="!loadedContentsList[key].isMyArticle"
+                           [isFollowing]="loadedContentsList[key].author.subscribed"
+                           (btnClicked)="!loadedContentsList[key].author.subscribed ? follow(loadedContentsList[key].author, key) : unfollow(loadedContentsList[key].author, key)">
+                    </ui-button>
+                <ng-container *ngIf="loadedContentsList[key].publication">
+                  <i *ngIf="loadedContentsList[key].publication">{{'article.in' | translate}} </i>
+                  <a href="#"
+                     (click)="onPublicationClick($event, loadedContentsList[key].publication.slug)">{{loadedContentsList[key].publication.title}}</a>
+                </ng-container>
+              </div>
               <span class="article__author__date">{{loadedContentsList[key].published * 1000 | localizedDate:'dd MMM, HH:mm'}}</span>
             </div>
-            <ui-button size="small" [type]="!loadedContentsList[key].author.subscribed ? 'primary' : ''"
-                       [text]="loadedContentsList[key].author.subscribed ? ('article.following' | translate) : ('article.follow' | translate)"
-                       *ngIf="!loadedContentsList[key].isMyArticle"
-                       [isFollowing]="loadedContentsList[key].author.subscribed"
-                       (btnClicked)="!loadedContentsList[key].author.subscribed ? follow(loadedContentsList[key].author, key) : unfollow(loadedContentsList[key].author, key)">
-            </ui-button>
           </div>
         </div>
       </div>
-      <div class="row">
-        <div class="col-md-8 offset-md-2">
-          <h1 class="article__title">{{loadedContentsList[key].title}}</h1>
-          <div class="article__content" [innerHTML]="loadedContentsList[key].text | safeHtml"></div>
-        </div>
-      </div>
+    </div>
+    <div class="article__wrapper">
+      <h1 class="article__title">{{loadedContentsList[key].title}}</h1>
+      <div class="article__content" [innerHTML]="loadedContentsList[key].text | safeHtml"></div>
+    </div>
+    <div class="container">
       <div class="row article__footing" *ngIf="loadedContentsList[key].tags.length && !loadedContentsList[key].isMyArticle">
         <div class="col-9 col-md-5 offset-md-2">
           <div class="article__tag" *ngFor="let tag of loadedContentsList[key].tags;" (click)="onTagClick(tag)">{{tag}}</div>
@@ -72,10 +74,10 @@
         </div>
       </div>
       <div class="row article__footing" *ngIf="loadedContentsList[key].isMyArticle">
-        <div class="col-9 col-md-5 offset-md-2">
+        <div class="col-8 col-md-5 offset-md-2">
           <div class="article__tag" *ngFor="let tag of loadedContentsList[key].tags;" (click)="onTagClick(tag)">{{tag}}</div>
         </div>
-        <div class="col-3 col-md-3">
+        <div class="col-4 col-md-3">
           <div class="article__views article__views--own">
             <i class="icon-preview"></i>
             <span>{{loadedContentsList[key].views || '0'}}</span>

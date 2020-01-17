@@ -36,6 +36,7 @@ export class RegistrationPasswordComponent implements OnInit, OnDestroy {
   public passwordError = {
     length: null,
     uppercase: null,
+    lowercase: null,
     number: null,
     matching: null
   };
@@ -120,6 +121,7 @@ export class RegistrationPasswordComponent implements OnInit, OnDestroy {
     this.passwordError.length = form.password.length < 8;
     this.passwordError.number = !form.password.match(/\d/);
     this.passwordError.uppercase = !form.password.match(/[A-Z]/);
+    this.passwordError.lowercase = !form.password.match(/[a-z]/);
     this.passwordError.matching = form.password !== '' && form.password !== form.confirmPassword || null;
   }
 
@@ -135,6 +137,7 @@ export class RegistrationPasswordComponent implements OnInit, OnDestroy {
             this.loginAccount = false;
           }
           this.showPhase = true;
+          this.oauthService.generateRandomKey();
           return this.accountService.accountAuthenticate(data.token);
         }),
         takeUntil(this.unsubscribe$)

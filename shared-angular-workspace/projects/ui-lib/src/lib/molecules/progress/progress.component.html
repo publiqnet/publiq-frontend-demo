@@ -1,15 +1,55 @@
-<div [ngClass]="['progress-container', className]">
-    <span class="progress-container__value" *ngIf="!selectedValue; else secondSection">
-    {{defaultValue}} {{titleName}}
-  </span>
-    <ng-template #secondSection>
-      <span class="progress-container__value"> {{selectedValue}} {{titleName}}</span>
-    </ng-template>
+<!--Default-->
+<!--<div [ngClass]="['progress-container', className]" *ngIf="type === 'default'">-->
+<!--    <span class="progress-container__value" *ngIf="!selectedValue; else secondSection">-->
+<!--    {{defaultValue}} PBQ-->
+<!--    </span>-->
+<!--    <ng-template #secondSection>-->
+<!--      <span class="progress-container__value"> {{selectedValue}} PBQ</span>-->
+<!--    </ng-template>-->
+<!--  <div class="progress-container__info">-->
+<!--    <div>-->
+<!--      <span class="range-min-value">{{minValue}} PBQ</span>-->
+<!--      <span class="range-max-value">{{maxValue}} PBQ</span>-->
+<!--    </div>-->
+<!--    <input type="range" [min]="minValue" [max]="maxValue" #amountRange/>-->
+<!--  </div>-->
+<!--</div>-->
+<!--Days-->
+<div [ngClass]="['progress-container', className,type]" *ngIf="type === 'days'">
+  <span class="progress-container__title">{{'ui.progress.duration' | translate}} <span>({{'ui.progress.days' | translate}})</span></span>
   <div class="progress-container__info">
-    <div>
-      <span class="range-min-value">{{minValue}} {{titleName}}</span>
-      <span class="range-max-value">{{maxValue}} {{titleName}}</span>
-    </div>
-    <input type="range" [min]="minValue" [max]="maxValue" [value]="defaultValue" (change)="onRangeChange($event)"/>
+    <span class="rs-label" #daysValue>{{selectedDaysValue}}</span>
+    <input type="range" [min]="minValue" [max]="maxValue" #daysRange/>
+  </div>
+</div>
+<!--Amount-->
+<div [ngClass]="['progress-container', className,type]" *ngIf="type === 'amount'">
+  <span class="progress-container__title">{{'ui.progress.total_budget' | translate}}</span>
+  <div class="progress-container__info">
+    <span class="rs-label" #amountValue>
+      <svg width="10px" height="10px" viewBox="0 0 10 10" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 61 (89581) - https://sketch.com -->
+    <title>Group 9</title>
+    <desc>Created with Sketch.</desc>
+    <g id="Boost" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round">
+        <g id="Boost-story---popup-1" transform="translate(-236.000000, -373.000000)" stroke="#3366FF" stroke-width="1.5">
+            <g id="Group-17" transform="translate(204.000000, 241.000000)">
+                <g id="Group-8" transform="translate(25.000000, 80.000000)">
+                    <g id="Group-16" transform="translate(0.000000, 33.000000)">
+                        <g id="Group-12" transform="translate(0.000000, 12.000000)">
+                            <g id="Group-9" transform="translate(8.000000, 8.000000)">
+                                <line x1="4" y1="0" x2="4" y2="8" id="Path-3-Copy"></line>
+                                <line x1="7.5" y1="0" x2="7.5" y2="8" id="Path-3-Copy-2"></line>
+                                <line x1="0.5" y1="0" x2="0.5" y2="8" id="Path-3"></line>
+                            </g>
+                        </g>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>
+    </span>
+    <input type="range" [min]="minValue" [max]="maxValue" #amountRange/>
   </div>
 </div>

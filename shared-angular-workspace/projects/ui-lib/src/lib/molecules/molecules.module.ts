@@ -20,6 +20,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { UserSingleComponent } from './user-single/user-single.component';
 import { ChipComponent } from './chip/chip.component';
 import { InputSuggestionsComponent } from './input-suggestions/input-suggestions.component';
+import { InvitationActionsComponent } from './invitation-actions/invitation-actions.component';
 import { LoadingBlockComponent } from './loading-block/loading-block.component';
 import { CoreModule } from '../../core/core.module';
 import { PublicationBlockComponent } from './publication-block/publication-block.component';
@@ -29,6 +30,9 @@ import { NotificationCardComponent } from './notification-card/notification-card
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { TranslateModule } from '@ngx-translate/core';
 import { BoostContentSingleComponent } from './boost-content-single/boost-content-single.component';
+import { AuthorBlockComponent } from './author-block/author-block.component';
+import { AuthorSingleComponent } from './author-single/author-single.component';
+import { HighlightsComponent } from './highlights/highlights.component';
 
 @NgModule({
   imports: [
@@ -57,13 +61,17 @@ import { BoostContentSingleComponent } from './boost-content-single/boost-conten
     UserSingleComponent,
     ChipComponent,
     InputSuggestionsComponent,
+    InvitationActionsComponent,
     LoadingBlockComponent,
     ContentSingleComponent,
     PublicationBlockComponent,
     PublicationMembersComponent,
     DraftComponent,
     NotificationCardComponent,
-    BoostContentSingleComponent
+    BoostContentSingleComponent,
+    AuthorBlockComponent,
+    AuthorSingleComponent,
+    HighlightsComponent
   ],
   exports: [
     AvatarComponent,
@@ -82,13 +90,17 @@ import { BoostContentSingleComponent } from './boost-content-single/boost-conten
     UserSingleComponent,
     ChipComponent,
     InputSuggestionsComponent,
+    InvitationActionsComponent,
     LoadingBlockComponent,
     ContentSingleComponent,
     PublicationBlockComponent,
     PublicationMembersComponent,
     DraftComponent,
     NotificationCardComponent,
-    BoostContentSingleComponent
+    BoostContentSingleComponent,
+    AuthorBlockComponent,
+    AuthorSingleComponent,
+    HighlightsComponent
   ],
   entryComponents: []
 })

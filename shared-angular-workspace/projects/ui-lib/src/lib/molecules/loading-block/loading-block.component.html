@@ -1,4 +1,4 @@
-<div *ngIf="type !== null" class="loading-block__wrapper" [ngClass]="className">
+<div *ngIf="type === 'grid' || type === 'single'" class="loading-block__wrapper" [ngClass]="className">
   <ng-container *ngIf="type === 'grid'">
     <div class="loading-block__image"></div>
     <div class="loading-block__tags">
@@ -36,3 +36,82 @@
     </div>
   </ng-container>
 </div>
+
+<div class="loading-item-list" *ngIf="type === 'item-list'">
+  <div class="loading-item-list__title"></div>
+  <div class="loading-item-list__item">
+    <div class="loading-item-list__avatar"></div>
+    <div class="loading-item-list__texts">
+      <span></span>
+      <span></span>
+    </div>
+  </div>
+  <div class="loading-item-list__item">
+    <div class="loading-item-list__avatar"></div>
+    <div class="loading-item-list__texts">
+      <span></span>
+      <span></span>
+    </div>
+  </div>
+  <div class="loading-item-list__item">
+    <div class="loading-item-list__avatar"></div>
+    <div class="loading-item-list__texts">
+      <span></span>
+      <span></span>
+    </div>
+  </div>
+  <div class="loading-item-list__item">
+    <div class="loading-item-list__avatar"></div>
+    <div class="loading-item-list__texts">
+      <span></span>
+      <span></span>
+    </div>
+  </div>
+</div>
+
+<div class="loading-boostable" *ngIf="type === 'boostable'">
+  <div class="loading-boostable__part">
+    <div class="loading-boostable__avatar"></div>
+    <div class="loading-boostable__title">
+      <span></span>
+      <span></span>
+    </div>
+  </div>
+  <div class="loading-boostable__part">
+    <div class="loading-boostable__hint"></div>
+    <div class="loading-boostable__button"></div>
+  </div>
+</div>
+
+<div class="loading-recommended" *ngIf="type === 'recommended'">
+  <div class="loading-recommended__title">
+    <span></span>
+  </div>
+  <div class="loading-recommended__single">
+    <div class="loading-recommended__avatar"></div>
+    <div class="loading-recommended__name"></div>
+    <div class="loading-recommended__name"></div>
+    <div class="loading-recommended__hint"></div>
+    <div class="loading-recommended__button"></div>
+  </div>
+  <div class="loading-recommended__single">
+    <div class="loading-recommended__avatar"></div>
+    <div class="loading-recommended__name"></div>
+    <div class="loading-recommended__name"></div>
+    <div class="loading-recommended__hint"></div>
+    <div class="loading-recommended__button"></div>
+  </div>
+</div>
+
+<div class="loading-highlight" *ngIf="type === 'highlight'">
+  <span></span>
+  <span></span>
+  <span></span>
+</div>
+
+<div class="loading-line"
+     [ngClass]="className"
+     [style.width]="width + 'px'"
+     [style.height]="height + 'px'"
+     [style.border-radius]="borderRadius + 'px'"
+     *ngIf="type === 'line'"></div>
