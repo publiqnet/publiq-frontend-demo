@@ -1,0 +1,26 @@
+<div class="crop-modal">
+  <div  class="crop-modal__content">
+    <div class="crop-modal__content__parent" [class.custom]="hideModal" >
+      <image-cropper
+        [imageFile]="imageFile"
+        [maintainAspectRatio]="false"
+        [aspectRatio]="1"
+        [backgroundColor]="'#fff'"
+        [imageQuality]="70"
+        (imageCropped)="croppedImage = $event"
+        (imageLoaded)="imageLoaded()"
+        (cropperReady)="cropperReady()"
+        (loadImageFailed)="loadImageFailed()"
+        format="jpeg"
+        outputType="both">
+      </image-cropper>
+      <ui-loader *ngIf="showLoader" [size]="32" color="blue"></ui-loader>
+    </div>
+    <div [hidden]="hideModal" class="crop-modal__buttons">
+      <ui-button [size]="'large'"  [text]="'crop-image.cancel' | translate" (click)="_cancel()"></ui-button>
+      <ui-button [size]="'large'" [className]="'black'" type="primary" [text]="'crop-image.save' | translate" (click)="_save()"></ui-button>
+    </div>
+  </div>
+</div>
+
+

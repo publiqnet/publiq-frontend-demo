@@ -1,5 +1,5 @@
 import { moduleMetadata, storiesOf } from '@storybook/angular';
-import { withKnobs, text, radios, boolean } from '@storybook/addon-knobs';
+import { withKnobs, text, radios, boolean, number } from '@storybook/addon-knobs';
 import { InputComponent } from '../../projects/ui-lib/src/lib/atoms/input/input.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { action } from '@storybook/addon-actions';
@@ -102,6 +102,8 @@ storiesOf('Publiq Design|Atoms.Input', module)
         disabled: boolean('Disabled option', false),
         readonly: boolean('Readonly option', false),
         inputId: text('Add Id', ''),
+        minValue: number('Min Value', 0),
+        maxValue: number('Max Value', 1000000000000),
         className: text('Add Class', ''),
         _onChange: action('👊 Input was changed')
       }

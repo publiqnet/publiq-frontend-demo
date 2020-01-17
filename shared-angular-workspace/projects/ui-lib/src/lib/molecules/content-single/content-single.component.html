@@ -55,6 +55,12 @@
     <a [href]="'/s/' + contentData.uri" (click)="onContentClick($event)" class="title-bold">
       <h4 class="story__title" [attr.data-letter]="getTitleFirstChar()">{{contentData.title}}</h4>
     </a>
+    <div *ngIf="type === 'related' && (!contentData.cover || !contentData.cover.url)">
+      <div class="grid-view-count">
+        <i class="icon-preview"></i>
+        <span>{{contentData.view_count ? contentData.view_count : 0}}</span>
+      </div>
+    </div>
     <div class="story__meta" *ngIf="type !== 'related'">
       <ui-avatar *ngIf="contentData && contentData.author" [loadOriginalImg]="loadOriginalImg" [avatarData]="contentData.author" (click)="onAccountClick($event)"></ui-avatar>
       <div class="story__meta-info">
@@ -151,7 +157,9 @@
 </div>
 <div class="story-author" *ngIf="type === 'related'" [ngClass]="className">
   <ui-avatar *ngIf="contentData && contentData.author" [loadOriginalImg]="loadOriginalImg" (click)="onAccountClick($event)" size="large" [avatarData]="contentData.author"></ui-avatar>
-  <a *ngIf="contentData && contentData.author" [href]="'/a/' + contentData.author.slug" (click)="onAccountClick($event)"><h4>{{contentData.author.fullName ? contentData.author.fullName : contentData.author.slug}}</h4></a>
+  <a *ngIf="contentData && contentData.author" [href]="'/a/' + contentData.author.slug" (click)="onAccountClick($event)">
+    <h4>{{contentData.author.fullName ? contentData.author.fullName : contentData.author.slug}}</h4>
+  </a>
   <span *ngIf="contentData.published" class="date">{{!contentData.boosted ? (contentData.published * 1000 | localizedDate:'dd MMM, HH:mm') : ('ui.content-single.sponsored' | translate)}}</span>
 </div>
 <div class="story__edit--history" *ngIf="contentData.history && contentData.history.length && toggleHistoryIcon">

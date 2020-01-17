@@ -99,7 +99,7 @@ export class PublicationService {
   getPublicationArticles = (slug: string): Observable<any> => this.httpHelperService.customCall(HttpMethodTypes.get, this.url + `/${slug}/` + 'articles');
 
   getPublicationStories(slug: string, count = 20, boostedCount = 0, fromUri = null) {
-    return this.httpHelperService.customCall(HttpMethodTypes.get, this.url + `/${slug}/contents/${count}/${boostedCount}/${fromUri}`).pipe(map(contentData => {
+    return this.httpHelperService.call(HttpMethodTypes.get, this.url + `/${slug}/contents/${count}/${boostedCount}/${fromUri}`).pipe(map(contentData => {
       contentData.data = contentData.data.map(nextContent => new Content(nextContent));
       return contentData;
     }));

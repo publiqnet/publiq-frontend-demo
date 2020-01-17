@@ -20,4 +20,6 @@ export interface ContentDataOptions {
   uri: string;
   status: string;
   boosted: boolean;
+  highlightBackground?: string;
+  highlightFont?: string;
 }

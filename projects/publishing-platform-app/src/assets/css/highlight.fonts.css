@@ -1,0 +1,27 @@
+@font-face{
+  font-family: 'Fenton';
+  src: url("../highlight-fonts/Fenton-Black.otf") format('opentype');
+  font-weight: bold;
+  font-style: normal;
+}
+
+@font-face{
+  font-family: 'Journey';
+  src: url('../highlight-fonts/Journey_Bold.otf') format('opentype');
+  font-weight: bold;
+  font-style: normal;
+}
+
+@font-face{
+  font-family: 'Wensley';
+  src: url('../highlight-fonts/Wensley-Bold.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+}
+
+@font-face{
+  font-family: 'Vollkorn-Bold';
+  src: url('../highlight-fonts/Vollkorn-Bold.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+}

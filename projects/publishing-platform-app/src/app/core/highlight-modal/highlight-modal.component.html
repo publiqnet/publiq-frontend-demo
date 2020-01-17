@@ -1,0 +1,35 @@
+<div class="highlight-wrapper"
+     [ngStyle]="!highlight.highlightBackground && highlightImage ? {'background-image':'url(' + highlightImage + ')'} : {'background-color': highlight.highlightBackground}">
+  <img class="highlight-adjuster" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGcAAAC0CAYAAACJ6zJ4AAACbklEQVR4Xu3TQREAAAiEQK9/aWvsAxMw4O061sBYssCuOPATFKc4sAEYreUUBzYAo7Wc4sAGYLSWUxzYAIzWcooDG4DRWk5xYAMwWsspDmwARms5xYENwGgtpziwARit5RQHNgCjtZziwAZgtJZTHNgAjNZyigMbgNFaTnFgAzBayykObABGaznFgQ3AaC2nOLABGK3lFAc2AKO1nOLABmC0llMc2ACM1nKKAxuA0VpOcWADMFrLKQ5sAEZrOcWBDcBoLac4sAEYreUUBzYAo7Wc4sAGYLSWUxzYAIzWcooDG4DRWk5xYAMwWsspDmwARms5xYENwGgtpziwARit5RQHNgCjtZziwAZgtJZTHNgAjNZyigMbgNFaTnFgAzBayykObABGaznFgQ3AaC2nOLABGK3lFAc2AKO1nOLABmC0llMc2ACM1nKKAxuA0VpOcWADMFrLKQ5sAEZrOcWBDcBoLac4sAEYreUUBzYAo7Wc4sAGYLSWUxzYAIzWcooDG4DRWk5xYAMwWsspDmwARms5xYENwGgtpziwARit5RQHNgCjtZziwAZgtJZTHNgAjNZyigMbgNFaTnFgAzBayykObABGaznFgQ3AaC2nOLABGK3lFAc2AKO1nOLABmC0llMc2ACM1nKKAxuA0VpOcWADMFrLKQ5sAEZrOcWBDcBoLac4sAEYreUUBzYAo7Wc4sAGYLSWUxzYAIzWcooDG4DRWk5xYAMwWsspDmwARms5xYENwGgtpziwARit5RQHNgCjtZziwAZgtJZTHNgAjNZyigMbgNFaTnFgAzBayykObABGaznFgQ3AaC0HjvPQxwC1mEiASwAAAABJRU5ErkJggg=="/>
+
+  <div class="highlight"
+       [class.highlight--picture]="highlightImage"
+       [class.highlight--active]="highlightImageLoaded"
+       (click)="onFinished()">
+    <a routerLink="/s/{{highlight.uri}}" class="highlight__title" [style.font-family]="highlight.highlightFont">{{highlight.title}}</a>
+    <i class="highlight__closer icon-close" (click)="timeFinished.emit(null);"></i>
+    <div class="highlight__tags">
+      <a routerLink="/content/t/{{tag.tag.name}}" class="highlight__tag" *ngFor="let tag of highlight.tags;" [ngClass]="highlight.highlightTagClass">{{'#' + tag.tag.name}}</a>
+    </div>
+    <div class="highlight__author">
+      <div>
+        <ui-avatar [avatarData]="highlight.author" (click)="utilService.routerChangeHelper('account', highlight.author.slug)" size="large"></ui-avatar>
+        <svg viewBox="0 0 60 60">
+          <g fill="none">
+            <circle stroke="rgba(255,255,255,.8)" stroke-width="2" cx="30" cy="30" r="27"/>
+            <circle class="highlight__timer" stroke="#3264fb" (animationend)="onFinished()" stroke-width="3" transform="rotate(-90, 30, 30)" stroke-linecap="round" stroke-meterlimit="10" cx="30" cy="30" r="27" #timer/>
+          </g>
+        </svg>
+      </div>
+      <div>
+        <h5>
+          <a routerLink="/a/{{highlight.author.slug}}">{{highlight.author.fullName}} </a>
+          <ng-container *ngIf="highlight.publication">
+            <i>{{'highlight-modal.in' | translate}}</i>
+            <a routerLink="/p/{{highlight.publication.slug}}"> {{highlight.publication.title}}</a>
+          </ng-container>
+        </h5>
+      </div>
+    </div>
+  </div>
+</div>

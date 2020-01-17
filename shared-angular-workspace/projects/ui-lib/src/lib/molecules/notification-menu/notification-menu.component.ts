@@ -16,12 +16,12 @@ const moment = moment_;
 export enum Actions  {
   User = 'performer',
   Publication = 'target',
-  New_Request = 'publication_request_new',
-  New_Invitation = 'publication_invitation_new',
+  // New_Request = 'publication_request_new',
+  // New_Invitation = 'publication_invitation_new',
   Redirect_User = 'redirect-user',
   Redirect_Publication = 'redirect-publication',
-  Redirect_PB_Request = 'redirect-pb-requests',
-  Redirect_Invitation = 'redirect-invitations',
+  // Redirect_PB_Request = 'redirect-pb-requests',
+  // Redirect_Invitation = 'redirect-invitations',
 }
 
 @Component({
@@ -76,37 +76,34 @@ export class NotificationMenuComponent implements OnInit, OnChanges {
       item.langOptions.bodyEn = (!item.langOptions.bodyEn.includes('<a href')) ? this.changeKeys(item, 'en') : item.langOptions.bodyEn;
       item.langOptions.bodyJp = (!item.langOptions.bodyJp.includes('<a href')) ? this.changeKeys(item, 'jp') : item.langOptions.bodyJp;
 
-      if (item.type === Actions.New_Request) { // change types
-        item.langOptions.bodyEn =  (!item.langOptions.bodyEn.includes(`<a href="#" [id]="${item.type}-${item.slug}"`)) ? this.changeTypes('has requested to join', item, 'en') : item.langOptions.bodyEn;
-        item.langOptions.bodyJp =  (!item.langOptions.bodyJp.includes(`<a href="#" [id]="${item.type}-${item.slug}"`)) ? this.changeTypes('は参加を要求しました', item, 'jp') : item.langOptions.bodyJp;
-      } else if (item.type === Actions.New_Invitation) {
-        item.langOptions.bodyEn = (!item.langOptions.bodyEn.includes(`<a href="#" [id]="${item.type}-${item.slug}"`)) ? this.changeTypes('has invited you to join', item, 'en') : item.langOptions.bodyEn;
-        item.langOptions.bodyJp = (!item.langOptions.bodyJp.includes(`<a href="#" [id]="${item.type}-${item.slug}"`)) ? this.changeTypes('に参加するように招待されています', item, 'jp') : item.langOptions.bodyJp;
-      }
+      // if (item.type === Actions.New_Request) { // change types
+      //   item.langOptions.bodyEn =  (!item.langOptions.bodyEn.includes(`<a href="#" [id]="${item.type}-${item.slug}"`)) ? this.changeTypes('has requested to join', item, 'en') : item.langOptions.bodyEn;
+      //   item.langOptions.bodyJp =  (!item.langOptions.bodyJp.includes(`<a href="#" [id]="${item.type}-${item.slug}"`)) ? this.changeTypes('は参加を要求しました', item, 'jp') : item.langOptions.bodyJp;
+      // } else if (item.type === Actions.New_Invitation) {
+      //   item.langOptions.bodyEn = (!item.langOptions.bodyEn.includes(`<a href="#" [id]="${item.type}-${item.slug}"`)) ? this.changeTypes('has invited you to join', item, 'en') : item.langOptions.bodyEn;
+      //   item.langOptions.bodyJp = (!item.langOptions.bodyJp.includes(`<a href="#" [id]="${item.type}-${item.slug}"`)) ? this.changeTypes('に参加するように招待されています', item, 'jp') : item.langOptions.bodyJp;
+      // }
     });
   }
 
   private changeKeys(notification: NotificationOptions, lang: string) {
-    let name = notification.actionFrom.slug;
-    if (notification.actionFrom.first_name && !notification.actionFrom.last_name) {
-       name = notification.actionFrom.first_name;
-    } else if (!notification.actionFrom.first_name && notification.actionFrom.last_name) {
-      name = notification.actionFrom.last_name;
-    } else if (notification.actionFrom.first_name && notification.actionFrom.last_name) {
-      name = notification.actionFrom.first_name + ' ' + notification.actionFrom.last_name;
-    }
     const bodyLang = (lang === 'en') ? notification.langOptions.bodyEn : notification.langOptions.bodyJp;
+    if (!notification.actionFrom) { return bodyLang; }
+    const name = notification.actionFrom.fullName;
+    if (!notification.publication) {
+      return bodyLang.replace('{{performer}}', `<a href="#" [id]="performer-${notification.slug}">${name}</a>`);
+    }
     const title = notification.publication.title;
     return bodyLang
       .replace('{{performer}}', `<a href="#" [id]="performer-${notification.slug}">${name}</a>`)
       .replace('{{target}}', `<a href="#" [id]="target-${notification.slug}">${title}</a>`);
   }
 
-  private changeTypes(type: string, notification: NotificationOptions, lang: string) {
-    const bodyLang = (lang === 'en') ? notification.langOptions.bodyEn : notification.langOptions.bodyJp;
-    return bodyLang
-      .replace(type, `<a href="#" [id]="${notification.type}-${notification.slug}">${type}</a>`);
-  }
+  // private changeTypes(type: string, notification: NotificationOptions, lang: string) {
+  //   const bodyLang = (lang === 'en') ? notification.langOptions.bodyEn : notification.langOptions.bodyJp;
+  //   return bodyLang
+  //     .replace(type, `<a href="#" [id]="${notification.type}-${notification.slug}">${type}</a>`);
+  // }
 
   public onBodyClick(event) {
     if (event.target instanceof HTMLAnchorElement) {
@@ -118,12 +115,12 @@ export class NotificationMenuComponent implements OnInit, OnChanges {
         if (attrId.includes(Actions.Publication)) {
           this.makeAction(attrId, Actions.Redirect_Publication, event);
         }
-        if (attrId.includes(Actions.New_Invitation)) {
-          this.makeAction(attrId, Actions.Redirect_Invitation, event);
-        }
-        if (attrId.includes(Actions.New_Request)) {
-          this.makeAction(attrId, Actions.Redirect_PB_Request, event);
-        }
+        // if (attrId.includes(Actions.New_Invitation)) {
+        //   this.makeAction(attrId, Actions.Redirect_Invitation, event);
+        // }
+        // if (attrId.includes(Actions.New_Request)) {
+        //   this.makeAction(attrId, Actions.Redirect_PB_Request, event);
+        // }
       }
     } else {
       event.preventDefault();

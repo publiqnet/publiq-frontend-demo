@@ -1,8 +1,8 @@
 import { Injectable, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { lang } from 'moment';
 import * as moment from 'moment';
+declare const $: any;
 
 @Injectable()
 export class UtilService {
@@ -81,6 +81,19 @@ export class UtilService {
     min = Math.ceil(min);
     max = Math.floor(max);
     return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  blobToFile (theBlob: Blob, fileName: string): File {
+    const b: any = theBlob;
+    b.lastModifiedDate = new Date();
+    b.name = fileName;
+    return <File>theBlob;
+  }
+
+  async getImageBlob(url: string) {
+    return await fetch(url,
+    { mode: 'cors'
+    }).then(r => r.blob());
   }
 
 }

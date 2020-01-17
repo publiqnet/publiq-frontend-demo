@@ -82,6 +82,11 @@
 
 .publications-staff {
     ui-publication-single {
+      ::ng-deep .staff-publication {
+        .img-skeleton {
+          border-radius: 20px;
+        }
+      }
         @include media-sm {
              ::ng-deep .staff-publication {
                 display: inline-block;

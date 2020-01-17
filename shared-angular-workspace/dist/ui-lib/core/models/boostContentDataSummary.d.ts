@@ -4,4 +4,5 @@ export interface BoostContentDataSummary {
     views?: string | number;
     channels?: string | number;
     balance?: number;
+    spentBalance?: number;
 }

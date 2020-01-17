@@ -23,7 +23,6 @@ import { TranslateService } from '@ngx-translate/core';
 })
 export class ArticleComponent implements OnInit, AfterViewInit, OnDestroy {
   public article;
-  author: any;
   public loading = true;
   public enableLoading = false;
   public documentElement: any = null;
@@ -38,9 +37,8 @@ export class ArticleComponent implements OnInit, AfterViewInit, OnDestroy {
   public fingerprint: string = '';
   public env = environment;
   public loadingArticle: boolean = true;
-  public isCoverLoaded: boolean = false;
-
   private unsubscribe$ = new ReplaySubject<void>(1);
+  author: any;
 
   @ViewChildren('relatedBlock') relatedBlocks: QueryList<ElementRef>;
   @ViewChild('content', {static: false}) content: ElementRef;
@@ -142,12 +140,15 @@ export class ArticleComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
     this.contentService.getContentByUri(uri, this.fingerprint).subscribe((data: any) => {
+      if (data.status === 'pending') {
+        this.router.navigate([`/page-not-found`]);
+        return;
+      }
       this.loadingArticle = false;
-      const getFileCalls = [];
       if (data.files && data.files.length) {
         this.addSkeleton(data);
         let loadedFilesCount: number = 0;
-        data.files.forEach((file, index) => {
+        data.files.forEach((file) => {
           if (file.mimeType == 'text/html') {
             this.contentService.getFileContentFromUrl(file.url)
             .subscribe(
@@ -339,18 +340,21 @@ export class ArticleComponent implements OnInit, AfterViewInit, OnDestroy {
           uri = uri + `__index_${index}`;
           const width = imgHtmlText.match(/width="(.*?)"/);
           const height = imgHtmlText.match(/height="(.*?)"/);
+          const size = imgHtmlText.match(/data-size="(.*?)"/);
           const imgHtmlText1 = imgHtmlText.replace(/data-uri="(.*?)"/, `data-uri="${uri}" style="display: none;"`);
           let skeletonDiv = '';
           if ((width && width[1]) && (height && height[1])) {
             // tslint:disable-next-line:max-line-length
-             skeletonDiv = `<div>${imgHtmlText1}<div id="${uri}" class="img-skeleton${+(width[1]) <= 560 ? ' img-skeleton--small' : ''}" style="width: ${width[1]}px;"><i class="icon-picture"></i><div style="padding-top: ${+(height[1]) / +(width[1]) * 100}%"></div></div></div>`;
+             skeletonDiv = `<div class="image-wrapper ${(size && size[1]) ? size[1] + '-image' : 'defaultsize-image' }">${imgHtmlText1}<div id="${uri}" class="img-skeleton${+(width[1]) <= 560 ? ' img-skeleton--small' : ''}" style="width: ${width[1]}px;"><i class="icon-picture"></i><div style="padding-top: ${+(height[1]) / +(width[1]) * 100}%"></div></div></div>`;
           } else {
-             skeletonDiv = `<div>${imgHtmlText1}<div id="${uri}" class="img-skeleton" style="width: 100%; padding-top: 160px;"><i class="icon-picture"></i></div></div>`;
+             skeletonDiv = `<div class="image-wrapper ${(size && size[1]) ? size[1] + '-image' : 'defaultsize-image' }">${imgHtmlText1}
+            <div id="${uri}" class="img-skeleton" style="width: 100%; padding-top: 160px;"><i class="icon-picture"></i></div></div>`;
           }
           data.text = data.text.replace(imgHtmlText, skeletonDiv);
         }
       });
     }
+    data.text = data.text.replace(`contenteditable="true"`, 'contenteditable="false"');
     if (!data.files) { return; }
     data.files.forEach((file) => { // replacing contents text part
       if (file['mimeType'] === 'text/html') {

@@ -1,0 +1,9 @@
+<div class="invitation-actions" [ngClass]="className">
+  <div class="invitation-actions__content">
+    <p><a href="/a/{{inviter.slug}}" (click)="userClick($event)">{{inviter.fullName}}</a> {{'ui.notification-menu.invited_to_join' | translate}}</p>
+  </div>
+  <div class="invitation-actions__buttons">
+    <ui-button type="primary" [text]="'ui.publication-single.accept' | translate" (btnClicked)="actionSelected.emit(true)"></ui-button>
+    <ui-button [text]="'ui.publication-single.reject' | translate" (btnClicked)="actionSelected.emit(false)"></ui-button>
+  </div>
+</div>

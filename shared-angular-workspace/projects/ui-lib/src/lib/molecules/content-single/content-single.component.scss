@@ -81,7 +81,7 @@ a {
         content: attr(data-letter);
         font: italic 700 56px/1.3 $vollkorn;
         position: absolute;
-        top: -6px; left: -10px;
+        top: -6px; left: -2px;
         color: pbq-color($blue, 300);
         z-index: -1;
       }
@@ -192,6 +192,15 @@ a {
     max-width: 310px;
   }
   &.show-menu {
+    @include media-md {
+      .story__image__views,
+      .story__image__like,
+      .story__image__publication,
+      .story__image__settings--menu {
+        pointer-events: unset;
+        opacity: 1;
+      }
+    }
     .story__image__views,
     .story__image__like,
     .story__image__publication,
@@ -233,6 +242,46 @@ a {
     }
     img {
       filter: grayscale(100%);
+    }
+  }
+
+  @include media-md {
+     .story__image__views,
+     .story__image__like,
+     .story__image__publication,
+     .story__image__settings--menu{
+       pointer-events: unset;
+       opacity: 1;
+       ::ng-deep {
+         .dropdown-list{
+           &--bottom {
+             text-align: center;
+           }
+         }
+         .dropdown.with-icon {
+           width: 100%;
+         }
+       }
+     }
+   }
+
+  @include media-sm {
+    .story__image__views,
+    .story__image__like,
+    .story__image__publication,
+    .story__image__settings--menu{
+      pointer-events: unset;
+      opacity: 1;
+      ::ng-deep {
+        .dropdown-list{
+          &--bottom {
+            text-align: center;
+          }
+        }
+        .dropdown.with-icon {
+          width: 100%;
+        }
+      }
     }
   }
 
@@ -511,14 +560,16 @@ a {
     &__views, &__like, &__publication, &__settings--menu {
       padding: 2px 8px;
       background-color: rgba(pbq-color($grey, 700), .25);
-      border-radius: 30px;
       position: absolute;
       bottom: 15px;
-      color: #ffffff;
       font-size: 0;
       transition: 300ms;
       opacity: 0;
       pointer-events: none;
+      background: #FFFFFF;
+      box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.2);
+      border-radius: 14px;
+      color: #8D929A;
 
       span {
         vertical-align: middle;

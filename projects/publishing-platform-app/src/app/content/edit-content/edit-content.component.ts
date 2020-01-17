@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, Inject, Input, OnDestroy, OnInit, PLATFORM_ID, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, Inject, Input, NgZone, OnDestroy, OnInit, PLATFORM_ID, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { forkJoin, of, ReplaySubject, Subject } from 'rxjs';
@@ -19,8 +19,8 @@ import { UtilService } from '../../core/services/util.service';
 import { UtilsService } from 'shared-lib';
 import { isPlatformBrowser } from '@angular/common';
 import { SharedDataService } from '../../core/services/shared-data.service';
-import { getSvgPathByName } from '../../../assets/froala-icons/froala-custom.icons';
-import { FroalaEditorCustomConfigs, froalaEvents } from '../froala-configs/froala-editor-custom-configs';
+import { addCroppedImage, contentUrisChange, FroalaEditorCustomConfigs, froalaEvents, getImageSize, toggleImageSize, toggleImageSizeModifiers } from '../froala-configs/froala-editor-custom-configs';
+import { ImageCroppedEvent } from 'ngx-image-cropper';
 
 declare const $: any;
 
@@ -30,36 +30,25 @@ declare const $: any;
   styleUrls: ['./edit-content.component.scss']
 })
 export class EditContentComponent implements OnInit, OnDestroy {
-  public content: Content;
   draftId: number;
   isCurrentUser = false;
   showStoryForm: boolean = false;
   boostField: boolean = false;
-  public contentId: number;
-  private contentObject;
-  private editorContentInitObject;
-  private editorContentObject;
   contentUrl = environment.backend + '/api/file/upload';
-  public contentForm: FormGroup;
   contentUris = {};
   title: string;
   contentOptions: object;
+  tag: string = '';
+  tagSubject = new Subject<any>();
+  tagError: boolean;
+  public contentForm: FormGroup;
+  public content: Content;
+  public contentId: number;
   public publicationsList = [];
   public currentContentData = {};
-  public boostTab = [
-    {
-      'value': '1',
-      'text': `1 ${this.translateService.instant('newcontent.day')}` // '1 Day'
-    },
-    {
-      'value': '3',
-      'text': `3 ${this.translateService.instant('newcontent.days')}` // '3 Days',
-    },
-    {
-      'value': '7',
-      'text': `7 ${this.translateService.instant('newcontent.days')}` // '7 Days',
-    }
-  ];
+  public chosenDay: number;
+  public chosenPrice: number = 0;
+  public chosenPriceProgress: number = 0;
   public tags: String[] = [];
   public coverImagesList = {};
   public additionalCoverImage = {};
@@ -68,31 +57,42 @@ export class EditContentComponent implements OnInit, OnDestroy {
   public boostView = 'boost';
   public stepperData = [];
   public titleMaxLenght = 120;
-  private hasDraft = false;
   public isSubmited = false;
-  public boostPrice: number;
-  public boostDays: number;
-  private uploadedContentUri: string;
   public submitError: boolean = false;
   public contentLoaded: boolean = false;
-  tag: string = '';
-  tagSubject = new Subject<any>();
-  tagError: boolean;
-  private unsubscribe$ = new ReplaySubject<void>(1);
   public selectedPublication: { text: string, value: string } = {'text': '', 'value': ''};
   public feeWhole: number;
   public feeFraction: number;
   public currentFee: number;
   public currentBoostFee: number;
+  public totalFee: number;
+  public maxBoostPrice: number;
   public loading: boolean = false;
   public currentTime: number;
   public warningShown: boolean = false;
   public hideCover: boolean = false;
   public detectedLanguage: string = '';
+  public suggestedTags: string[] = [];
+  public remainingSuggestedTags: string[] = [];
   public contentLengthNotEnough: boolean = false;
   public isWhiteSpaceShown: boolean = false;
+  public cursorHostElement: HTMLElement;
+  public showGallery = false;
+  // cropping part
+  public croppedImage: any; // blob representation
+  public croppedOriginalImg: any; // jquery representation
+  public showCropModal: boolean = false;
+  public croppingImage: any; // blob representation
+  // ------
+  private contentObject;
+  private editorContentInitObject;
+  private editorContentObject;
+  private imgElemSelector: string; // for replacing image from gallery
   private tableEditPopup: boolean = false; // if true then we don't need table popup show event anymore
   private quickInsertPopup: boolean = false; // if true then we don't need table popup show event anymore
+  private uploadedContentUri: string;
+  private hasDraft = false;
+  private unsubscribe$ = new ReplaySubject<void>(1);
 
   @ViewChild('publicationTitle', { static: false }) set publicationTitle(el: ElementRef | null) {
     if (!el) {
@@ -116,7 +116,9 @@ export class EditContentComponent implements OnInit, OnDestroy {
     private draftService: DraftService,
     private publicationService: PublicationService,
     private sharedData: SharedDataService,
-    public uiNotificationService: UiNotificationService
+    private utilService: UtilService,
+    public uiNotificationService: UiNotificationService,
+    protected ngZone: NgZone,
   ) {
   }
 
@@ -201,7 +203,9 @@ export class EditContentComponent implements OnInit, OnDestroy {
     }
 
     this.content.files.forEach((file: any) => {
-      this.contentUris[file['uri']] = file['url'].replace(/&amp;/g, '&');
+      if (file.mimeType != 'text/html') {
+        this.contentUris[file['uri']] = file['url'].replace(/&amp;/g, '&');
+      }
     });
 
     this.contentForm.controls['title'].setValue(this.content.title);
@@ -235,25 +239,25 @@ export class EditContentComponent implements OnInit, OnDestroy {
   }
 
   initDefaultData() {
-    this.boostPrice = 50;
-    this.boostDays = 1;
+    this.chosenPrice = 0;
+    this.chosenDay = 1;
     this.initSubmitFormView();
 
     this.translateService.onLangChange.subscribe((lang) => {
-      this.boostTab = [
-        {
-          'value': '1',
-          'text': `1 ${this.translateService.instant('newcontent.day')}` // '1 Day'
-        },
-        {
-          'value': '3',
-          'text': `3 ${this.translateService.instant('newcontent.days')}` // '3 Days',
-        },
-        {
-          'value': '7',
-          'text': `7 ${this.translateService.instant('newcontent.days')}` // '7 Days',
-        }
-      ];
+      // this.boostTab = [
+      //   {
+      //     'value': '1',
+      //     'text': `1 ${this.translateService.instant('newcontent.day')}` // '1 Day'
+      //   },
+      //   {
+      //     'value': '3',
+      //     'text': `3 ${this.translateService.instant('newcontent.days')}` // '3 Days',
+      //   },
+      //   {
+      //     'value': '7',
+      //     'text': `7 ${this.translateService.instant('newcontent.days')}` // '7 Days',
+      //   }
+      // ];
       this.editorContentObject.$placeholder[0].textContent = this.translateService.instant('edit-content.write_something');
     });
 
@@ -291,14 +295,16 @@ export class EditContentComponent implements OnInit, OnDestroy {
 
     this.contentOptions = {
       key: environment.froala_editor_key,
+      keepFormatOnDelete: true,
       toolbarInline: true,
       toolbarButtons: ['bold', 'italic', 'title', 'paragraphFormat', 'insertLink', 'formatOL', 'formatUL', 'quote'],
       language: (this.accountService.accountInfo && this.accountService.accountInfo.language == 'jp') ? 'ja' : 'en_us',
       dragInline: false,
       pastePlain: true,
       imageInsertButtons: ['imageBack', '|', 'imageUpload', 'imageByURL'],
+      videoInsertButtons: ['videoByURL'],
       videoEditButtons: [],
-      quickInsertButtons: ['quickImage', 'quickVideo'],
+      quickInsertButtons: ['quickImage', 'search', 'quickVideo'],
       imageUpload: true,
       imageUploadMethod: 'POST',
       paragraphFormat: {
@@ -320,7 +326,7 @@ export class EditContentComponent implements OnInit, OnDestroy {
       imageMaxSize: 5 * 1024 * 1024, // 5MB
       pasteDeniedAttrs: ['class', 'id', 'style', 'srcset'],
       imageResize: false,
-      imageEditButtons: ['imageCaption', 'imageRemove'],
+      imageEditButtons: ['gridsize', 'containersize', 'fullsize', 'imageCaption',  'imageCrop', 'imageRemove'],
       imagePasteProcess: true,
       imageDefaultWidth: null,
       imageOutputSize: true,
@@ -332,42 +338,140 @@ export class EditContentComponent implements OnInit, OnDestroy {
       events: {
         ...froalaEvents.call(this),
         'froalaEditor.initialized': (e, editor) => {
+          const self = this;
+          editor.$el.on('DOMCharacterDataModified DOMNodeInserted', function(event) {
+            const $p = $(event.target).closest('p');
+
+            if ($(event.target).is('.fr-img-caption .fr-inner')) {
+              if (event.target.textContent.length === 1) {
+                const $img = $(event.target).prev(),
+                    $p = $img.closest('p');
+
+                $p.append($img).find('> span').remove();
+              }
+
+              return;
+            }
+
+            if ($(event.target).is('ol, ul')) {
+              $(event.target).removeAttr('style');
+            }
+
+            if ($p.is('.gridsize-image,.containersize-image,.fullsize-image,.defaultsize-image')) {
+              event.preventDefault();
+
+              if ( $p.find('img').length === 0 ) {
+                $p.remove();
+                return;
+              }
+              $p.contents().filter(function() { return this.nodeType === 3; }).each(function() {
+                if (['%u200B', ''].indexOf(escape(this.textContent)) !== -1) { return; }
+
+                const command = $(this).prev('img,span').length ? 'insertAfter' : 'insertBefore',
+                    $newP = $('<p></p>')[command]($p);
+
+                $newP.get(0).appendChild(this);
+                editor.selection.setAtEnd($newP.get(0));
+                editor.selection.restore();
+              });
+            }
+          });
+          editor.$el.on('click', 'img', function () {
+            // self.utilService.getImageBlob(this.src).then((blob) => {
+            //   if (blob.type === 'image/gif') {
+            //     $('.fr-btn[data-cmd="imageCrop"]').addClass('fr-disabled size-disabled');
+            //   } else {
+            //     $('.fr-btn[data-cmd="imageCrop"]').removeClass('fr-disabled size-disabled');
+            //   }
+            // });
+            const parent = $(this).closest('p');
+            $('.active').removeClass('active');
+
+            if (parent.hasClass('containersize-image')) {
+              $('.fr-btn[data-cmd="containersize"] > svg > g').addClass('active');
+            } else if (parent.hasClass('fullsize-image')) {
+              $('.fr-btn[data-cmd="fullsize"] > svg > g').addClass('active');
+            } else if (parent.hasClass('gridsize-image')) {
+              $('.fr-btn[data-cmd="gridsize"] > svg > g').addClass('active');
+            }
+
+            if (!$(this).data('natural-width') || !$(this).data('natural-height')) {
+              getImageSize($(this).attr('src')).subscribe( (dimensions: ({width: number, height: number})) => {
+                $(this).attr('data-natural-width', dimensions.width);
+                $(this).attr('data-natural-height', dimensions.height);
+
+                toggleImageSizeModifiers(dimensions.width);
+              });
+
+              if ( $(this).attr('width') && $(this).attr('width') >= 870 && $(this).data('natural-width') === undefined) {
+                $(this).attr('data-size', 'gridsize');
+                toggleImageSize($(this).closest('p'), 'gridsize-image');
+
+                if ($('.active').length) {
+                    $('.active').removeClass('active');
+                }
+                $('#icon-grid-1').addClass('active');
+
+                $(this).attr('width', $(this).width());
+                $(this).attr('height', $(this).height());
+                this.saveDraft(this.draftId);
+              }
+            } else {
+              toggleImageSizeModifiers($(this).data('natural-width'));
+            }
+            $(editor.popups.get('image.edit')).addClass('image-edit-popup');
+          });
           this.contentObject = e;
           this.editorContentObject = editor;
+        },
+        'froalaEditor.popups.show.image.insert': function(e, editor) {
+          editor.popups
+            .get('image.insert')
+            .css({
+              zIndex: 9,
+              left: $('.fr-element > p:not([class*="-image"]):first').offset().left
+            });
+        },
+        'froalaEditor.popups.show.video.insert': function(e, editor) {
+          editor.popups
+            .get('video.insert')
+            .css({
+              zIndex: 9,
+              left: $('.fr-element > p:not([class*="-image"]):first').offset().left
+            });
         },
         'froalaEditor.html.set': function (e, editor) {
           editor.events.trigger('charCounter.update');
         },
         'froalaEditor.image.beforeRemove': (e, editor, img) => {
+          $('.fr-image-resizer').remove();
+          if ( !img.closest('p').next('p').text() ) { img.closest('p').next('p').remove(); }
           const imageUri = $(img).attr('data-uri');
           if (this.coverImagesList[imageUri]) {
             delete this.coverImagesList[imageUri];
-            if (this.contentUris[imageUri]) {
-              delete this.contentUris[imageUri];
-            }
             this.selectedCoverImageUri = '';
           }
-        },
-        'froalaEditor.image.removed': (img) => {
-          if ($('.active').length) {
-            $($('.active')[0]).removeClass('active');
-          }
-        },
-        'froalaEditor.image.inserted': (e, editor, img, response) => {
-          if (response) {
-            const responseData = JSON.parse(response);
-            this.contentUris[responseData.uri] = responseData.link.replace(/&amp;/g, '&');
-            const uploadedImage = responseData.content_original_sample_file;
-            this.selectedCoverImageUri = responseData.uri;
 
-            if (uploadedImage) {
-              // this.resetCurrentUrl(uploadedImage);
+          if (this.editorContentObject) {
+            let deletedImageCount = 0;
+            const contentBlocks = this.editorContentObject.html.blocks();
+            contentBlocks.forEach((node) => {
+              const nodeHtml = $.trim(node.innerHTML);
+              if (nodeHtml.match(/<img/)) {
+                const outerText = node.outerHTML;
+                const regex = /<img[^>]*data-uri="([^"]*)"/g;
+                const regexData = regex.exec(outerText);
+                if (regexData && regexData.length > 1 && regexData[1] && imageUri == regexData[1]) {
+                  deletedImageCount++;
+                }
+              }
+            });
+            if (deletedImageCount == 1) {
+              delete this.contentUris[imageUri];
             }
-            $(img).closest('p').find('br:first').remove();
-            $(img).closest('p').after('<p data-empty="true"><br></p>');
           }
         },
-        'froalaEditor.image.error': (e, editor, error, response) => {
+        'froalaEditor.image.error': (e, editor, error) => {
           if (error && error.code && error.message) {
             this.uiNotificationService.error(this.translateService.instant('edit-content.error'), error.message);
           }
@@ -378,7 +482,7 @@ export class EditContentComponent implements OnInit, OnDestroy {
         }
       }
     };
-    FroalaEditorCustomConfigs();
+    FroalaEditorCustomConfigs.call(this);
   }
 
   initSubmitFormView() {
@@ -475,7 +579,7 @@ export class EditContentComponent implements OnInit, OnDestroy {
   saveDraft(id = null) {
     const newDraft: any = {
       title: this.contentForm.value.title || '',
-      content: this.contentForm.value.content || '',
+      content: this.editorContentObject.html.get() || '',
       publication: this.contentForm.value.publication,
       contentUris: this.contentUris || {},
       options: {
@@ -530,6 +634,8 @@ export class EditContentComponent implements OnInit, OnDestroy {
         )
         .subscribe(detectedLanguage => {
           this.detectedLanguage = (detectedLanguage && detectedLanguage.nativeName) ? detectedLanguage.nativeName : '';
+          this.suggestedTags = (detectedLanguage && detectedLanguage.keywords && detectedLanguage.keywords.length) ? detectedLanguage.keywords.slice(0, 3) : [];
+          this.selectUsedSuggestedTags();
         });
     }
 
@@ -595,6 +701,8 @@ export class EditContentComponent implements OnInit, OnDestroy {
     const fee = UtilsService.calculateBalance(this.feeWhole, this.feeFraction);
     this.currentBoostFee = fee;
     this.currentFee = signesCount * fee;
+    this.totalFee = this.currentBoostFee + this.currentFee;
+    this.maxBoostPrice = Math.floor(this.accountService.accountInfo.balance - this.currentBoostFee - this.currentFee);
   }
 
   changeBoostView(event) {
@@ -614,7 +722,20 @@ export class EditContentComponent implements OnInit, OnDestroy {
   }
 
   tagChange() {
+    this.selectUsedSuggestedTags();
     this.contentForm.controls['tags'].setValue(this.tags);
+  }
+
+  selectUsedSuggestedTags() {
+    this.remainingSuggestedTags = this.suggestedTags.slice();
+    if (this.tags && this.tags.length) {
+      this.tags.forEach((tag: string) => {
+        const index = this.remainingSuggestedTags.indexOf(tag);
+        if (index > -1 && this.remainingSuggestedTags[index] == tag) {
+          this.remainingSuggestedTags.splice(index, 1);
+        }
+      });
+    }
   }
 
   enterTag() {
@@ -634,12 +755,23 @@ export class EditContentComponent implements OnInit, OnDestroy {
     this.tagChange();
   }
 
+  selectSuggestedTag(tag) {
+    if (typeof tag == 'string') {
+      this.tag = tag;
+      this.enterTag();
+    }
+  }
+
   textChange(e) {
     this.tagError = false;
     this.tagSubject.next(e);
   }
 
   submit() {
+    if (!this.accountService.loggedIn()) {
+      this.router.navigate([`/user/login`]);
+    }
+
     if (!UtilService.calculateContentLength(this.contentForm.value.content)) {
       this.uiNotificationService.error(this.translateService.instant('edit-content.error'), this.translateService.instant('edit-content.content_empty'));
       return false;
@@ -710,13 +842,13 @@ export class EditContentComponent implements OnInit, OnDestroy {
         this.contentForm.value.content = this.contentForm.value.content.replace(/contenteditable="[^"]*"/g, '');
 
         if (Object.keys(this.contentUris).length) {
-          this.contentService.signFiles(Object.keys(this.contentUris), this.feeWhole, this.feeFraction, this.currentTime, password)
+          this.contentService.signFiles(Object.keys(this.contentUris), this.feeWhole, this.feeFraction, this.currentTime, this.draftId, password)
             .pipe(
               switchMap((data: any) => {
                 return this.submitContent(contentData, password);
               }),
               switchMap((data: any) => {
-                return (this.boostField) ? this.contentService.contentBoost(this.uploadedContentUri, this.boostPrice, this.boostDays, this.feeWhole, this.feeFraction, this.currentTime, password) : of(data);
+                return (this.boostField) ? this.contentService.contentBoost(this.uploadedContentUri, this.chosenPrice, this.chosenDay, this.feeWhole, this.feeFraction, this.currentTime, password) : of(data);
               })
             ).subscribe(data => {
               this.afterContentSubmit();
@@ -748,9 +880,6 @@ export class EditContentComponent implements OnInit, OnDestroy {
 
   afterContentSubmit() {
     this.loading = false;
-    if (this.draftId) {
-      this.draftService.delete(this.draftId).subscribe();
-    }
     this.router.navigate([`/a/${this.accountService.accountInfo.publicKey}`]);
   }
 
@@ -766,17 +895,9 @@ export class EditContentComponent implements OnInit, OnDestroy {
             this.feeWhole, this.feeFraction, this.currentTime, password);
         }),
         switchMap((data: any) => {
-          return this.contentService.publish(this.uploadedContentUri, this.contentId);
+          return this.contentService.publish(this.uploadedContentUri, this.contentId, this.draftId);
         })
       );
-  }
-
-  onRangeChange(event) {
-    this.boostPrice = event.target.value;
-  }
-
-  tabChange(event) {
-    this.boostDays = event;
   }
 
   continueLater() {
@@ -791,6 +912,7 @@ export class EditContentComponent implements OnInit, OnDestroy {
       this.currentContentData['cover'] = {
         'url': this.coverImagesList[this.selectedCoverImageUri]
       };
+      contentUrisChange.call(this);
       this.saveDraft(this.draftId);
     }
     this.calculateContentFee();
@@ -841,12 +963,17 @@ export class EditContentComponent implements OnInit, OnDestroy {
             delete this.coverImagesList[this.additionalCoverImage['uri']];
           }
 
+          if (this.contentUris && this.contentUris[this.additionalCoverImage['uri']]) {
+            delete this.contentUris[this.additionalCoverImage['uri']];
+          }
+
           this.additionalCoverImage = {'uri': data.uri, 'link': data.link};
           this.coverImagesList[data.uri] = data.link;
           this.selectedCoverImageUri = data.uri;
           this.currentContentData['cover'] = {
             'url': this.coverImagesList[this.selectedCoverImageUri]
           };
+          this.contentUris[this.additionalCoverImage['uri']] = this.additionalCoverImage['link'];
           this.saveDraft(this.draftId);
         },
         error => {
@@ -878,14 +1005,53 @@ export class EditContentComponent implements OnInit, OnDestroy {
       };
     }
     this.hideCover = !this.hideCover;
+    contentUrisChange.call(this);
     this.saveDraft(this.draftId);
   }
 
   resetBoostProgress() {
     this.boostField = false;
-    this.boostDays = 1;
-    this.boostPrice = 50;
+    this.chosenDay = 1;
+    this.chosenPrice = 0;
     this.isWhiteSpaceShown = false;
+  }
+
+  insertImage(options) {
+    this.showGallery = false;
+    this.editorContentObject.selection.setAtStart(this.cursorHostElement);
+    this.editorContentObject.selection.restore();
+    this.editorContentObject.image.insert(options.url, options.sanitize, options.data, options.existingImage, options.response);
+  }
+
+  onAmountRangeChange(data) {
+    if (Math.round(data) != Math.round(this.chosenPrice)) {
+      this.chosenPrice = data;
+    }
+  }
+
+  onDaysRangeChange(data) {
+    this.chosenDay = data;
+  }
+
+  detectValue(data) {
+    if (this.chosenPrice != data.value) {
+      this.chosenPrice = data.value;
+    }
+
+    if (this.chosenPriceProgress != Math.round(data.value)) {
+      this.chosenPriceProgress = Math.round(data.value);
+    }
+  }
+
+  cancelCrop() {
+    this.croppingImage = null;
+    this.showCropModal = false;
+    // document.querySelector('html').classList.remove('overflow-hidden');
+  }
+
+  addCroppedImage(event: ImageCroppedEvent) {
+    this.croppedImage = event;
+    addCroppedImage.call(this);
   }
 
   ngOnDestroy(): void {

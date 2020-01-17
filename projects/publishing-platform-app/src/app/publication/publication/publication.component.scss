@@ -132,11 +132,19 @@
     height: 340px;
     margin: 35px 0;
     border-radius: 30px;
-    background-color: pbq-color($blue, 300);
+    background-position: 0, 0;
+    background-repeat: no-repeat;
+    background-color: pbq-color($grey, 300);
     background-size: contain;
-    background-position: center;
     position: relative;
     overflow: hidden;
+    &--draggable {
+        border: 3px solid $blue;
+    }
+    &--hideCover {
+        display: none!important;
+    }
+
     &--editable {
         &--no-img {
             border: 3px solid rgba($blue, 0.1);
@@ -997,3 +1005,46 @@ ui-input-suggestions {
         text-align: center;
     }
 }
+
+//boost
+.publishing-space--edit-boost{
+  opacity: 1;
+  visibility: visible;
+  transition: .2s ease-out;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  right: 0;
+  left: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9;
+  @include media-sm {
+    overflow: scroll;
+  }
+  &.visible{
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition: .2s ease-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+.no-visible{
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: .2s ease-out;
+  &.visible{
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition: .2s ease-out;
+  }
+}
+

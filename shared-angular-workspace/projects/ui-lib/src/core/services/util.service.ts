@@ -14,13 +14,13 @@ export class UtilService {
     return string.length > limit ? `${string.substring(0, limit)}...` : string;
   }
 
-  formatFirstLetters(fullName: string) {
+  formatFirstLetters(fullName: string, count: number = 2) {
     return fullName ?
       fullName
         .replace(/\s+/g, ' ')
         .trim()
         .split(' ')
-        .slice(0, 2)
+        .slice(0, count)
         .map(n => n.slice(0, 1))
         .map(n => n.toUpperCase())
         .join('') :

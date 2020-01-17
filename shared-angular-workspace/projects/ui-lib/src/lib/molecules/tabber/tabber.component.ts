@@ -38,11 +38,11 @@ export class TabberComponent implements OnInit, AfterViewInit, OnChanges, DoChec
   ngOnInit() {
     this.itemSelector = this.type === 'navigation' ? '.tabber__item' : '.button-tabber__item';
 
-    if (this.tabs.length > 0 && !this.tabs.some(tab => tab.value === this.currentValue)) {
+    if (this.tabs && this.tabs.length > 0 && !this.tabs.some(tab => tab.value === this.currentValue)) {
       this.currentValue = this.tabs[0].value;
       this.onTabChange.emit(this.tabs[0].value);
     }
-    this.oldTabs = this.tabs.length ? this.tabs : this.oldTabs;
+    this.oldTabs = (this.tabs && this.tabs.length) ? this.tabs : this.oldTabs;
   }
 
   ngOnChanges(changes: SimpleChanges): void {

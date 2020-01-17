@@ -1,8 +1,8 @@
-import { AfterViewInit, ElementRef, EventEmitter, OnChanges, OnInit, SimpleChanges, ChangeDetectorRef } from '@angular/core';
+import { AfterViewInit, ElementRef, EventEmitter, OnChanges, SimpleChanges, ChangeDetectorRef, DoCheck } from '@angular/core';
 import { HeaderDataOptions } from '../../../core/models/headerData';
 import { ListItemOptions } from '../../../core/models/listItem';
 import { Avatar } from '../../../core/models/avatar';
-export declare class HeaderComponent implements OnInit, OnChanges, AfterViewInit {
+export declare class HeaderComponent implements OnChanges, AfterViewInit, DoCheck {
     private cdr;
     headerData: HeaderDataOptions;
     showSearchBar: boolean;
@@ -55,13 +55,13 @@ export declare class HeaderComponent implements OnInit, OnChanges, AfterViewInit
         social: boolean;
     };
     constructor(cdr: ChangeDetectorRef);
-    ngOnInit(): void;
+    ngOnChanges(changes: SimpleChanges): void;
+    ngDoCheck(): void;
+    ngAfterViewInit(): void;
     selectTagValue(value: any): void;
     buildAvatarData(): void;
-    ngOnChanges(changes: SimpleChanges): void;
     imageLoaded(): void;
     enableLoading(currentDraftDate: number): void;
-    ngAfterViewInit(): void;
     calculateLeftValues(): void;
     _leftValsListener(): void;
     _closeMenus(): void;

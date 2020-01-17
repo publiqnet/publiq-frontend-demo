@@ -1,5 +1,5 @@
 <div class="publication-widget" *ngIf="showData && showData.length">
-  <h3 class="publication-widget__title">{{'ui.publication-block.recommended' | translate}}</h3>
+  <h3 class="publication-widget__title" [attr.data-shadow-text]="'ui.publication-block.publications' | translate">{{'ui.publication-block.recommended' | translate}}</h3>
   <div class="publication-widget__buttons">
     <span class="refresh-list" [ngClass]="refreshAnimate ? 'animate' : ''">
       <button (click)="updateActions()">

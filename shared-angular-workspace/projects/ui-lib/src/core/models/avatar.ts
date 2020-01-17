@@ -6,6 +6,8 @@ export interface AvatarOptions {
   bio?: string;
   public_key?: string;
   thumbnail?: string;
+  subscribersCount?: number;
+  subscribed?: boolean;
 }
 
 export class Avatar {
@@ -17,6 +19,8 @@ export class Avatar {
   thumbnail: string;
   public_key: string;
   bio: string;
+  subscribersCount: number;
+  subscribed: boolean;
 
   constructor(options?: AvatarOptions) {
     for (const i in options) {

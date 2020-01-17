@@ -1,0 +1,69 @@
+<ng-container *ngIf="highlightData">
+  <div id="publishMain" class="publish__main">
+    <span class="white-overlay"></span>
+    <div class="highlight-main" [ngStyle]="!selectedBackground && highlightData?.cover?.url? {'background-image':'url(' + highlightData.cover.url + ')'} : {'background-color': selectedBackground}">
+      <div class="highlight-body" [ngClass]="firstTitleChange ? '' : 'top-padding'" [class.with-shadow]="!selectedBackground">
+        <div *ngIf="firstTitleChange" class="highlight-body--title-first">
+          <svg width="14px" height="18px" viewBox="0 0 14 18" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+            <!-- Generator: Sketch 61 (89581) - https://sketch.com -->
+            <title>Hand Copy</title>
+            <desc>Created with Sketch.</desc>
+            <g id="Highlights" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+              <g id="Highlights-Style-2" transform="translate(-546.000000, -151.000000)" fill="#FFC300">
+                <g id="Group-15" transform="translate(514.000000, 132.000000)">
+                  <g id="Group-29">
+                    <g id="Group-38" transform="translate(30.000000, 19.000000)">
+                      <g id="Hand-Copy" transform="translate(9.000000, 9.000000) scale(-1, 1) rotate(-180.000000) translate(-9.000000, -9.000000) ">
+                        <path d="M10.5,5.25 C11.2966117,5.25 11.9968917,5.66425678 12.3967409,6.28875607 C12.7228647,6.10491004 13.0993243,6 13.5,6 C14.7421007,6 15.75,7.00714006 15.75,8.24804378 L15.75,12.7470102 C15.75,15.2326388 13.7343328,17.25 11.2524856,17.25 L6.74751437,17.25 C4.26318939,17.25 2.25,15.2340714 2.25,12.7470102 L2.25,2.99972805 C2.25,1.75765838 3.25862344,0.75 4.5,0.75 C5.74298677,0.75 6.75,1.75617999 6.75,2.99972805 L6.75,5.37814506 C6.98465779,5.2951603 7.2371168,5.25 7.5,5.25 C8.07616796,5.25 8.60194245,5.46670774 9.00010021,5.82293204 C9.39836657,5.4666759 9.92417601,5.25 10.5,5.25 Z M9.75,7.49804378 L9.75,9 C9.75,9.41421356 9.41421356,9.75 9,9.75 C8.58578644,9.75 8.25,9.41421356 8.25,9 L8.25,7.49804378 C8.25,7.08582031 7.91392654,6.75 7.5,6.75 C7.08654096,6.75 6.75,7.08584136 6.75,7.49804378 L6.75,9 C6.75,9.41421356 6.41421356,9.75 6,9.75 C5.58578644,9.75 5.25,9.41421356 5.25,9 L5.25,2.99972805 C5.25,2.5848852 4.91483748,2.25 4.5,2.25 C4.0867293,2.25 3.75,2.58640712 3.75,2.99972805 L3.75,12.7470102 C3.75,14.4061005 5.09207344,15.75 6.74751437,15.75 L11.2524856,15.75 C12.9056235,15.75 14.25,14.4044936 14.25,12.7470102 L14.25,8.24804378 C14.25,7.83582031 13.9139265,7.5 13.5,7.5 C13.086541,7.5 12.75,7.83584136 12.75,8.24804378 L12.75,9 C12.75,9.41421356 12.4142136,9.75 12,9.75 C11.5857864,9.75 11.25,9.41421356 11.25,9 L11.25,7.49804378 C11.25,7.08582031 10.9139265,6.75 10.5,6.75 C10.086541,6.75 9.75,7.08584136 9.75,7.49804378 Z" id="Combined-Shape"></path>
+                      </g>
+                    </g>
+                  </g>
+                </g>
+              </g>
+            </g>
+          </svg>
+          <span>{{'highlight.change_font' | translate}}</span>
+        </div>
+        <div class="highlight-body--title" (click)="changeFonts()">
+          <h3 [style.font-family]="currentFont">{{highlightData.title}}</h3>
+        </div>
+        <div *ngIf="highlightData" class="highlight-body--tags">
+          <div *ngFor="let tag of highlightData.tags" (click)="changeTags()" [ngClass]="[currentTag]">
+            <h4>#{{tag}}</h4>
+          </div>
+        </div>
+        <div *ngIf="firstTagChange" class="highlight-body--title-first tags-first">
+          <svg width="14px" height="18px" viewBox="0 0 14 18" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+            <!-- Generator: Sketch 61 (89581) - https://sketch.com -->
+            <title>Hand</title>
+            <desc>Created with Sketch.</desc>
+            <g id="Highlights" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+              <g id="Highlights-Style-2" transform="translate(-546.000000, -500.000000)" fill="#FFC300">
+                <g id="Group-15" transform="translate(514.000000, 132.000000)">
+                  <g id="Group-29">
+                    <g id="Hand" transform="translate(30.000000, 368.000000)">
+                      <path d="M10.5,5.25 C11.2966117,5.25 11.9968917,5.66425678 12.3967409,6.28875607 C12.7228647,6.10491004 13.0993243,6 13.5,6 C14.7421007,6 15.75,7.00714006 15.75,8.24804378 L15.75,12.7470102 C15.75,15.2326388 13.7343328,17.25 11.2524856,17.25 L6.74751437,17.25 C4.26318939,17.25 2.25,15.2340714 2.25,12.7470102 L2.25,2.99972805 C2.25,1.75765838 3.25862344,0.75 4.5,0.75 C5.74298677,0.75 6.75,1.75617999 6.75,2.99972805 L6.75,5.37814506 C6.98465779,5.2951603 7.2371168,5.25 7.5,5.25 C8.07616796,5.25 8.60194245,5.46670774 9.00010021,5.82293204 C9.39836657,5.4666759 9.92417601,5.25 10.5,5.25 Z M9.75,7.49804378 L9.75,9 C9.75,9.41421356 9.41421356,9.75 9,9.75 C8.58578644,9.75 8.25,9.41421356 8.25,9 L8.25,7.49804378 C8.25,7.08582031 7.91392654,6.75 7.5,6.75 C7.08654096,6.75 6.75,7.08584136 6.75,7.49804378 L6.75,9 C6.75,9.41421356 6.41421356,9.75 6,9.75 C5.58578644,9.75 5.25,9.41421356 5.25,9 L5.25,2.99972805 C5.25,2.5848852 4.91483748,2.25 4.5,2.25 C4.0867293,2.25 3.75,2.58640712 3.75,2.99972805 L3.75,12.7470102 C3.75,14.4061005 5.09207344,15.75 6.74751437,15.75 L11.2524856,15.75 C12.9056235,15.75 14.25,14.4044936 14.25,12.7470102 L14.25,8.24804378 C14.25,7.83582031 13.9139265,7.5 13.5,7.5 C13.086541,7.5 12.75,7.83584136 12.75,8.24804378 L12.75,9 C12.75,9.41421356 12.4142136,9.75 12,9.75 C11.5857864,9.75 11.25,9.41421356 11.25,9 L11.25,7.49804378 C11.25,7.08582031 10.9139265,6.75 10.5,6.75 C10.086541,6.75 9.75,7.08584136 9.75,7.49804378 Z" id="Combined-Shape"></path>
+                    </g>
+                  </g>
+                </g>
+              </g>
+            </g>
+          </svg>
+          <span>{{'highlight.change_tag' | translate}}</span>
+        </div>
+      </div>
+      <div class="highlight-footer">
+        <div class="highlight-footer--single" *ngIf="highlightBackgrounds && highlightBackgrounds.length">
+          <ng-container *ngIf="highlightData?.cover?.url">
+            <div [ngStyle]="{ 'background-image': 'url(' + highlightData?.cover?.url + ')'}" class="highlight-footer--single-block cover-block" (click)="changeBackground()"></div>
+          </ng-container>
+          <div *ngFor="let bgColor of highlightBackgrounds, i as index" [style.background]="bgColor" class="highlight-footer--single-block" (click)="changeBackground(bgColor)">{{index}}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="highlight-buttons">
+    <ui-button [type]="'ordinary'" [text]="'highlight.skip' | translate" [className]="'button-highlight'" (btnClicked)="closeHighlightModal($event)"></ui-button>
+    <ui-button [type]="'ordinary'" [text]="'highlight.done' | translate" [className]="'button-highlight button-highlight--done'" (btnClicked)="createHighlightModal($event)"></ui-button>
+  </div>
+</ng-container>

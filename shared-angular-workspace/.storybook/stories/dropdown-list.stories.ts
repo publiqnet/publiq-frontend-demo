@@ -330,18 +330,18 @@ storiesOf('Publiq Design|Molecules.Dropdown List', module)
         type: radios('type', {
           'Notification': 'notification-list',
         }, 'notification-list'),
-        isOpen: boolean('Is open?', false),
+        isOpen: boolean('Is open?', true),
         delta: number('delta', 35),
         position: radios('position', {
           top: 'top',
           right: 'right',
           bottom: 'bottom',
           left: 'left',
-        }, 'bottom'),
+        }, 'right'),
         icon: text('Icon', 'energy'),
         items: object('Items', [
           {
-            type: 'publication_invitation_new',
+            type: 'share_article',
             slug: '1.3.8',
             date: new Date(),
             langOptions: {
@@ -373,6 +373,26 @@ storiesOf('Publiq Design|Molecules.Dropdown List', module)
               image: 'http://via.placeholder.com/150',
               first_name: 'Gagik',
               last_name: 'Yeghiazaryan',
+              slug: '4.3.2'
+            },
+            publication: {
+              title: 'Lorem Ipsum',
+              slug: '123ab6'
+            }
+          },
+          {
+            type: 'publication_invitation_new',
+            slug: '1.3.8',
+            date: new Date(),
+            langOptions: {
+              bodyEn: '{{performer}} has invited you to join {{target}}',
+              bodyJp: '{{performer}}に参加するように招待されています{{target}}'
+            },
+            isRead: true,
+            actionFrom: {
+              image: 'http://via.placeholder.com/150',
+              first_name: 'Harutyun',
+              last_name: 'Mnatsakanyan',
               slug: '4.3.2'
             },
             publication: {

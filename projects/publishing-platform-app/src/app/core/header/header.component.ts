@@ -2,7 +2,7 @@ import { AfterViewInit, Component, Inject, Input, OnDestroy, OnInit, PLATFORM_ID
 import { of, ReplaySubject, timer } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AccountService } from '../services/account.service';
-import { filter, switchMap, take, takeUntil, tap } from 'rxjs/operators';
+import { filter, switchMap, take, takeUntil, takeWhile, tap } from 'rxjs/operators';
 import { ContentService } from '../services/content.service';
 import { ErrorService } from '../services/error.service';
 import { Search } from '../services/models/search';
@@ -15,6 +15,8 @@ import { Notification } from '../../core/services/models/notification';
 import { PublicationService } from '../services/publication.service';
 import { TranslateService } from '@ngx-translate/core';
 import { UiNotificationService } from '../services/ui-notification.service';
+import { BrowserNotificationService } from '../services/browser-notification.service';
+import { BrowserNotification, BrowserNotificationOptions } from '../services/models/browserNotification';
 
 enum NotificationActions {
   REDIRECT = 'redirect',
@@ -26,7 +28,25 @@ enum NotificationActions {
   MARK_AS_UNREAD = 'mark-as-unread',
   MARK_ALL_AS_READ = 'mark-all-as-read',
   DELETE_NOTIFICATION = 'delete-notification',
-  DELETE_ALL_NOTIFICATIONS = 'delete-all-notifications'
+  DELETE_ALL_NOTIFICATIONS = 'delete-all-notifications',
+  SHARE_ARTICLE = 'share'
+}
+
+enum NotificationTypes {
+  publication_request_new = 'Publication Request',
+  publication_invitation_new = 'Publication Invitation',
+  publication_invitation_cancelled = 'Publication Invitation Cancelled',
+  publication_membership_cancelled = 'Publication Membership Cancelled',
+  publication_invitation_accepted  = 'Publication Invitation Accepted',
+  publication_invitation_rejected = 'Publication Invitation Rejected',
+  publication_request_cancelled = 'Publication Request Cancelled',
+  publication_request_accepted = 'Publication Request Accepted',
+  publication_request_rejected = 'Publication Request Rejected',
+  publication_membership_cancelled_by_user = 'Publication Membership Cancelled',
+  new_article = 'New Article',
+  subscribe_user = 'User Subscription',
+  share_article = 'Article Shared'
+
 }
 
 @Component({
@@ -41,7 +61,7 @@ export class HeaderComponent implements OnInit, AfterViewInit, OnDestroy {
   public searchWord: string;
   public defaultSearchData = null;
   private unsubscribe$ = new ReplaySubject<void>(1);
-  private stopNotificationTimer$: ReplaySubject<void> = new ReplaySubject<void>();
+  private stopNotificationTimer: boolean = true;
   private firstCheck: number = 0;
   public headerData: any = {
     logo: '/assets/images/publiq-media.svg',
@@ -75,6 +95,7 @@ export class HeaderComponent implements OnInit, AfterViewInit, OnDestroy {
     public sharedData: SharedDataService,
     public publicationService: PublicationService,
     private location: Location,
+    private browserNotificationService: BrowserNotificationService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
   }
@@ -103,38 +124,41 @@ export class HeaderComponent implements OnInit, AfterViewInit, OnDestroy {
                   this.emittedNumber = emittedNumber;
                   return this.notificationService.getNotifications(this.emittedNumber === 0 ? this.notificationCount : 20, 0);
                 }),
-                takeUntil(this.stopNotificationTimer$))
-              .subscribe((res) => {
-                this.notificationLastId = this.emittedNumber === 0 ?
-                  (res.notifications && res.notifications.length ? res.notifications[res.notifications.length - 1]['id'] : 0)
-                  : this.notificationLastId;
-                this.notifications = this.emittedNumber === 0 ? [...res.notifications.map(n => new Notification(n))]
-                  : this.notifications;
-                this.seeMoreChecker = this.emittedNumber === 0 ? res.more : this.seeMoreChecker;
-                this.newNotificationsCount = this.emittedNumber === 0 ? res.unseenCount : this.newNotificationsCount;
+                tap((res) => {
+                  this.notificationLastId = this.emittedNumber === 0 ?
+                    (res.notifications && res.notifications.length ? res.notifications[res.notifications.length - 1]['id'] : 0)
+                    : this.notificationLastId;
+                  this.notifications = this.emittedNumber === 0 ? [...res.notifications.map(n => new Notification(n))]
+                    : this.notifications;
+                  this.seeMoreChecker = this.emittedNumber === 0 ? res.more : this.seeMoreChecker;
+                  this.newNotificationsCount = this.emittedNumber === 0 ? res.unseenCount : this.newNotificationsCount;
 
-                const unseenCount = res.unseenCount - this.newNotificationsCount;
-                if (unseenCount > 0 && this.emittedNumber > 0) {
-                  if (unseenCount <= res.notifications.length) {
-                    this.notifications = [...res.notifications.slice(0, unseenCount).map(n => new Notification(n)), ...this.notifications];
-                    this.newNotificationsCount = res.unseenCount;
-                  } else {
-                    this.notificationService.getNotifications(unseenCount, 0)
-                      .pipe(take(1))
-                      .subscribe((innerRes) => {
-                        this.notifications = [...innerRes.notifications.map(n => new Notification(n)), ...this.notifications];
-                        this.newNotificationsCount = innerRes.unseenCount;
-                      });
+                  const unseenCount = res.unseenCount - this.newNotificationsCount;
+                  if (unseenCount > 0 && this.emittedNumber > 0) {
+                    if (unseenCount <= res.notifications.length) {
+                      const unseenNotifications: Notification[] = res.notifications.slice(0, unseenCount).map(n => new Notification(n));
+                      this.notifications = [...unseenNotifications, ...this.notifications];
+                      this.newNotificationsCount = res.unseenCount;
+                      this.showBrowserNotifications(unseenNotifications);
+                    } else {
+                      this.notificationService.getNotifications(unseenCount, 0)
+                        .pipe(take(1))
+                        .subscribe((innerRes) => {
+                          const unseenNotifications: Notification[] = innerRes.notifications.map(n => new Notification(n));
+                          this.notifications = [...unseenNotifications, ...this.notifications];
+                          this.showBrowserNotifications(unseenNotifications);
+                          this.newNotificationsCount = innerRes.unseenCount;
+                        });
+                    }
                   }
-                }
-                this.updateHeaderData();
-              });
+                  this.updateHeaderData();
+                }),
+                takeWhile(() => this.stopNotificationTimer)).subscribe();
             this.firstCheck += 1;
           } else {
             if (this.firstCheck) {
               this.allowRequests = false;
-              this.stopNotificationTimer$.next();
-              this.stopNotificationTimer$.complete();
+              this.stopNotificationTimer = false;
             }
           }
         });
@@ -161,7 +185,7 @@ export class HeaderComponent implements OnInit, AfterViewInit, OnDestroy {
             views: publication.views,
             storiesCount: publication.storiesCount,
             subscribersCount: publication.subscribersCount,
-            membersList: publication.membersCount,
+            membersCount: publication.membersCount,
             following: publication.following,
             memberStatus: publication.memberStatus,
             slug: publication.slug
@@ -207,34 +231,34 @@ export class HeaderComponent implements OnInit, AfterViewInit, OnDestroy {
       ).subscribe();
   }
 
-  onShare(platform) {
+  onShare(platform, contentUnit?) {
     if (isPlatformBrowser(this.platformId)) {
       switch (platform) {
         case 'facebook':
           window.open('https://www.facebook.com/sharer/sharer.php?u=' +
             encodeURIComponent(environment.main_site_url + '/s/' +
-              this.headerData.articleData.slug), 'facebooksharer',
+              ((contentUnit && contentUnit.uri) || this.headerData.articleData.slug)), 'facebooksharer',
             `width=600, height=400, top=${(screen.availHeight || screen.height) / 2 - 200},` +
             `left=${(screen.availWidth || screen.width) / 2 - 300}, scrollbars=no`);
           break;
         case 'twitter':
           window.open('http://twitter.com/share?url=' +
             encodeURIComponent(environment.main_site_url + '/s/' +
-              this.headerData.articleData.slug), 'twittersharer',
+              ((contentUnit && contentUnit.uri) || this.headerData.articleData.slug)), 'twittersharer',
             `width=600, height=300, top=${(screen.availHeight || screen.height) / 2 - 150},` +
             `left=${(screen.availWidth || screen.width) / 2 - 300}, toolbar=0, resizable=1`);
           break;
         case 'linkedin':
           window.open('http://www.linkedin.com/shareArticle?mini=true&url=' +
             encodeURIComponent(environment.main_site_url + '/s/' +
-              this.headerData.articleData.slug), 'linkedinsharer',
+              ((contentUnit && contentUnit.uri) || this.headerData.articleData.slug)), 'linkedinsharer',
             `width=600, height=300, top=${(screen.availHeight || screen.height) / 2 - 150},` +
             `left=${(screen.availWidth || screen.width) / 2 - 300}, toolbar=0, resizable=1`);
           break;
         case 'reddit':
           window.open('http://www.reddit.com/submit?url=' +
-            encodeURIComponent(environment.main_site_url + '/s/' + this.headerData.articleData.slug) +
-            '&title=' + encodeURIComponent(this.headerData.articleData.title), 'redditsharer',
+            encodeURIComponent(environment.main_site_url + '/s/' + ((contentUnit && contentUnit.uri) || this.headerData.articleData.slug)) +
+            '&title=' + encodeURIComponent((contentUnit && contentUnit.title) || this.headerData.articleData.title), 'redditsharer',
             `width=600, top=${(screen.availHeight || screen.height) / 2 - 150},` +
             `left=${(screen.availWidth || screen.width) / 2 - 300}, height=300, toolbar=0, resizable=1`);
           break;
@@ -425,7 +449,7 @@ export class HeaderComponent implements OnInit, AfterViewInit, OnDestroy {
       } else if (['en', 'jp'].includes(event.slug)) {
         this.changeLang(event.slug);
       } else if (event.slug == 'profile') {
-        this.router.navigate([`//a/${this.accountService.accountInfo.publicKey}`]);
+        this.router.navigate([`/a/${this.accountService.accountInfo.publicKey}`]);
       } else if (event.slug == 'wallet') {
         window.open(environment.wallet_url, '_blank');
       } else {
@@ -461,7 +485,7 @@ export class HeaderComponent implements OnInit, AfterViewInit, OnDestroy {
         }
         this.router.navigate([`/p/${e.slug.slug.publication.slug}`]);
         break;
-      case NotificationActions.REDIRECT_INVITATIONS:
+/*      case NotificationActions.REDIRECT_INVITATIONS:
         if (!e.slug.slug.isRead) {
           this.markAsRead(e, true);
         }
@@ -474,6 +498,9 @@ export class HeaderComponent implements OnInit, AfterViewInit, OnDestroy {
         }
         const openRequests = {openRequests: true};
         this.router.navigate([`/p/${e.slug.slug.publication.slug}`, openRequests]);
+        break;*/
+      case NotificationActions.SHARE_ARTICLE:
+        this.onShare(e.slug.platform, e.slug.data);
         break;
       case NotificationActions.MARK_AS_READ:
         this.markAsRead(e, true);
@@ -512,8 +539,13 @@ export class HeaderComponent implements OnInit, AfterViewInit, OnDestroy {
     this.resetNewNotificationsCount();
   }
 
+  hideOverflow(elem) {
+    elem ? document.querySelector('html').classList.add('overflow-hidden') : document.querySelector('html').classList.remove('overflow-hidden');
+  }
+
   onTagSelect(event) {
     this.showSearch = true;
+    this.hideOverflow(this.showSearch);
   }
 
   onNotificationMenuOpened() {
@@ -573,6 +605,25 @@ export class HeaderComponent implements OnInit, AfterViewInit, OnDestroy {
         this.translate.use(lang);
       }
     }
+  }
+
+  private showBrowserNotifications(notifications: Notification[]) {
+    notifications.forEach((notification) => {
+      if (notification.isSpecial) {
+        const customNotification = new BrowserNotification(this.translate.currentLang, notification);
+
+        this.browserNotificationService.generateNotification(NotificationTypes[notification.type], customNotification);
+        this.browserNotificationService.permission$
+          .pipe(
+            tap((permission) => {
+              if (permission === 'denied') {
+                this.notificationService.info(NotificationTypes[notification.type], customNotification.body);
+              }
+            }),
+            takeUntil(this.unsubscribe$)
+          ).subscribe();
+      }
+    });
   }
 
   ngOnDestroy() {

@@ -51,17 +51,17 @@ enum LoadDataType {
   providers: [SafeStylePipe]
 })
 export class AuthorComponent implements OnInit, OnDestroy {
+  @Input('autoresize') maxHeight: number;
   @ViewChild(NgxMasonryComponent, { static: false }) masonry: NgxMasonryComponent;
-  public isMasonryLoaded = false;
-  public publicationsList = [];
-  public activeBoostsData = [];
-  public allBoostsData = [];
-  bioTextElement: ElementRef;
-  authorNameElement: ElementRef;
-
-  modalTitles = null;
-  public animationAction: boolean;
-
+  @ViewChild('fullnameTextarea', { static: false }) fullnameTextarea: ElementRef;
+  @ViewChild('bioTextarea', { static: false }) bioTextarea: ElementRef;
+  @ViewChild('bioText', { static: false }) set bioText(el: ElementRef | null) {
+    if (!el) {
+      return;
+    }
+    this.bioTextElement = el;
+    this.resizeTextareaElement(el.nativeElement);
+  }
   @ViewChild('authorName', { static: false }) set authorName(el: ElementRef | null) {
     if (!el) {
       return;
@@ -70,31 +70,48 @@ export class AuthorComponent implements OnInit, OnDestroy {
     this.authorNameElement = el;
     this.resizeTextareaElement(el.nativeElement);
   }
-
-  @ViewChild('bioText', { static: false }) set bioText(el: ElementRef | null) {
-    if (!el) {
-      return;
-    }
-
-    this.bioTextElement = el;
-    this.resizeTextareaElement(el.nativeElement);
-  }
-
-  @ViewChild('fullnameTextarea', { static: false }) fullnameTextarea: ElementRef;
-  @ViewChild('bioTextarea', { static: false }) bioTextarea: ElementRef;
-
-  @Input('autoresize') maxHeight: number;
   public masonryOptions: NgxMasonryOptions = {
     transitionDuration: '0s',
     itemSelector: '.story--grid',
     gutter: 10,
     horizontalOrder: true
   };
-  public testTest: any;
+  public isMasonryLoaded = false;
+  public publicationsList = [];
+  public animationAction: boolean;
+  public boostType: string = 'boost';
+  public decryptedBrainKey: string;
+  public publishedContent: Content[] = [];
+  public loading = true;
+  public drafts: Array<any>;
+  public blockInfiniteScroll = false;
+  public seeMoreChecker = false;
+  public startFromUri = null;
+  public startFromDraftId = 0; // for draft data loading
+  public storiesDefaultCount = 10;
+  public boostedStoriesCount = 0;
+  public draftsDefaultCount = 10;
+  public seeMoreDraftChecker = false;
+  public showBoostModal: boolean = false;
+  public showHighlightModal: boolean = false;
+  public showHistoryModal: boolean = false;
+  public selectedBoostData: any = {};
+  public feeWhole: number = 0;
+  public feeFraction: number = 0;
+  public currentBoostFee: number = 0;
+  public currentTime: number;
+  public boostStates: {active: Content[], passive: Content[], summary: any};
+  public contentVersions = [];
+  public boostSubmitError: boolean = false;
+  protected password: string = '';
+  private authorId: string;
+  private unsubscribe$ = new ReplaySubject<void>(1);
+  bioTextElement: ElementRef;
+  authorNameElement: ElementRef;
+  modalTitles = null;
   showEditIcon = false;
   showEditIcon1 = false;
   showEditModeIcons = false;
-  private authorId: string;
   shortName;
   loadingAuthor = true;
   avatarUrl: string;
@@ -108,28 +125,14 @@ export class AuthorComponent implements OnInit, OnDestroy {
   showPhase: boolean = false;
   showModal: boolean = false;
   showSecurityModal: boolean = false;
-  protected password: string = '';
   passwordVerified = false;
   decriptedPrivateKey: string;
   passError = '';
   incorrectRecoverPhrase = '';
-  public boostType: string = 'boost';
-  public decryptedBrainKey: string;
-  public publishedContent: Content[] = [];
-  public loading = true;
   listType = 'grid';
-  public drafts: Array<any>;
-  private unsubscribe$ = new ReplaySubject<void>(1);
   selectedTab: string = '1';
-  public blockInfiniteScroll = false;
-  public seeMoreChecker = false;
   seeMoreLoading = false;
-  public seeMoreDraftChecker = false;
   seeMoreDraftLoading: boolean = false;
-  public startFromUri = null;
-  public startFromDraftId = 0; // for draft data loading
-  public storiesDefaultCount = 10;
-  public draftsDefaultCount = 10;
   authorForm: FormGroup;
   tabs = [];
   author: Account;
@@ -141,16 +144,7 @@ export class AuthorComponent implements OnInit, OnDestroy {
   photo: File;
   editMode: boolean = false;
   modalProps: any = {};
-  public showBoostModal: boolean = false;
-  public showHistoryModal: boolean = false;
   showBoostModalType: string = 'boost';
-  public selectedBoostData: any = {};
-  public feeWhole: number = 0;
-  public feeFraction: number = 0;
-  public currentBoostFee: number = 0;
-  public currentTime: number;
-  public boostStates: {active: Content[], passive: Content[], summary: any};
-  public contentVersions = [];
 
   constructor(
     private activatedRoute: ActivatedRoute,
@@ -208,10 +202,8 @@ export class AuthorComponent implements OnInit, OnDestroy {
             if (this.accountService.loggedIn() && this.author && this.accountService.accountInfo.publicKey == this.author.publicKey) {
               this.isCurrentUser = true;
               this.setAuthorName();
-              return this.contentService.getMyContents(this.startFromUri, this.storiesDefaultCount);
-            } else {
-              return this.contentService.getContents(this.authorId, this.startFromUri, this.storiesDefaultCount);
             }
+            return this.contentService.getContents(this.authorId, this.startFromUri, this.storiesDefaultCount, this.boostedStoriesCount);
           }),
           takeUntil(this.unsubscribe$)
         )
@@ -241,7 +233,6 @@ export class AuthorComponent implements OnInit, OnDestroy {
           if (data.action === 'loadAuthorData') {
             this.router.navigate([`/page-not-found`]);
           } else if (data.action == 'loadAuthorStories') {
-            console.log('--error--', data.message);
           } else if (['getUserDrafts', 'deleteDraft', 'deleteAllDrafts'].includes(data.action)) {
             this.uiNotificationService.error(this.translateService.instant('author.error'), data.message);
           }
@@ -316,7 +307,7 @@ export class AuthorComponent implements OnInit, OnDestroy {
 
   refreshStories() {
     this.startFromUri = null;
-    this.contentService.getMyContents(this.startFromUri, this.storiesDefaultCount)
+    this.contentService.getContents(this.authorId, this.startFromUri, this.storiesDefaultCount, this.boostedStoriesCount)
       .subscribe(contents => {
         this.publishedContent = contents.data;
         this.seeMoreChecker = contents.more;
@@ -345,6 +336,8 @@ export class AuthorComponent implements OnInit, OnDestroy {
     this.selectedBoostData['uri'] = data.uri;
     this.selectedBoostData['type'] = data.type;
     this.showBoostModal = true;
+    this.hideOverflow(this.showBoostModal);
+    this.hideOverflow(this.showHighlightModal);
     this.showBoostModalType = data.type == 'cancel' ? 'cancel-boost' : 'boost';
   }
 
@@ -353,15 +346,31 @@ export class AuthorComponent implements OnInit, OnDestroy {
     this.selectedBoostData['type'] = data.type;
     this.selectedBoostData['transactionHash'] = data.hash ? data.hash : '';
     this.showBoostModal = true;
+    this.hideOverflow(this.showBoostModal);
     this.showBoostModalType = data.type == 'cancel' ? 'cancel-boost' : 'boost';
   }
 
   closeBoostModal() {
     this.showBoostModal = false;
+    this.hideOverflow(this.showBoostModal);
+  }
+
+  submittedBoost() {
+    this.showHighlightModal = true;
+    this.showBoostModal = false;
+    this.hideOverflow(this.showHighlightModal);
+    this.refreshStories();
+    this.getAllBoosts();
+  }
+
+  closeHighlightModal() {
+    this.showHighlightModal = false;
+    this.hideOverflow(this.showHighlightModal);
   }
 
   closeHistoryModal(event) {
     if (event.closeHistory) { this.showHistoryModal = false; }
+    this.hideOverflow(this.showHistoryModal);
   }
 
   @HostListener('document:keydown', ['$event']) onKeydownHandler(event: KeyboardEvent) {
@@ -554,10 +563,15 @@ export class AuthorComponent implements OnInit, OnDestroy {
     this.router.navigate([`/s/${uri}`]);
   }
 
+  hideOverflow(elem) {
+    elem ? document.querySelector('html').classList.add('overflow-hidden') : document.querySelector('html').classList.remove('overflow-hidden');
+  }
+
   deleteDraft(id: number, index: number) {
     const title = this.modalTitles.DeleteOneDraft;
     this.modalProps = { action: ModalConfirmActions.DeleteOne.toString(), title, slug: id, index };
     this.showModal = !this.showModal;
+    this.hideOverflow(this.showModal);
   }
 
   editDraft(id: string) {
@@ -568,6 +582,7 @@ export class AuthorComponent implements OnInit, OnDestroy {
     const title = this.modalTitles.DeleteAllDrafts;
     this.modalProps = { action: ModalConfirmActions.DeleteAll.toString(), title };
     this.showModal = !this.showModal;
+    this.hideOverflow(this.showModal);
   }
 
   onLayoutComplete(event) {
@@ -604,8 +619,7 @@ export class AuthorComponent implements OnInit, OnDestroy {
     let contentObservable;
     if (type === LoadDataType.Stories) {
       this.seeMoreLoading = true;
-      contentObservable = this.isCurrentUser ? this.contentService.getMyContents(this.startFromUri, this.storiesDefaultCount) :
-        this.contentService.getContents(this.authorId, this.startFromUri, this.storiesDefaultCount);
+      contentObservable = this.contentService.getContents(this.authorId, this.startFromUri, this.storiesDefaultCount, this.boostedStoriesCount);
     } else if (type === LoadDataType.Drafts) {
       this.seeMoreDraftLoading = true;
       contentObservable = this.draftService.getUserDrafts(this.startFromDraftId, this.draftsDefaultCount);
@@ -715,6 +729,7 @@ export class AuthorComponent implements OnInit, OnDestroy {
   doDelete(data) {
     if (!data.answer) {
       this.showModal = !this.showModal;
+      this.hideOverflow(this.showModal);
       return;
     }
     if (data.properties.action == ModalConfirmActions.DeleteOne.toString()) {
@@ -723,6 +738,7 @@ export class AuthorComponent implements OnInit, OnDestroy {
       this.doDeleteAllDrafts(data.properties);
     }
     this.showModal = !this.showModal;
+    this.hideOverflow(this.showModal);
   }
 
   private doDeleteOneDraft(props) {
@@ -840,6 +856,7 @@ export class AuthorComponent implements OnInit, OnDestroy {
         takeUntil(this.unsubscribe$)
       )
       .subscribe((author: Account) => {
+        this.author.subscribersCount++;
         this.contentService.updateSearchData = true;
         this.canFollow = false;
       });
@@ -850,12 +867,12 @@ export class AuthorComponent implements OnInit, OnDestroy {
       this.router.navigate([`/user/login`]);
       return false;
     }
-
     this.accountService.unfollow(this.author.publicKey)
       .pipe(
         takeUntil(this.unsubscribe$)
       )
       .subscribe((author: Account) => {
+        this.author.subscribersCount--;
         this.contentService.updateSearchData = true;
         this.canFollow = true;
       });
@@ -881,34 +898,10 @@ export class AuthorComponent implements OnInit, OnDestroy {
     }
   }
 
-  cancelBoostSubmit(password) {
-    if (password && this.selectedBoostData && this.selectedBoostData.type == 'cancel') {
-      this.contentService.cancelStoryBoosting(this.selectedBoostData.uri, this.selectedBoostData.transactionHash, this.feeWhole, this.feeFraction, this.currentTime, password)
-      .subscribe(data => {
-        this.uiNotificationService.success(this.translateService.instant('author.success'), this.translateService.instant('author.boost_successfully_canceled'));
-        this.closeBoostModal();
-        this.refreshStories();
-          this.getAllBoosts();
-      },
-      error => {
-        this.uiNotificationService.error(this.translateService.instant('author.error'), this.translateService.instant('author.boost_cancel_error'));
-      });
-    }
-  }
-
-  newBoostSubmit(boostData) {
-    if (boostData.password && this.selectedBoostData && this.selectedBoostData.type == 'boost') {
-      this.contentService.contentBoost(this.selectedBoostData.uri, boostData.boostPrice, boostData.boostDays, this.feeWhole, this.feeFraction, this.currentTime, boostData.password)
-        .subscribe(data => {
-          this.uiNotificationService.success(this.translateService.instant('author.success'), this.translateService.instant('author.boost_successfully_added'));
-            this.closeBoostModal();
-            this.refreshStories();
-            this.getAllBoosts();
-        },
-        error => {
-          this.uiNotificationService.error(this.translateService.instant('author.error'), this.translateService.instant('author.content_boost_error'));
-        });
-    }
+  cancelBoostSubmit() {
+    this.closeBoostModal();
+    this.refreshStories();
+    this.getAllBoosts();
   }
 
   onTagClick(tagName) {

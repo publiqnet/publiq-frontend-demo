@@ -6,11 +6,10 @@ import {
   EventEmitter,
   Input,
   OnChanges,
-  OnInit,
   Output,
   SimpleChanges,
   ViewChild,
-  ChangeDetectorRef
+  ChangeDetectorRef, DoCheck
 } from '@angular/core';
 import { HeaderDataOptions } from '../../../core/models/headerData';
 import { debounceTime } from 'rxjs/operators';
@@ -24,7 +23,7 @@ import { Avatar } from '../../../core/models/avatar';
   styleUrls: ['./header.component.scss']
 })
 
-export class HeaderComponent implements OnInit, OnChanges, AfterViewInit {
+export class HeaderComponent implements OnChanges, AfterViewInit, DoCheck {
   @Input() headerData: HeaderDataOptions;
   @Input() showSearchBar: boolean = false;
   @Input() articleReadPercent: number = 0;
@@ -81,7 +80,37 @@ export class HeaderComponent implements OnInit, OnChanges, AfterViewInit {
 
   constructor(private cdr: ChangeDetectorRef) {}
 
-  ngOnInit(): void {
+  ngOnChanges(changes: SimpleChanges): void {
+    this.buildAvatarData();
+    setTimeout(() => {
+      this.calculateLeftValues();
+    }, 75);
+    if (this.headerData.draftData && this.headerData.draftData.updated) {
+      const currentDraftDate = this.headerData.draftData.updated;
+      if (this.draftUpdate != currentDraftDate) {
+        this.enableLoading(currentDraftDate);
+      }
+    } else {
+      this.draftUpdate = 0;
+    }
+  }
+
+  ngDoCheck(): void {
+    this.buildAvatarData();
+  }
+
+  ngAfterViewInit() {
+    setTimeout(() => {
+      this.calculateLeftValues();
+    }, 75);
+
+    fromEvent(this.searchBar.nativeElement, 'input').pipe(
+      debounceTime(600),
+    ).subscribe(
+      (event: KeyboardEvent) => {
+        this.onInputChange.emit(event['srcElement']['value']);
+      }
+    );
   }
 
   selectTagValue(value) {
@@ -99,25 +128,10 @@ export class HeaderComponent implements OnInit, OnChanges, AfterViewInit {
     });
   }
 
-  ngOnChanges(changes: SimpleChanges): void {
-    this.buildAvatarData();
-    setTimeout(() => {
-      this.calculateLeftValues();
-    }, 75);
-    if (this.headerData.draftData && this.headerData.draftData.updated) {
-      const currentDraftDate = this.headerData.draftData.updated;
-      if (this.draftUpdate != currentDraftDate) {
-        this.enableLoading(currentDraftDate);
-      }
-    } else {
-      this.draftUpdate = 0;
-    }
-  }
 
   imageLoaded() {
     this.calculateLeftValues();
   }
-
 
   enableLoading(currentDraftDate: number) {
     this.showLoading = true;
@@ -125,20 +139,6 @@ export class HeaderComponent implements OnInit, OnChanges, AfterViewInit {
       this.draftUpdate = currentDraftDate;
       this.showLoading = false;
     }, 1000);
-  }
-
-  ngAfterViewInit() {
-    setTimeout(() => {
-      this.calculateLeftValues();
-    }, 75);
-
-    fromEvent(this.searchBar.nativeElement, 'input').pipe(
-      debounceTime(600),
-    ).subscribe(
-      (event: KeyboardEvent) => {
-        this.onInputChange.emit(event['srcElement']['value']);
-      }
-    );
   }
 
   calculateLeftValues() {

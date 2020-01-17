@@ -12,6 +12,7 @@ export class AvatarComponent implements OnInit {
   @Input('isSquaric') isSquaric: boolean = false;
   @Input('size') size: string = 'medium';
   @Input('loadOriginalImg') loadOriginalImg: boolean = true;
+  @Input() multiLetters: boolean = true;
   @Input() className: string;
   public thumbnailLoaded: boolean = false;
   public originalImageLoaded: boolean = false;

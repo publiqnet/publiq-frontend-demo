@@ -8,6 +8,9 @@ import { Component, EventEmitter, Input, Output, HostBinding, AfterViewInit, Sim
 export class LoadingBlockComponent implements AfterViewInit, OnChanges {
   @Input() type: string = 'grid';
   @Input() className: string = '';
+  @Input() width: number = 120;
+  @Input() height: number = 15;
+  @Input() borderRadius: number = 4;
   @HostBinding('class.loading-block--grid') isGrid: boolean = false;
   @HostBinding('class.loading-block--single') isSingle: boolean = false;
 

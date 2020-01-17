@@ -76,7 +76,7 @@
               <span class="datum-container__property">{{'ui.header.followers' | translate}}</span>
             </div>
             <div class="datum-container">
-              <span class="datum-container__count">{{headerData.publicationData.membersList ? headerData.publicationData.membersList.length : 0}}</span>
+              <span class="datum-container__count">{{headerData.publicationData.membersCount}}</span>
               <span class="datum-container__property">{{'ui.header.members' | translate}}</span>
             </div>
           </div>
@@ -148,7 +148,7 @@
       <div class="row">
         <div class="col-md-8 offset-md-2">
           <label for="search_bar" class="search-input-space"></label>
-          <input id="search_bar" type="text" #searchBar>
+          <input id="search_bar" type="text" autocomplete="off" #searchBar>
           <div class="close-search" (click)="_searchEvent($event, false)">
             <span>{{'ui.header.close' | translate}}</span>
             <i class="icon icon-close"></i>
@@ -171,8 +171,7 @@
                     (seeMore)="onSeeMoreEvent($event)" [position]="'bottom'" [icon]="'energy'" [items]="headerData.notificationData.notifications" (onItemSelect)="navigationLinkClick($event)" [openerClassName]="'notification-list'" class="header-overlay__item" [style.left]="leftVal.notification + 'px'" [(isOpen)]="menuOpen.notification"></ui-dropdown-list>
 
 
-  <ui-dropdown-list [type]="'default'" [shadowed]="true" *ngIf="headerData.userLoggedData" [userPublicKey]="headerData.userData.user.slug" [items]="headerData.userLoggedData" (onItemSelect)="navigationLinkClick($event)" [icon]="'profile'" [position]="'bottom'" [openerClassName]="'user-data'" class="header-overlay__item" [style.left]="leftVal.profile + 'px'" [(isOpen)]="menuOpen.profile"></ui-dropdown-list>
+  <ui-dropdown-list [type]="'default'" [shadowed]="true" *ngIf="headerData.userLoggedData && headerData.userData" [userPublicKey]="headerData.userData.user.slug" [items]="headerData.userLoggedData" (onItemSelect)="navigationLinkClick($event)" [icon]="'profile'" [position]="'bottom'" [openerClassName]="'user-data'" class="header-overlay__item" [style.left]="leftVal.profile + 'px'" [(isOpen)]="menuOpen.profile"></ui-dropdown-list>
 
   <ui-dropdown-list [type]="'social-menu'" [shadowed]="true" [position]="'bottom'" [icon]="'menu'" [(isOpen)]="menuOpen.social" [delta]="25" [items]="" [style.left]="leftVal.social + 'px'" class="header-overlay__item" (articleShared)="_articleShared($event)"></ui-dropdown-list>
-
 </div>

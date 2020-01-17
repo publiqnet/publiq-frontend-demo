@@ -24,6 +24,8 @@ export interface PublicationOptions {
   storiesCount: number;
   members: Array<Author>;
   socialImage?: string;
+  coverPositionX: string;
+  coverPositionY: string;
 }
 
 export class Publication {
@@ -54,6 +56,8 @@ export class Publication {
   tags: Array<string>;
   members: Array<Author>;
   socialImage: string;
+  coverPositionX: string;
+  coverPositionY: string;
   constructor(options?: PublicationOptions) {
     for (const i in options) {
       if (options.hasOwnProperty(i)) {

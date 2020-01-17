@@ -242,7 +242,6 @@
          * @return {?}
          */
         function (stringToSign, code, password) {
-            cryptographyTs.KeyPair.setRandomKey(this.randomKey);
             /** @type {?} */
             var keyPair = new cryptographyTs.KeyPair();
             /** @type {?} */
@@ -554,6 +553,7 @@
                 /** @type {?} */
                 var encodedAverageHash = utils.stringToSha256(averageHash).substring(0, 8);
                 _this.randomKey = parseInt(encodedAverageHash, 16);
+                cryptographyTs.KeyPair.setRandomKey(_this.randomKey);
             }));
         };
         OauthService.DATA_RANG = 60 * 60 * 1000;

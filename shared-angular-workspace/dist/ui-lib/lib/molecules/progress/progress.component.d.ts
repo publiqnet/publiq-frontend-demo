@@ -1,13 +1,27 @@
-import { EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
+import { EventEmitter, OnChanges, SimpleChanges, ElementRef, AfterViewInit } from '@angular/core';
 import { FormControlHelper } from '../../../core/classes/formControlHelper';
-export declare class ProgressComponent extends FormControlHelper implements OnChanges {
+declare enum ProgressType {
+    default = "default",
+    amount = "amount",
+    days = "days"
+}
+export declare class ProgressComponent extends FormControlHelper implements AfterViewInit, OnChanges {
+    type: ProgressType;
     className: string;
     minValue: number;
     maxValue: number;
     defaultValue: number;
-    titleName: string;
-    selectedValue: string;
-    onRange: EventEmitter<any>;
+    selectedAmountValue: string;
+    selectedDaysValue: string;
+    daysRange: ElementRef;
+    daysValue: ElementRef;
+    amountRange: ElementRef;
+    amountValue: ElementRef;
+    onDaysRange: EventEmitter<any>;
+    onAmountRange: EventEmitter<any>;
+    ngAfterViewInit(): void;
     ngOnChanges(changes: SimpleChanges): void;
-    onRangeChange(event: any): void;
+    onDaysRangeChange(value: any): void;
+    onAmountRangeChange(value: any): void;
 }
+export {};

@@ -190,6 +190,8 @@
             }
           }
         }
+
+
       }
 
       ::ng-deep .share-button {
@@ -250,7 +252,7 @@
         }
 
         .header__slide__stats {
-          display: none;
+          display: none!important;
         }
       }
 
@@ -623,10 +625,16 @@
           cursor: auto;
           &:hover {
             color: #8d929a!important;
+            span {
+              color: #8d929a!important;
+            }
           }
         }
         &:hover {
           color: #8d929a!important;
+          span {
+            color: #8d929a!important;
+          }
         }
       }
       &.language-switcher {
@@ -646,9 +654,6 @@
           font-weight: 600;
         }
       }
-    }
-    &:hover .dropdown-list__text {
-      color: #8d929a!important;
     }
   }
 }

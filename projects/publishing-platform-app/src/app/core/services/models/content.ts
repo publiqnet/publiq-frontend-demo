@@ -28,6 +28,9 @@ export interface ContentOptions {
     canEditContent?: boolean;
     boostSummary: any;
     views: number;
+    highlightBackground?: string;
+    highlightFont?: string;
+    highlightTagClass?: string;
 }
 
 export class Content {
@@ -51,6 +54,9 @@ export class Content {
     socialImage: string;
     canEditContent: boolean = false;
     boostSummary: any;
+    highlightBackground: string;
+    highlightFont: string;
+    highlightTagClass: string;
 
     constructor(options?: ContentOptions) {
         for (const i in options) {
@@ -79,6 +85,9 @@ export class Content {
 
         if (this.boostSummary && this.boostSummary.hasOwnProperty('whole') && this.boostSummary.hasOwnProperty('fraction')) {
             this.boostSummary.balance = UtilsService.calculateBalance(this.boostSummary.whole, this.boostSummary.fraction);
+        }
+        if (this.boostSummary && this.boostSummary.hasOwnProperty('spentWhole') && this.boostSummary.hasOwnProperty('spentFraction')) {
+            this.boostSummary.spentBalance = UtilsService.calculateBalance(this.boostSummary.spentWhole, this.boostSummary.spentFraction);
         }
     }
 }

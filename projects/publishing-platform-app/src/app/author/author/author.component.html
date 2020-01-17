@@ -169,14 +169,38 @@
                 <div [ngClass]="{'editable-disabled' : editMode && publishedContent.length && (selectedTab == '1' || !isCurrentUser)}" *ngIf="publishedContent.length && (selectedTab == '1' || !isCurrentUser)">
                     <ng-container *ngIf="listType == 'grid'">
                         <div [class.masonry]="isMasonryLoaded" (layoutComplete)="onLayoutComplete($event)" ngx-masonry [options]="masonryOptions" class="grid-view-content content-grid">
-                            <ui-content-single *ngFor="let data of publishedContent" (accountClick)="utilService.routerChangeHelper('account', $event.slug)" (contentClick)="utilService.routerChangeHelper('content',$event)" (publicationClick)="utilService.routerChangeHelper('publication',$event.slug)"
-                                (tagClick)="onTagClick($event)" ngxMasonryItem [type]="'grid'" [canEditContent]="data.canEditContent" [contentData]="data" [publicationList]="publicationsList" (onPublicationSelect)="changePublication($event, data.uri)" (onTagItemSelect)="onRouteChange($event, data)">
+                            <ui-content-single
+                              *ngFor="let data of publishedContent"
+                              (accountClick)="utilService.routerChangeHelper('account', $event.slug)"
+                              (contentClick)="utilService.routerChangeHelper('content',$event)"
+                              (publicationClick)="utilService.routerChangeHelper('publication',$event.slug)"
+                              (tagClick)="onTagClick($event)"
+                              [loadOriginalImg]="false"
+                              ngxMasonryItem
+                              [type]="'grid'"
+                              [canEditContent]="accountService.loggedIn() && accountService.accountInfo.publicKey === data.author.publicKey"
+                              [contentData]="data"
+                              [publicationList]="publicationsList"
+                              (onPublicationSelect)="changePublication($event, data.uri)"
+                              (onTagItemSelect)="onRouteChange($event, data)">
                             </ui-content-single>
                         </div>
                     </ng-container>
                     <div *ngIf="listType == 'single'" class="content-single">
-                        <ui-content-single *ngFor="let data of publishedContent" [type]="'single'" (accountClick)="utilService.routerChangeHelper('account', $event.slug)" (contentClick)="utilService.routerChangeHelper('content', $event)" (publicationClick)="utilService.routerChangeHelper('publication', $event.slug)"
-                            (tagClick)="onTagClick($event)" [contentData]="data" [canEditContent]="data.canEditContent" [publicationList]="publicationsList" (onPublicationSelect)="changePublication($event, data.uri)" (onTagItemSelect)="onRouteChange($event, data)"></ui-content-single>
+                        <ui-content-single
+                          *ngFor="let data of publishedContent"
+                          [type]="'single'"
+                          (accountClick)="utilService.routerChangeHelper('account', $event.slug)"
+                          (contentClick)="utilService.routerChangeHelper('content', $event)"
+                          (publicationClick)="utilService.routerChangeHelper('publication', $event.slug)"
+                          (tagClick)="onTagClick($event)"
+                          [contentData]="data"
+                          [loadOriginalImg]="false"
+                          [canEditContent]="accountService.loggedIn() && accountService.accountInfo.publicKey === data.author.publicKey"
+                          [publicationList]="publicationsList"
+                          (onPublicationSelect)="changePublication($event, data.uri)"
+                          (onTagItemSelect)="onRouteChange($event, data)">
+                        </ui-content-single>
                     </div>
                   <div *ngIf="seeMoreLoading" class="empty">
                     <div style="display: inline-block">
@@ -214,17 +238,17 @@
                   <div class="ads-container">
                     <h3 class="ads-container__title">{{'author.overview' | translate | uppercase}}</h3>
                     <div class="ads-container__views">
-                      <div class="ads-container__views--total" *ngIf="boostStates && boostStates.summary">
+                      <div class="ads-container__views--total" *ngIf="boostStates && boostStates.summary" [ngClass]="boostStates.summary.spentbalance > 0 ? 'not-empty' : 'no-spend'">
                         <h4>{{'author.total_views' | translate}}</h4>
                         <span>{{boostStates.summary.views}}</span>
                       </div>
-                      <div class="ads-container__views--channels">
+                      <div class="ads-container__views--channels" [ngClass]="boostStates.summary.spentbalance > 0 ? 'not-empty' : 'no-spend'">
                         <h4>{{'author.total_channels' | translate}}</h4>
                         <span>{{boostStates.summary.channels}}</span>
                       </div>
-                      <div class="ads-container__views--spend">
+                      <div class="ads-container__views--spend" [ngClass]="boostStates.summary.spentbalance > 0 ? 'not-empty' : 'no-spend'">
                         <h4>{{'author.total_spend' | translate}}</h4>
-                        <span>{{boostStates.summary.balance}} PBQ</span>
+                        <span>{{(boostStates.summary.spentbalance | number:'0.0-4') + ' PBQ'}}</span>
                       </div>
                     </div>
                     <div class="ads-container__active-boosts">
@@ -233,7 +257,7 @@
                         <span></span>
                       </div>
                       <div *ngIf="boostStates.active && boostStates.active.length">
-                        <ui-boost-content-single *ngFor="let activeBoost of boostStates.active" [boostContentData]="activeBoost" (boostClick)="onActiveBoost($event, 'boost')" (contentClick)="utilService.routerChangeHelper('content', $event)"></ui-boost-content-single>
+                        <ui-boost-content-single *ngFor="let activeBoost of boostStates.active" [boostContentData]="activeBoost" (boostClick)="onActiveBoost($event, 'boost')" (contentClick)="activeBoost.status !== 'pending' ? utilService.routerChangeHelper('content', $event) : ''"></ui-boost-content-single>
                       </div>
                     </div>
                     <div class="ads-container__boosts-history" *ngIf="boostStates.passive && boostStates.passive.length">
@@ -301,7 +325,7 @@
 
 <!--create story-->
 <div class="container container--new-story" *ngIf="isCurrentUser">
-    <div class="new-story" [routerLink]="'/content/newcontent'">
+    <div class="new-story" [class.new-story__current]="isCurrentUser" [routerLink]="'/content/newcontent'">
         <img src="assets/images/new-story.svg" alt="new story">
     </div>
 </div>
@@ -312,10 +336,21 @@
 </div>
 
 <!--for boosting-->
-<div class="publishing-space publishing-space--edit-boost" [ngClass]="{'visible' : showBoostModal}">
-    <app-boost-modal [resetModal]="!showBoostModal" [modalType]="showBoostModalType" [boostFee]="currentBoostFee" (closeBoostedModal)="closeBoostModal()" (cancelBoost)="cancelBoostSubmit($event)" (newBoost)="newBoostSubmit($event)"></app-boost-modal>
+<div *ngIf="showBoostModal" class="publishing-space publishing-space--edit-boost">
+  <app-boost-modal [modalType]="showBoostModalType"
+                   (closeBoostedModal)="closeBoostModal()"
+                   (cancelBoost)="cancelBoostSubmit()"
+                   (submittedBoost)="submittedBoost()"
+                   [cancelHash]="selectedBoostData['transactionHash']"
+                   [contentUri]="selectedBoostData.uri">
+  </app-boost-modal>
+</div>
+<!--for highlight-->
+<div *ngIf="showHighlightModal" class="publishing-space publishing-space--edit-boost">
+  <app-create-highlight
+    (closeHighlightedModal)="closeHighlightModal()" [contentUri]="selectedBoostData.uri">
+  </app-create-highlight>
 </div>
 <div *ngIf="showHistoryModal">
   <app-custom-dialog [case]="'history'" [properties]="contentVersions" (closeConfirmModal)="closeHistoryModal($event)"></app-custom-dialog>
 </div>
-

@@ -12,6 +12,7 @@ export class Notification {
   slug: string;
   date: Date;
   isRead: boolean = false;
+  isSpecial: boolean = false;
   actionFrom: {
     image: string,
     first_name: string,
@@ -23,6 +24,10 @@ export class Notification {
     title: string,
     slug: string
   };
+  contentUnit?: {
+    uri: string,
+    title: string
+  };
 
   constructor(data) {
     this.langOptions = (() => ({bodyEn: data.type['bodyEn'], bodyJp: data.type['bodyJp']}))();
@@ -30,28 +35,33 @@ export class Notification {
     this.date = new Date(data.created_at * 1000);
     this.slug = data.id;
     this.isRead = data.isRead;
+    this.isSpecial = data.isSpecial;
+    this.contentUnit = data.contentUnit;
 
-    this.actionFrom = {
-      image: data.performer.image ? `${environment.backend}/${data.performer.image}` : data.performer.image,
-      first_name: data.performer.firstName,
-      last_name: data.performer.lastName,
-      slug: data.performer.publicKey,
-      fullName: ''
-    };
+    if (data.performer) {
+      this.actionFrom = {
+        image: data.performer.image ? `${environment.backend}/${data.performer.image}` : data.performer.image,
+        first_name: data.performer.firstName,
+        last_name: data.performer.lastName,
+        slug: data.performer.publicKey,
+        fullName: ''
+      };
 
-    let name = '';
-    if (data.performer.firstName) {
-      name += data.performer.firstName;
+      let name = '';
+      if (data.performer.firstName) {
+        name += data.performer.firstName;
+      }
+      if (name && data.performer.lastName) {
+        name += ` ${data.performer.lastName}`;
+      }
+
+      this.actionFrom.fullName = name || data.performer.publicKey;
     }
-    if (name && data.performer.lastName) {
-      name += ` ${data.performer.lastName}`;
+    if (data.publication) {
+      this.publication = {
+        title: data.publication.title,
+        slug: data.publication.slug
+      };
     }
-
-    this.actionFrom.fullName = name || data.performer.publicKey;
-
-    this.publication = {
-      title: data.publication.title,
-      slug: data.publication.slug
-    };
   }
 }

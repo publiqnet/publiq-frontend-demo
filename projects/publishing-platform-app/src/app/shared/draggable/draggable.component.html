@@ -1,0 +1,12 @@
+<div class="reposition" [class.reposition--loading]="isLoading">
+  <ng-container *ngIf="!isLoading; else loading">
+    <p><i class="icon icon-reposition"></i> {{'draggable.drag_cover' | translate}}</p>
+    <div class="reposition__action">
+      <ui-button [type]="" [text]="'draggable.cancel' | translate" (btnClicked)="onCancel($event)"></ui-button>
+      <ui-button [type]="'primary'" [text]="'draggable.save' | translate" (btnClicked)="onSave($event)"></ui-button>
+    </div>
+  </ng-container>
+  <ng-template #loading>
+    <ui-loader size="28" color="white"></ui-loader>
+  </ng-template>
+</div>

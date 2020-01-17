@@ -18,7 +18,7 @@
     img {
       width: 100%;
       height: 100%;
-      
+
       object-fit: cover;
       object-position: center;
     }
@@ -159,6 +159,15 @@
 
       @include media-md {
         @include single-small-styles();
+      }
+    }
+  }
+}
+.big-piece {
+  ::ng-deep {
+    .story{
+      &--grid {
+        width: 100%;
       }
     }
   }

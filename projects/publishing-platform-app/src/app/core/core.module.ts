@@ -22,6 +22,7 @@ import { ErrorService } from './services/error.service';
 import { ImageCropperModule } from 'ngx-img-cropper';
 import { LinkService } from './services/link.service';
 import { StartEarningPopupComponent } from './start-earning-popup/start-earning-popup.component';
+import { HighlightModalComponent } from './highlight-modal/highlight-modal.component';
 import { DraftService } from './services/draft.service';
 import { CryptService } from './services/crypt.service';
 import { NgxMasonryModule } from 'ngx-masonry';
@@ -67,6 +68,7 @@ export function createTranslateLoader(http: HttpClient) {
         TemplateComponent,
         HeaderComponent,
         StartEarningPopupComponent,
+        HighlightModalComponent
     ],
     providers: [
         AuthguardService,

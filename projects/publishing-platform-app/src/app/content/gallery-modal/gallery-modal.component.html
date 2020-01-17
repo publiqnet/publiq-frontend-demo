@@ -1,0 +1,33 @@
+<div class="gallery-modal-layer">
+  <div class="gallery-modal">
+    <!--todo: translate-->
+    <div class="gallery-modal__title">
+      <h3>Image Library
+        <span class="gallery-modal__title__close" (click)="close()">
+          <i class="icon-close"></i>
+        </span>
+      </h3>
+      <div class="gallery-modal__search">
+        <input type="text" class="gallery-modal__input" id="searchImage" placeholder="Search image" #searchBar>
+      </div>
+    </div>
+    <div class="search-results gallery-modal__items"
+         infiniteScroll [scrollWindow]="false" [infiniteScrollDistance]="1"
+         [infiniteScrollThrottle]="50" [infiniteScrollDisabled]="blockInfiniteScroll"
+         (scrolled)="seeMoreChecker ? seeMore() : ''">
+      <ngx-masonry class="gallery-items" [class.masonry]="isMasonryLoaded" [options]="myOptions"
+                   (layoutComplete)="onLayoutComplete($event)" #masonry>
+        <ngxMasonryItem class="gallery-items__item" *ngFor="let img of images">
+          <img [src]="img.thumbnail" (click)="insertInFroala(img)" alt="item" class="masonry-item">
+        </ngxMasonryItem>
+      </ngx-masonry>
+      <div class="no-search-result" *ngIf="noImages">
+        <img src="assets/images/no_result.svg" alt="No search result">
+        <span>No image found</span>
+      </div>
+    </div>
+   <!-- <div class="loading-items" *ngIf="seeMoreLoading">
+      <ui-loader [color]="'blue'"></ui-loader>
+    </div>-->
+  </div>
+</div>

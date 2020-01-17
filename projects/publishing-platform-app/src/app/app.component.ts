@@ -1,9 +1,9 @@
 import { Component, Inject, OnDestroy, OnInit, Optional, PLATFORM_ID } from '@angular/core';
 import { TransferState } from '@angular/platform-browser';
-import { Router } from '@angular/router';
-import { APP_BASE_HREF, isPlatformBrowser, PlatformLocation, Location } from '@angular/common';
+import { NavigationEnd, Router } from '@angular/router';
+import { APP_BASE_HREF, isPlatformBrowser, PlatformLocation } from '@angular/common';
 import { REQUEST } from '@nguniversal/express-engine/tokens';
-import { filter, switchMap, takeUntil } from 'rxjs/operators';
+import { filter, takeUntil, takeWhile, tap } from 'rxjs/operators';
 import { ReplaySubject } from 'rxjs';
 import { Angulartics2GoogleAnalytics } from 'angulartics2/ga';
 import { TranslateService } from '@ngx-translate/core';
@@ -27,6 +27,8 @@ import { Account } from './core/services/models/account';
 })
 export class AppComponent implements OnInit, OnDestroy {
   private unsubscribe$ = new ReplaySubject<void>(1);
+  private translationsReady: boolean = false;
+
 
   constructor(
     private router: Router,
@@ -42,7 +44,6 @@ export class AppComponent implements OnInit, OnDestroy {
     @Optional() @Inject(REQUEST) private request: any,
     public translateService: TranslateService,
     private publicationService: PublicationService,
-    private location: Location
   ) {
   }
 
@@ -70,7 +71,25 @@ export class AppComponent implements OnInit, OnDestroy {
       )
       .subscribe(() => this.publicationService.reset());
 
-      this.translateService.use(localStorage.getItem('lang') || 'en');
+      this.translateService.use((typeof window !== 'undefined' && localStorage) ? (localStorage.getItem('lang') || 'en') : 'en');
+      this.translateService.getTranslation(this.translateService.currentLang)
+        .pipe(
+          tap((translations) => {
+            this.translationsReady = !!Object.values(translations).length;
+            this.contentService.translationsReady = this.translationsReady;
+          }),
+          takeWhile(() => !this.translationsReady),
+          takeUntil(this.unsubscribe$)
+        ).subscribe();
+
+      this.router.events
+        .pipe(
+          filter(event => event instanceof NavigationEnd),
+          takeUntil(this.unsubscribe$)
+        )
+        .subscribe(event => {
+          window.scrollTo(0, 0);
+        });
     }
   }
 

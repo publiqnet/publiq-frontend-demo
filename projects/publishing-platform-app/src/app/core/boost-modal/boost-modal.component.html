@@ -1,33 +1,40 @@
 <div id="publishMain" class="publish__main">
-  <span class="close-icon" (click)="closeBoostModal($event)"><i class="icon-close"></i></span>
   <span class="white-overlay"></span>
   <!--edit boost-->
   <div *ngIf="modalType == 'boost'" class="publish__main--white-space">
     <h3>{{'boost-modal.boost' | translate}}</h3>
-    <p class="boost-fee">{{'boost-modal.boost_fee' | translate}}{{': ' + boostFee + 'PBQ'}}</p>
     <div class="boost-progress">
       <div class="boost-progress__item">
-        <span>{{'boost-modal.budget' | translate}}</span>
-        <ui-progress [className]="'custom-class'" [minValue]="30" [maxValue]='100' [defaultValue]="boostPrice" [titleName]="'PBQ'" (onRange)="onRangeChange($event)"></ui-progress>
+        <ui-progress [className]="'custom-class'" [minValue]="0" [maxValue]='maxBoostPrice' [type]="'amount'" [defaultValue]="chosenPriceProgress" (onAmountRange)="onRangeChange($event)"></ui-progress>
       </div>
-      <ui-tab className="boost-tabber" [tabs]="boostTab" [type]="'buttons'" [currentValue]="''+boostDays" (onTabChange)="boostTabChange($event)"></ui-tab>
+      <label class="boost-label" data-currency="PBQ">
+        <ui-input [type]="'number'" [inputValue]="chosenPrice" [minValue]="0" [maxValue]="maxBoostPrice" class="current-boost-count" (_onChange)="detectValue($event)"></ui-input>
+      </label>
+      <ui-progress [className]="'custom-class'" [minValue]="1" [maxValue]='31' [type]="'days'" [defaultValue]="1" (onDaysRange)="onDaysChange($event)"></ui-progress>
+      <p class="boost-fee">{{'boost-modal.boost_fee' | translate}}<b>{{': ' + boostFee}}</b> PBQ</p>
       <div class="boost-progress__balance">
-        <span>{{'boost-modal.your_balance' | translate}} <b>{{accountService.accountInfo ? (accountService.accountInfo.balance | number:'0.0-8') : 0}} PBQ</b></span>
         <div class="boost-progress__balance__amount">
-          {{'boost-modal.you_will_spend' | translate}} <b>{{(boostPrice / boostDays) | number : '1.2-2'}} PBQ</b> {{'boost-modal.per_day' | translate}}
+          {{'boost-modal.you_will_spend' | translate}} <b>{{(chosenPrice / chosenDay) | number : '0.0-8'}} PBQ</b> {{'boost-modal.per_day' | translate}}
         </div>
+        <span>{{'boost-modal.your_balance' | translate}} <b>{{(accountService.loggedIn() && maxBoostPrice > 0) ? (maxBoostPrice | number : '0.0-8') : 0}} </b> PBQ</span>
       </div>
-      <ui-input [type]="'password'" class="new-boost-input" [inputId]="'new_boost_password'" [placeholder]="'boost-modal.enter_password' | translate" (_onChange)="onInputChange($event)"></ui-input>
-      <ui-button [className]="'button-boost'" [type]="'primary'" [text]="'boost-modal.boost' | translate" (btnClicked)="addBoostSubmit()"></ui-button>
+      <ui-input [type]="'password'" class="new-boost-input" [ngClass]="{'password-error': submitError}" [inputId]="'new_boost_password'" [placeholder]="'boost-modal.enter_password' | translate" (_onChange)="onInputChange($event)" [inputValue]="boostPassword"></ui-input>
+      <span *ngIf="submitError" style="color: #FE3A52;padding-left: 2px;margin-top: 5px;display: block">{{'boost-modal.invalid_password' | translate}}</span>
+      <div class="boost-footer">
+        <ui-button [className]="'button-boost button-boost--cancel'" [type]="'ordinary'" [text]="'boost-modal.cancel' | translate" (btnClicked)="closeBoostModal($event)" class="cancel-boost-btn"></ui-button>
+        <ui-button [className]="'button-boost button-boost-apply'" [type]="'primary'" [text]="'boost-modal.boost' | translate" (btnClicked)="addBoostSubmit()"></ui-button>
+      </div>
     </div>
   </div>
-
   <!--cancel boost-->
   <div class="cancel-boost" *ngIf="modalType == 'cancel-boost'">
+    <div class="cancel-boost__close" (click)="closeBoostModal($event)">
+      <i class="highlight__closer icon-close" (click)="closeBoostModal($event)"></i>
+    </div>
     <h3>{{'boost-modal.cancel_boost' | translate}}</h3>
-    <p class="boost-fee">{{'boost-modal.boost_fee' | translate}}{{': ' + boostFee + 'PBQ'}}</p>
-    <p class="boost-hint">{{'boost-modal.cancel_boost_hint' | translate}}</p>
-    <ui-input [type]="'password'" [className]="'boost-input'" [inputId]="'cancel_password'" [placeholder]="'boost-modal.enter_password' | translate" (_onChange)="onInputChange($event)"></ui-input>
-    <ui-button [className]="'button-boost button-boost--cancel'" [type]="'primary'" [text]="'boost-modal.cancel' | translate" [disabled]="!boostPassword" (btnClicked)="cancelBoostSubmit()"></ui-button>
+    <p class="boost-fee">{{'boost-modal.boost_fee' | translate}}{{': ' + boostFee + ' PBQ'}}</p>
+    <ui-input [type]="'password'" [className]="'boost-input'" [ngClass]="{'password-error': submitError}" [inputId]="'cancel_password'" [placeholder]="'boost-modal.enter_password' | translate" (_onChange)="onInputChange($event)" [inputValue]="boostPassword"></ui-input>
+    <span *ngIf="submitError" style="color: #FE3A52;padding-left: 2px;margin-top: 5px;display: block">{{'boost-modal.invalid_password' | translate}}</span>
+    <ui-button [className]="'button-boost button-boost--cancel'" [type]="'primary'" [text]="'boost-modal.submit' | translate" (btnClicked)="cancelBoostSubmit()"></ui-button>
   </div>
 </div>

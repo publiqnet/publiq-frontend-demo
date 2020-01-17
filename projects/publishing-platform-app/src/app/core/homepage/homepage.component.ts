@@ -9,16 +9,21 @@ import {
 import { NgxMasonryOptions } from 'ngx-masonry';
 import { OauthService } from 'helper-lib';
 import { ContentService } from '../services/content.service';
-import { takeUntil, switchMap } from 'rxjs/operators';
+import { takeUntil, switchMap, map } from 'rxjs/operators';
 import { ReplaySubject, of } from 'rxjs';
 import { UtilService } from '../services/util.service';
 import { PublicationService } from '../services/publication.service';
 import { AccountService } from '../services/account.service';
 import { ActivatedRoute, NavigationStart, Router } from '@angular/router';
 import { Content } from '../services/models/content';
+import { Author } from '../services/models/author';
 import { DOCUMENT, isPlatformBrowser, isPlatformServer, Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { environment } from '../../../environments/environment';
+import { Publication } from '../services/models/publication';
+import { UtilsService } from 'shared-lib';
+import { UiNotificationService } from '../services/ui-notification.service';
+import { Publications } from '../services/models/publications';
 
 @Component({
   selector: 'app-homepage',
@@ -27,8 +32,12 @@ import { environment } from '../../../environments/environment';
 })
 export class HomepageComponent implements OnInit, AfterViewInit, OnDestroy {
   public contentArray = [];
-  public preferedAuthorContent: Content[] = [];
-  public preferedTagContent: Content[] = [];
+  public trendingAuthorsList: Author[] = [];
+  public recommendedPublicationsList: Publication[] = [];
+  public highlightsList: Content[] = [];
+  public highlightsListLoaded: boolean = false;
+  public selectedHighlight: Content = null;
+  public articleToBoost: Content = null;
   public isMasonryLoaded = false;
   public listType = 'grid';
   public seeMoreChecker = false;
@@ -47,11 +56,12 @@ export class HomepageComponent implements OnInit, AfterViewInit, OnDestroy {
   public firstContentBlock = [];
   public secondContentBlock = [];
   public loadedContentBlock = [];
-  public publicationsList = [];
-  public hasMorePublications = false;
+  public hasMoreRecommendedPublications = false;
   public publicationsFromSlug = null;
-  public publicationsDefaultCount = 4;
-  public haveFirstArticle: boolean = false;
+  public recommendedPublicationsDefaultCount = 2;
+  public hasMoreAuthors = false;
+  public trendingAuthorsDefaultCount = 4;
+  public hasFirstArticle: boolean = false;
   public isProd: boolean = false;
   public myOptions: NgxMasonryOptions = {
     transitionDuration: '0s',
@@ -63,6 +73,21 @@ export class HomepageComponent implements OnInit, AfterViewInit, OnDestroy {
   updateMasonryFirstBlock: boolean = false;
   updateMasonrySecondBlock: boolean = false;
   updateMasonryContentBlock: boolean = false;
+  public showBoostModal: boolean = false;
+  public showHighlightModal: boolean = false;
+  public showHistoryModal: boolean = false;
+  public publicationsList = [];
+  public contentVersions = [];
+  showBoostModalType: string = 'boost';
+  public boostType: string = 'boost';
+  public selectedBoostData: any = {};
+  public feeWhole: number = 0;
+  public feeFraction: number = 0;
+  public currentBoostFee: number = 0;
+  public currentTime: number;
+  private isLoggedIn: any = undefined;
+  public loadingHighlightCount: Array<number> = new Array<number>(10);
+  private loadingBlockCount: Array<number> = new Array<number>(6);
 
   private unsubscribe$ = new ReplaySubject<void>(1);
 
@@ -76,6 +101,7 @@ export class HomepageComponent implements OnInit, AfterViewInit, OnDestroy {
     public translateService: TranslateService,
     private activatedRoute: ActivatedRoute,
     private location: Location,
+    private uiNotificationService: UiNotificationService,
     @Inject(PLATFORM_ID) private platformId,
     @Inject(DOCUMENT) private document: any,
   ) {
@@ -98,25 +124,30 @@ export class HomepageComponent implements OnInit, AfterViewInit, OnDestroy {
       this.accountService.accountUpdated$
         .pipe(
           switchMap((account: any) => {
-            if (account && !this.publicationsList.length) {
-              return this.contentService.getRecommendations(this.publicationsFromSlug, this.publicationsDefaultCount);
-            } else {
-              return of(null);
-            }
+            return this.contentService.getHomePageData();
           }),
           takeUntil(this.unsubscribe$)
         )
-        .subscribe(contentData => {
-          if (contentData) {
-            this.preferedAuthorContent = contentData.author;
-            this.preferedTagContent = contentData.tag;
-            this.haveFirstArticle = contentData.firstArticle;
-            this.firstRelevantBlock = this.preferedAuthorContent.slice(0, this.storiesDefaultCount);
-            this.secondRelevantBlock = this.preferedTagContent.slice(0, this.storiesDefaultCount);
-            this.loadMorePublications(true, contentData);
-          } else if (!this.accountService.loggedIn()) {
-            this.firstRelevantBlock = UtilService.pickRandomFromArray(this.contentArray, this.storiesDefaultCount);
-            this.secondRelevantBlock = UtilService.pickRandomFromArray(this.contentArray, this.storiesDefaultCount);
+        .subscribe(homepageData => {
+          if (this.isLoggedIn !== this.accountService.loggedIn()) {
+            if (this.accountService.loggedIn()) {
+              this.recommendedPublicationsList = homepageData.recommended.publications;
+              this.hasFirstArticle = homepageData.firstArticle;
+              this.firstRelevantBlock = homepageData.preferences.author;
+              this.secondRelevantBlock = homepageData.preferences.tag;
+              this.articleToBoost = homepageData.articleToBoost;
+              this.feeWhole = homepageData.currentBoostFee.whole;
+              this.feeFraction = homepageData.currentBoostFee.fraction;
+              this.currentTime = homepageData.currentBoostFee.currentTime;
+              this.currentBoostFee = UtilsService.calculateBalance(homepageData.currentBoostFee.whole, homepageData.currentBoostFee.fraction);
+            } else {
+              this.firstRelevantBlock = UtilService.pickRandomFromArray(this.contentArray, this.storiesDefaultCount);
+              this.secondRelevantBlock = UtilService.pickRandomFromArray(this.contentArray, this.storiesDefaultCount);
+            }
+            this.trendingAuthorsList = homepageData.trending.authors;
+            this.isLoggedIn = this.accountService.loggedIn();
+            this.highlightsList = homepageData.highlights;
+            this.highlightsListLoaded = true;
           }
         });
 
@@ -140,47 +171,12 @@ export class HomepageComponent implements OnInit, AfterViewInit, OnDestroy {
           }
         });
     }
+    if (!this.publicationsList.length) {
+      this.getMyPublications();
+    }
   }
 
   ngAfterViewInit(): void {
-  }
-
-  loadMorePublications(init = false, publicationsListData = null) {
-    if (init && publicationsListData) {
-      this.initRecommendedPublications(publicationsListData);
-    } else {
-      this.contentService.getRecommendations(this.publicationsFromSlug, this.publicationsDefaultCount)
-        .pipe(
-          takeUntil(this.unsubscribe$)
-        )
-        .subscribe(
-          (publicationsListData: any) => {
-            this.initRecommendedPublications(publicationsListData);
-          }
-        );
-    }
-  }
-
-  refreshPublications() {
-    this.publicationsFromSlug = null;
-    this.contentService.getRecommendations(this.publicationsFromSlug, this.publicationsDefaultCount)
-      .pipe(
-        takeUntil(this.unsubscribe$)
-      )
-      .subscribe(
-        (publicationsListData: any) => {
-          this.initRecommendedPublications(publicationsListData, true);
-        }
-      );
-  }
-
-  initRecommendedPublications(publicationsListData, refresh: boolean = false) {
-    this.hasMorePublications = publicationsListData.more;
-    this.publicationsList = (refresh) ? publicationsListData.publications : this.publicationsList.concat(publicationsListData.publications);
-    const lastIndex = this.publicationsList.length - 1;
-    if (this.publicationsList[lastIndex] && this.publicationsList[lastIndex].slug && this.publicationsList[lastIndex].slug !== this.publicationsFromSlug) {
-      this.publicationsFromSlug = this.publicationsList[lastIndex].slug;
-    }
   }
 
   calculateLastStoriUri() {
@@ -199,15 +195,18 @@ export class HomepageComponent implements OnInit, AfterViewInit, OnDestroy {
         .pipe(
           takeUntil(this.unsubscribe$)
         )
-        .subscribe(() => {
-            const pubIndex = this.publicationsList.findIndex(x => x.slug == event.slug);
-            this.publicationsList.splice(pubIndex, 1);
-            if (this.hasMorePublications) {
-              this.refreshPublications();
-            }
-          }
-        );
+        .subscribe(() => {});
     }
+  }
+
+  followAuthor(event) {
+    if (!this.accountService.loggedIn()) {
+      this.router.navigate([`/user/login`]);
+    }
+    const follow = event.follow ? this.accountService.follow(event.slug) : this.accountService.unfollow(event.slug);
+    follow
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe();
   }
 
   onLayoutComplete(event) {
@@ -218,6 +217,10 @@ export class HomepageComponent implements OnInit, AfterViewInit, OnDestroy {
 
   goPublicationPage(e) {
     this.utilService.routerChangeHelper('publication', e);
+  }
+
+  goToAuthor(event) {
+    this.utilService.routerChangeHelper('account', event);
   }
 
   seeMore() {
@@ -241,6 +244,10 @@ export class HomepageComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  storageAuth() {
+    return (typeof window !== 'undefined' && localStorage) && localStorage.getItem('auth') != null && localStorage.getItem('encrypted_brain_key') != null;
+  }
+
   onSignUp(email) {
     this.oauthService.authenticate(email, true)
       .pipe(
@@ -254,6 +261,7 @@ export class HomepageComponent implements OnInit, AfterViewInit, OnDestroy {
         }
       }, error => {
         this.welcomeMessageState = 'invalid';
+        this.uiNotificationService.error((error.status == 500) ? this.translateService.instant('homepage.empty_email') : this.translateService.instant('homepage.system_error'), '');
       });
   }
 
@@ -280,10 +288,164 @@ export class HomepageComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  boostStory(contentData: Content) {
+    this.selectedBoostData['uri'] = contentData.uri;
+    this.selectedBoostData['type'] = 'boost';
+    this.selectedBoostData['transactionHash'] = '';
+    this.showBoostModal = true;
+    document.querySelector('body').classList.add('no-scroll');
+  }
+
+  closeBoostModal() {
+    this.showBoostModal = false;
+    document.querySelector('body').classList.remove('no-scroll');
+  }
+
+  closeHighlightModal() {
+    this.showHighlightModal = false;
+    document.querySelector('body').classList.remove('no-scroll');
+  }
+
+  hideOverflow(elem) {
+    elem ? document.querySelector('html').classList.add('overflow-hidden') : document.querySelector('html').classList.remove('overflow-hidden');
+  }
+
+  closeHistoryModal(event) {
+    if (event.closeHistory) { this.showHistoryModal = false; }
+    this.hideOverflow(this.showHistoryModal);
+  }
+
+  submittedBoost() {
+    this.refreshArticleToBoost();
+    this.closeBoostModal();
+    this.showHighlightModal = true;
+  }
+
+
+  refreshArticleToBoost() {
+    this.contentService.getHomePageData()
+      .pipe(
+        takeUntil(this.unsubscribe$)
+      )
+      .subscribe(data => {
+        this.articleToBoost = data.articleToBoost;
+      });
+  }
+
+  onHighlightClicked(highlight) {
+    this.selectedHighlight = highlight;
+  }
+
+  highlightFinished(highlight) {
+    if (highlight === null) {
+      return this.selectedHighlight = null;
+    }
+
+    this.selectedHighlight = this.highlightsList[this.highlightsList.indexOf(highlight) + 1] || this.highlightsList[0];
+  }
+
+  getMyPublications() {
+    this.publicationsList = [];
+    this.publicationService.getMyPublications()
+      .pipe(
+        map((publicationsData: Publications) => {
+          const publicationsList = [...publicationsData.membership, ...publicationsData.owned];
+          return publicationsList;
+        }),
+        takeUntil(this.unsubscribe$)
+      )
+      .subscribe(publicationsList => {
+        if (publicationsList.length) {
+          publicationsList.forEach(publication => {
+            const text = publication.title ? publication.title : publication.description;
+            const nextPublication = {
+              'value': publication.slug,
+              'text': text,
+              'metaData': {
+                'image': publication.logo ? publication.logo : publication.cover,
+                'first_name': text,
+                'last_name': '',
+                'fullName': text
+              }
+            };
+            this.publicationsList.push(nextPublication);
+          });
+        }
+      });
+  }
+
+  changePublication(event, contentUri, blockType) {
+    if (!event) {
+      event = null;
+    }
+    this.contentService.updateContentPublication(event, contentUri)
+      .pipe(
+        switchMap(() => event === null ? of(null) : this.publicationService.getPublicationBySlug(event)),
+        takeUntil(this.unsubscribe$))
+      .subscribe(publication => {
+        if (blockType === 'firstBlock') {
+          this.firstContentBlock.forEach((content: Content) => {
+            if (content.uri === contentUri) {
+              content.publication = publication;
+            }
+          });
+        } else if (blockType === 'secondBlock') {
+          this.secondContentBlock.forEach((content: Content) => {
+            if (content.uri === contentUri) {
+              content.publication = publication;
+            }
+          });
+        } else if (blockType === 'loadedBlock') {
+          this.loadedContentBlock.forEach((content: Content) => {
+            if (content.uri === contentUri) {
+              content.publication = publication;
+            }
+          });
+        }
+        this.uiNotificationService.success(this.translateService.instant('author.success'), this.translateService.instant('author.publication_successfully_updated'));
+      });
+  }
+
+  onBoostModal(data) {
+    this.selectedBoostData = {};
+    if (data && data.type == 'cancel' && data['boostData'] && data['boostData'].length) {
+      data['boostData'].forEach(boost => {
+        if (['pending', 'active'].includes(boost.status)) {
+          this.selectedBoostData['transactionHash'] = boost['transaction']['transactionHash'];
+        }
+      });
+    }
+    this.selectedBoostData['uri'] = data.uri;
+    this.selectedBoostData['type'] = data.type;
+    this.showBoostModal = true;
+    this.hideOverflow(this.showBoostModal);
+    this.hideOverflow(this.showHighlightModal);
+    this.showBoostModalType = data.type == 'cancel' ? 'cancel-boost' : 'boost';
+  }
+
+  onRouteChange(event: any, data: any) {
+    const BoostInfo = {
+      data: data.boosts,
+      type: this.boostType,
+      uri: data.uri
+    };
+    if (event == 'edit_story') {
+      this.router.navigate([`/content/edit/${data.uri}`]);
+    } else if (event == 'boost_story') {
+      this.onBoostModal(BoostInfo);
+    } else if (event == 'history_story') {
+      this.contentVersions = data.previousVersions;
+      this.showHistoryModal = true;
+    }
+  }
+
   ngOnDestroy() {
     this.publicationsFromSlug = null;
-    this.publicationsList = [];
+    this.recommendedPublicationsList = [];
+    this.trendingAuthorsList = [];
+    this.highlightsList = [];
     this.unsubscribe$.next();
     this.unsubscribe$.complete();
   }
+
 }

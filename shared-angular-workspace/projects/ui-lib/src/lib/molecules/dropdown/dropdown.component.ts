@@ -31,7 +31,6 @@ export class DropdownComponent extends FormControlHelper implements OnChanges {
   public openDropdown: boolean = false;
   public selectedOptionData: DropdownDataOptions = null;
   public selectedRoleData: DropdownRoleDataOptions = null;
-  public enteredItem = null;
   public lastSavedValue = null;
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -51,6 +50,7 @@ export class DropdownComponent extends FormControlHelper implements OnChanges {
   onOptionChange(item) {
     this.onChange(item.value);
     this.selectedOptionData = item;
+    this.selectedOptionValue = item.value;
     this.onSelectChange.emit(item);
     this.isOpen = false;
     this.isOpenChange.emit(false);
@@ -59,26 +59,27 @@ export class DropdownComponent extends FormControlHelper implements OnChanges {
   onOptionEnter(item) {
     this.onChange(item.value);
     this.selectedOptionData = item;
-    this.enteredItem = item;
+    this.selectedOptionValue = item.value;
   }
 
   clearOption() {
     this.selectedOptionData = null;
-    this.enteredItem = null;
+    this.selectedOptionValue = '';
     this.onChange('');
   }
 
   submitOption() {
-    this.lastSavedValue = this.enteredItem;
-    if (this.enteredItem == null) {
+    this.lastSavedValue = this.selectedOptionData;
+    if (this.selectedOptionData == null) {
       this.onSelectChange.emit('');
     } else {
-      this.onSelectChange.emit(this.enteredItem.value);
+      this.onSelectChange.emit(this.selectedOptionData.value);
     }
   }
 
   unsetOption() {
     this.selectedOptionData = null;
+    this.selectedOptionValue = '';
     this.onSelectChange.emit(null);
     this.onChange('');
   }
@@ -86,6 +87,7 @@ export class DropdownComponent extends FormControlHelper implements OnChanges {
   _onCloseDropdown() {
     this.onCloseDropdown.emit('close');
     this.selectedOptionData = this.lastSavedValue;
+    this.selectedOptionValue = this.lastSavedValue.value;
   }
 
   _onRoleChange(slug) {

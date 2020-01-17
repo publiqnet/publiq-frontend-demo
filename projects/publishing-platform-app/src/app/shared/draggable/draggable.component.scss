@@ -1,0 +1,61 @@
+@import "../../../assets/css/variables.scss";
+
+.reposition{
+  background: rgba(#191B1E, 0.8);
+  mix-blend-mode: normal;
+  border-radius: 10px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 7px;
+  display: flex;
+  max-width: 390px;
+  width: 100%;
+  align-items: center;
+  z-index: 1;
+  opacity: 1;
+  transition: max-width 300ms;
+
+  @include media-sm{
+    flex-direction: column;
+    padding: 7px 7px 10px;
+    max-width: 230px;
+  }
+
+  i{
+    font-size: 24px;
+    color: white;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+  p{
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 18px;
+    color: #FFFFFF;
+    margin: 0 10px;
+    white-space: nowrap;
+    @include media-sm{
+      margin: 0 10px 10px;
+    }
+  }
+  &__action{
+    display: flex;
+    ui-button:first-child{
+      margin-right: 6px;
+    }
+    ::ng-deep ui-button{
+      button{
+        line-height: 28px;
+      }
+    }
+  }
+
+  &--loading {
+    max-width: 60px;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+  }
+}

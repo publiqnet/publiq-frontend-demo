@@ -7,6 +7,7 @@ export declare class AvatarComponent implements OnInit {
     isSquaric: boolean;
     size: string;
     loadOriginalImg: boolean;
+    multiLetters: boolean;
     className: string;
     thumbnailLoaded: boolean;
     originalImageLoaded: boolean;

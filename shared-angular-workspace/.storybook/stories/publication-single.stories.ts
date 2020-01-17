@@ -208,6 +208,7 @@ storiesOf('Publiq Design|Molecules.Publication Single', module)
           },
           status: 0,
           storiesCount: 0,
+          membersCount: 1,
           membersList: [
             {
               slug: '1.0.2',

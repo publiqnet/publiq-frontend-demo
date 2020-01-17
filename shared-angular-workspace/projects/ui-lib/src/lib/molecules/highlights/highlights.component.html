@@ -1,0 +1,5 @@
+<div *ngIf="highlightData" (click)="highlightClickEvent($event)" class="highlight-card" [class.highlight-card--loading]="loading" [class.with-shadow]="!highlightData?.highlightBackground"
+     [ngStyle]="!loading && highlightData?.cover?.url? {'background-image':'url(' + highlightData.cover.url + ')'} : {'background-color': highlightData?.highlightBackground}"
+     [ngClass]="className">
+  <h4 [style.font-family]="highlightData?.highlightFont">{{highlightData.title}}</h4>
+</div>

@@ -11,4 +11,8 @@ export interface NotificationOptions {
   actionFrom: ActionMakerOptions;
   actionTo?: ActionMakerOptions;
   publication?: PublicationOptions;
+  contentUnit?: {
+    uri: string,
+    title: string
+  };
 }

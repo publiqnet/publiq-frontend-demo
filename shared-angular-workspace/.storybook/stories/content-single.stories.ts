@@ -57,6 +57,7 @@ storiesOf('Publiq Design|Molecules.Content Single', module)
                     'related': 'related',
                 }, 'related'),
                 canEditContent: boolean('Can Edit?', true),
+                canOnlyDelete: boolean('Can Only Delete', false),
                 loadOriginalImg: boolean('loadOriginalImg', true),
                 contentData: object('Content data', {
                     uri: '5ceb9fc82765246c6cc55b47',
@@ -122,6 +123,7 @@ storiesOf('Publiq Design|Molecules.Content Single', module)
             'single': 'single'
           }, 'single'),
           canEditContent: boolean('Can Edit?', true),
+          canOnlyDelete: boolean('Can Only Delete', false),
           loadOriginalImg: boolean('loadOriginalImg', true),
           contentData: object('Content data', {
             uri: '5ceb9fc82765246c6cc55b47',
@@ -187,6 +189,7 @@ storiesOf('Publiq Design|Molecules.Content Single', module)
             'single-small': 'single-small'
           }, 'single-small'),
           canEditContent: boolean('Can Edit?', true),
+          canOnlyDelete: boolean('Can Only Delete', false),
           loadOriginalImg: boolean('loadOriginalImg', true),
           contentData: object('Content data', {
             uri: '5ceb9fc82765246c6cc55b47',
@@ -251,6 +254,7 @@ storiesOf('Publiq Design|Molecules.Content Single', module)
             'grid': 'grid'
           }, 'grid'),
           canEditContent: boolean('Can Edit?', true),
+          canOnlyDelete: boolean('Can Only Delete', true),
           loadOriginalImg: boolean('loadOriginalImg', true),
           contentData: object('Content data', {
             uri: '5ceb9fc82765246c6cc55b47',

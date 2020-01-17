@@ -27,6 +27,7 @@ export class ContentSingleComponent implements  OnInit, OnChanges {
   @Input() hasBoost: boolean = false;
   @Input() imageArrowsShown: boolean = false;
   @Input() canEditContent: boolean = false;
+  @Input() canOnlyDelete: boolean = false;
   @Input() tagItems: HeaderLoggedDataOptions[] = null;
   @Input() loadOriginalImg: boolean = true;
   @Output() onTagItemSelect: EventEmitter<any> = new EventEmitter();
@@ -66,10 +67,23 @@ export class ContentSingleComponent implements  OnInit, OnChanges {
       this.dropdownSettings.push( { text: this.translateService.instant('ui.content-single.history_story'), value: 'history_story' });
     }
 
+    if (this.canOnlyDelete) {
+      this.dropdownSettings = [
+        { text: this.translateService.instant('ui.content-single.delete_story'), value: 'delete_story' }
+      ];
+    }
+
     if (this.contentData && this.contentData.cover && this.contentData.cover.url && typeof this.contentData.cover.url === 'string') {
       const fileMatch = this.contentData.cover.url.match(/\?file=(.*?)\&/) || this.contentData.cover.url.match(/\?file=(.*?)$/);
       this.imageUri = fileMatch ? fileMatch[1] : null;
     }
+
+    this.translateService.onLangChange.subscribe(lang => {
+      this.dropdownSettings = [
+        { text: this.translateService.instant('ui.content-single.boost_story'), value: 'boost_story' },
+        { text: this.translateService.instant('ui.content-single.edit_story'), value: 'edit_story' },
+      ];
+    });
   }
 
   selectTagValue(event) {

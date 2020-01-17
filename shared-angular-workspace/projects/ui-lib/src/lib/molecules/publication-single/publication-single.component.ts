@@ -43,6 +43,13 @@ export class PublicationSingleComponent implements OnInit, OnChanges {
   ngOnInit(): void {
     this.animationAction = false;
     this.animationOptions = {type: 'user', loop: 0.5};
+    this.translateService.onLangChange.subscribe(lang => {
+      this.statusList = {
+        1: this.translateService.instant('ui.publication-single.owner'),
+        2: this.translateService.instant('ui.publication-single.editor'),
+        3: this.translateService.instant('ui.publication-single.contributor'),
+      };
+    });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
