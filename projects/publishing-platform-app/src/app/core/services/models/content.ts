@@ -31,6 +31,7 @@ export interface ContentOptions {
     highlightBackground?: string;
     highlightFont?: string;
     highlightTagClass?: string;
+    textWithData?: string;
 }
 
 export class Content {
@@ -57,6 +58,7 @@ export class Content {
     highlightBackground: string;
     highlightFont: string;
     highlightTagClass: string;
+    textWithData?: string;
 
     constructor(options?: ContentOptions) {
         for (const i in options) {
