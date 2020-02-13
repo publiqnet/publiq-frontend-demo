@@ -7,5 +7,6 @@ export const environment = {
   main_site_url: 'https://stage-mainnet.publiq.site',
   wallet_url: 'https://wallet.publiq.network/user/login',
   explorerAddress: 'https://explorer.publiq.network',
-  coinName: 'TPBQ'
+  coinName: 'TPBQ',
+  googleAdClient: 'ca-pub-8815422507798180'
 };

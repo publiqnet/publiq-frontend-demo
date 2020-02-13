@@ -7,7 +7,8 @@ export const environment = {
   main_site_url: 'https://publiq.site',
   wallet_url: 'https://wallet.publiq.network/user/login',
   explorerAddress: 'https://explorer.publiq.network',
-  coinName: 'PBQ'
+  coinName: 'PBQ',
+  googleAdClient: 'ca-pub-8815422507798180'
 };
 
 
