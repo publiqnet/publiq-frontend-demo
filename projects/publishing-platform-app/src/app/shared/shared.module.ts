@@ -69,9 +69,9 @@ import { CropImageComponent } from './crop-image/crop-image.component';
 import { ImageCropperModule } from 'ngx-image-cropper';
 import { DraggableComponent } from './draggable/draggable.component';
 import { CreateHighlightComponent } from '../core/create-highlight/create-highlight.component';
+import { GoogleAdsenseComponent } from './google-adsense/google-adsense.component';
 
 registerLocaleData(localeJa);
-
 
 HttpHelperService.setBaseHeaders([
   {
@@ -158,7 +158,8 @@ export function createTranslateLoader(http: HttpClient) {
     LocalizedDatePipe,
     TransformContentPipe,
     CropImageComponent,
-    CreateHighlightComponent
+    CreateHighlightComponent,
+    GoogleAdsenseComponent
   ],
   exports: [
     PerfectScrollbarModule,
@@ -221,7 +222,8 @@ export function createTranslateLoader(http: HttpClient) {
     CropImageComponent,
     ClickOutsideDirective,
     LocalizedDatePipe,
-    CreateHighlightComponent
+    CreateHighlightComponent,
+    GoogleAdsenseComponent
   ],
   providers: [
     DecimalPipe,
