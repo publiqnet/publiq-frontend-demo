@@ -71,6 +71,7 @@ import { DraggableComponent } from './draggable/draggable.component';
 import { CreateHighlightComponent } from '../core/create-highlight/create-highlight.component';
 import { FollowersModalComponent } from './followers-modal/followers-modal.component';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
+import { GoogleAdsenseComponent } from './google-adsense/google-adsense.component';
 
 registerLocaleData(localeJa);
 
@@ -163,6 +164,7 @@ export function createTranslateLoader(http: HttpClient) {
     CropImageComponent,
     CreateHighlightComponent,
     FollowersModalComponent,
+    GoogleAdsenseComponent
   ],
   exports: [
     PerfectScrollbarModule,
@@ -227,6 +229,7 @@ export function createTranslateLoader(http: HttpClient) {
     LocalizedDatePipe,
     CreateHighlightComponent,
     FollowersModalComponent,
+    GoogleAdsenseComponent
   ],
   providers: [
     DecimalPipe,
