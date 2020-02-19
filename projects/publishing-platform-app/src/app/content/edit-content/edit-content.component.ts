@@ -1,16 +1,13 @@
 import { Component, ElementRef, HostListener, Inject, Input, NgZone, OnDestroy, OnInit, PLATFORM_ID, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-
-import { forkJoin, of, ReplaySubject, Subject } from 'rxjs';
+import { BehaviorSubject, forkJoin, of, ReplaySubject, Subject } from 'rxjs';
 import { debounceTime, delay, map, switchMap, takeUntil, tap } from 'rxjs/operators';
-
 import { Content } from '../../core/services/models/content';
 import { AccountService } from '../../core/services/account.service';
 import { ContentService } from '../../core/services/content.service';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { ValidationService } from '../../core/validator/validator.service';
 import { Publications } from '../../core/services/models/publications';
-import { environment } from '../../../environments/environment';
 import { TranslateService } from '@ngx-translate/core';
 import { DraftService } from '../../core/services/draft.service';
 import { PublicationService } from '../../core/services/publication.service';
@@ -19,10 +16,6 @@ import { UtilService } from '../../core/services/util.service';
 import { UtilsService } from 'shared-lib';
 import { isPlatformBrowser } from '@angular/common';
 import { SharedDataService } from '../../core/services/shared-data.service';
-import { addCroppedImage, contentUrisChange, FroalaEditorCustomConfigs, froalaEvents, getImageSize, toggleImageSize, toggleImageSizeModifiers } from '../froala-configs/froala-editor-custom-configs';
-import { ImageCroppedEvent } from 'ngx-image-cropper';
-
-declare const $: any;
 
 @Component({
   selector: 'app-edit-content',
@@ -34,10 +27,9 @@ export class EditContentComponent implements OnInit, OnDestroy {
   isCurrentUser = false;
   showStoryForm: boolean = false;
   boostField: boolean = false;
-  contentUrl = environment.backend + '/api/file/upload';
+  whiteOverlay: boolean = false;
   contentUris = {};
   title: string;
-  contentOptions: object;
   tag: string = '';
   tagSubject = new Subject<any>();
   tagError: boolean;
@@ -60,6 +52,7 @@ export class EditContentComponent implements OnInit, OnDestroy {
   public isSubmited = false;
   public submitError: boolean = false;
   public contentLoaded: boolean = false;
+  public editBoost: boolean = false;
   public selectedPublication: { text: string, value: string } = {'text': '', 'value': ''};
   public feeWhole: number;
   public feeFraction: number;
@@ -76,31 +69,19 @@ export class EditContentComponent implements OnInit, OnDestroy {
   public remainingSuggestedTags: string[] = [];
   public contentLengthNotEnough: boolean = false;
   public isWhiteSpaceShown: boolean = false;
-  public cursorHostElement: HTMLElement;
-  public showGallery = false;
-  // cropping part
-  public croppedImage: any; // blob representation
-  public croppedOriginalImg: any; // jquery representation
-  public showCropModal: boolean = false;
-  public croppingImage: any; // blob representation
-  // ------
-  private contentObject;
-  private editorContentInitObject;
-  private editorContentObject;
-  private imgElemSelector: string; // for replacing image from gallery
-  private tableEditPopup: boolean = false; // if true then we don't need table popup show event anymore
-  private quickInsertPopup: boolean = false; // if true then we don't need table popup show event anymore
   private uploadedContentUri: string;
   private hasDraft = false;
+  private contentChangeObs$ = new Subject<any>();
   private unsubscribe$ = new ReplaySubject<void>(1);
 
-  @ViewChild('publicationTitle', { static: false }) set publicationTitle(el: ElementRef | null) {
+  @ViewChild('publicationTitle', {static: false}) set publicationTitle(el: ElementRef | null) {
     if (!el) {
       return;
     }
 
     this.resizeTextareaElement(el.nativeElement);
   }
+
   @ViewChild('titleInput', {static: false}) titleInput: ElementRef;
 
   @Input('autoresize') maxHeight: number;
@@ -149,6 +130,7 @@ export class EditContentComponent implements OnInit, OnDestroy {
           });
 
           forkJoin(getFileCalls)
+            .pipe(takeUntil(this.unsubscribe$))
             .subscribe(nextFileData => {
               data.text = `${data.text}`;
 
@@ -189,7 +171,6 @@ export class EditContentComponent implements OnInit, OnDestroy {
     }
   }
 
-
   initContentData() {
     if (this.content.publication) {
       this.selectedPublication = {'value': this.content.publication.slug, 'text': this.content.publication.title};
@@ -198,10 +179,6 @@ export class EditContentComponent implements OnInit, OnDestroy {
     this.tags = this.content.tags;
     this.contentId = +this.content.contentId;
     this.contentForm.controls['content'].setValue(this.content.text);
-    if (this.editorContentObject) {
-      this.editorContentObject.html.set(this.content.text);
-    }
-
     this.content.files.forEach((file: any) => {
       if (file.mimeType != 'text/html') {
         this.contentUris[file['uri']] = file['url'].replace(/&amp;/g, '&');
@@ -241,29 +218,9 @@ export class EditContentComponent implements OnInit, OnDestroy {
   initDefaultData() {
     this.chosenPrice = 0;
     this.chosenDay = 1;
-    this.initSubmitFormView();
-
-    this.translateService.onLangChange.subscribe((lang) => {
-      // this.boostTab = [
-      //   {
-      //     'value': '1',
-      //     'text': `1 ${this.translateService.instant('newcontent.day')}` // '1 Day'
-      //   },
-      //   {
-      //     'value': '3',
-      //     'text': `3 ${this.translateService.instant('newcontent.days')}` // '3 Days',
-      //   },
-      //   {
-      //     'value': '7',
-      //     'text': `7 ${this.translateService.instant('newcontent.days')}` // '7 Days',
-      //   }
-      // ];
-      this.editorContentObject.$placeholder[0].textContent = this.translateService.instant('edit-content.write_something');
-    });
-
     this.stepperData = [
-      { 'value': this.translateService.instant('edit-content.preview'), 'slug': 'preview', 'status': false },
-      { 'value': this.translateService.instant('edit-content.boost'), 'slug': 'boost', 'status': true },
+      {'value': this.translateService.instant('edit-content.preview'), 'slug': 'preview', 'status': false},
+      {'value': this.translateService.instant('edit-content.boost'), 'slug': 'boost', 'status': true},
     ];
 
     this.publicationService.getMyPublications()
@@ -292,223 +249,31 @@ export class EditContentComponent implements OnInit, OnDestroy {
           });
         }
       });
-
-    this.contentOptions = {
-      key: environment.froala_editor_key,
-      keepFormatOnDelete: true,
-      toolbarInline: true,
-      toolbarButtons: ['bold', 'italic', 'title', 'paragraphFormat', 'insertLink', 'formatOL', 'formatUL', 'quote'],
-      language: (this.accountService.accountInfo && this.accountService.accountInfo.language == 'jp') ? 'ja' : 'en_us',
-      dragInline: false,
-      pastePlain: true,
-      imageInsertButtons: ['imageBack', '|', 'imageUpload', 'imageByURL'],
-      videoInsertButtons: ['videoByURL'],
-      videoEditButtons: [],
-      quickInsertButtons: ['quickImage', 'search', 'quickVideo'],
-      imageUpload: true,
-      imageUploadMethod: 'POST',
-      paragraphFormat: {
-        N: 'Normal',
-        H2: 'H2',
-        H3: 'H3',
-        H4: 'H4'
-      },
-      listAdvancedTypes: false,
-      linkText: false,
-      linkInsertButtons: ['linkBack'],
-      imageUploadURL: this.contentUrl,
-      videoAllowedTypes: ['mp4', 'webm', 'ogg'],
-      imageAllowedTypes: ['jpeg', 'jpg', 'png', 'gif'],
-      charCounterMax: 65535,
-      charCounterCount: false,
-      lineBreakerTags: ['table', 'hr', 'form'],
-      linkAlwaysBlank: true,
-      imageMaxSize: 5 * 1024 * 1024, // 5MB
-      pasteDeniedAttrs: ['class', 'id', 'style', 'srcset'],
-      imageResize: false,
-      imageEditButtons: ['gridsize', 'containersize', 'fullsize', 'imageCaption',  'imageCrop', 'imageRemove'],
-      imagePasteProcess: true,
-      imageDefaultWidth: null,
-      imageOutputSize: true,
-      requestHeaders: {
-        'X-API-TOKEN': (this.accountService.accountInfo && this.accountService.accountInfo.token)
-          ? this.accountService.accountInfo.token
-          : ''
-      },
-      events: {
-        ...froalaEvents.call(this),
-        'froalaEditor.initialized': (e, editor) => {
-          const self = this;
-          editor.$el.on('DOMCharacterDataModified DOMNodeInserted', function(event) {
-            const $p = $(event.target).closest('p');
-
-            if ($(event.target).is('.fr-img-caption .fr-inner')) {
-              if (event.target.textContent.length === 1) {
-                const $img = $(event.target).prev(),
-                    $p = $img.closest('p');
-
-                $p.append($img).find('> span').remove();
-              }
-
-              return;
-            }
-
-            if ($(event.target).is('ol, ul')) {
-              $(event.target).removeAttr('style');
-            }
-
-            if ($p.is('.gridsize-image,.containersize-image,.fullsize-image,.defaultsize-image')) {
-              event.preventDefault();
-
-              if ( $p.find('img').length === 0 ) {
-                $p.remove();
-                return;
-              }
-              $p.contents().filter(function() { return this.nodeType === 3; }).each(function() {
-                if (['%u200B', ''].indexOf(escape(this.textContent)) !== -1) { return; }
-
-                const command = $(this).prev('img,span').length ? 'insertAfter' : 'insertBefore',
-                    $newP = $('<p></p>')[command]($p);
-
-                $newP.get(0).appendChild(this);
-                editor.selection.setAtEnd($newP.get(0));
-                editor.selection.restore();
-              });
-            }
-          });
-          editor.$el.on('click', 'img', function () {
-            // self.utilService.getImageBlob(this.src).then((blob) => {
-            //   if (blob.type === 'image/gif') {
-            //     $('.fr-btn[data-cmd="imageCrop"]').addClass('fr-disabled size-disabled');
-            //   } else {
-            //     $('.fr-btn[data-cmd="imageCrop"]').removeClass('fr-disabled size-disabled');
-            //   }
-            // });
-            const parent = $(this).closest('p');
-            $('.active').removeClass('active');
-
-            if (parent.hasClass('containersize-image')) {
-              $('.fr-btn[data-cmd="containersize"] > svg > g').addClass('active');
-            } else if (parent.hasClass('fullsize-image')) {
-              $('.fr-btn[data-cmd="fullsize"] > svg > g').addClass('active');
-            } else if (parent.hasClass('gridsize-image')) {
-              $('.fr-btn[data-cmd="gridsize"] > svg > g').addClass('active');
-            }
-
-            if (!$(this).data('natural-width') || !$(this).data('natural-height')) {
-              getImageSize($(this).attr('src')).subscribe( (dimensions: ({width: number, height: number})) => {
-                $(this).attr('data-natural-width', dimensions.width);
-                $(this).attr('data-natural-height', dimensions.height);
-
-                toggleImageSizeModifiers(dimensions.width);
-              });
-
-              if ( $(this).attr('width') && $(this).attr('width') >= 870 && $(this).data('natural-width') === undefined) {
-                $(this).attr('data-size', 'gridsize');
-                toggleImageSize($(this).closest('p'), 'gridsize-image');
-
-                if ($('.active').length) {
-                    $('.active').removeClass('active');
-                }
-                $('#icon-grid-1').addClass('active');
-
-                $(this).attr('width', $(this).width());
-                $(this).attr('height', $(this).height());
-                this.saveDraft(this.draftId);
-              }
-            } else {
-              toggleImageSizeModifiers($(this).data('natural-width'));
-            }
-            $(editor.popups.get('image.edit')).addClass('image-edit-popup');
-          });
-          this.contentObject = e;
-          this.editorContentObject = editor;
-        },
-        'froalaEditor.popups.show.image.insert': function(e, editor) {
-          editor.popups
-            .get('image.insert')
-            .css({
-              zIndex: 9,
-              left: $('.fr-element > p:not([class*="-image"]):first').offset().left
-            });
-        },
-        'froalaEditor.popups.show.video.insert': function(e, editor) {
-          editor.popups
-            .get('video.insert')
-            .css({
-              zIndex: 9,
-              left: $('.fr-element > p:not([class*="-image"]):first').offset().left
-            });
-        },
-        'froalaEditor.html.set': function (e, editor) {
-          editor.events.trigger('charCounter.update');
-        },
-        'froalaEditor.image.beforeRemove': (e, editor, img) => {
-          $('.fr-image-resizer').remove();
-          if ( !img.closest('p').next('p').text() ) { img.closest('p').next('p').remove(); }
-          const imageUri = $(img).attr('data-uri');
-          if (this.coverImagesList[imageUri]) {
-            delete this.coverImagesList[imageUri];
-            this.selectedCoverImageUri = '';
-          }
-
-          if (this.editorContentObject) {
-            let deletedImageCount = 0;
-            const contentBlocks = this.editorContentObject.html.blocks();
-            contentBlocks.forEach((node) => {
-              const nodeHtml = $.trim(node.innerHTML);
-              if (nodeHtml.match(/<img/)) {
-                const outerText = node.outerHTML;
-                const regex = /<img[^>]*data-uri="([^"]*)"/g;
-                const regexData = regex.exec(outerText);
-                if (regexData && regexData.length > 1 && regexData[1] && imageUri == regexData[1]) {
-                  deletedImageCount++;
-                }
-              }
-            });
-            if (deletedImageCount == 1) {
-              delete this.contentUris[imageUri];
-            }
-          }
-        },
-        'froalaEditor.image.error': (e, editor, error) => {
-          if (error && error.code && error.message) {
-            this.uiNotificationService.error(this.translateService.instant('edit-content.error'), error.message);
-          }
-        },
-        'froalaEditor.video.inserted': function (e, editor, $video) {
-          $video.closest('p').find('br:last').remove();
-          $video.closest('p').after('<p data-empty="true"><br></p>');
-        }
-      }
-    };
-    FroalaEditorCustomConfigs.call(this);
   }
 
   initSubmitFormView() {
     this.submitError = false;
-
-    if (this.editorContentObject) {
-      const contentBlocks = this.editorContentObject.html.blocks();
-      contentBlocks.forEach((node) => {
-        const nodeHtml = $.trim(node.innerHTML);
-        if (nodeHtml.match(/<img/)) {
-          const outerText = node.outerHTML;
-          const regex = /<img[^>]*data-uri="([^"]*)"/g;
-          const regexData = regex.exec(outerText);
-          if (regexData && regexData.length > 1 && regexData[1]) {
-            const imgUri = regexData[1];
-            const imgSrc = this.contentUris[imgUri];
-            if (imgUri && imgSrc) {
-              this.coverImagesList[imgUri] = imgSrc;
-            }
+    const fakeDom = new DOMParser().parseFromString(this.content.text, 'text/html');
+    const contentBlocks = fakeDom.children[0].children[1].children;
+    for (let i = 0; i < contentBlocks.length; i++) {
+      const node = contentBlocks.item(i);
+      const nodeHtml = node.innerHTML.trim();
+      if (nodeHtml.match(/<img/)) {
+        const outerText = node.outerHTML;
+        const regex = /<img[^>]*data-uri="([^"]*)"/g;
+        const regexData = regex.exec(outerText);
+        if (regexData && regexData.length > 1 && regexData[1]) {
+          const imgUri = regexData[1];
+          const imgSrc = this.contentUris[imgUri];
+          if (imgUri && imgSrc) {
+            this.coverImagesList[imgUri] = imgSrc;
           }
         }
-      });
-
-      if (!this.selectedCoverImageUri && Object.keys(this.coverImagesList).length) {
-        this.selectedCoverImageUri = Object.keys(this.coverImagesList)[Object.keys(this.coverImagesList).length - 1];
       }
+    }
+
+    if (!this.selectedCoverImageUri && Object.keys(this.coverImagesList).length) {
+      this.selectedCoverImageUri = Object.keys(this.coverImagesList)[Object.keys(this.coverImagesList).length - 1];
     }
 
     this.currentContentData = {
@@ -519,7 +284,7 @@ export class EditContentComponent implements OnInit, OnDestroy {
         'image': this.accountService.accountInfo.image
       },
       'published': Math.round(new Date().getTime() / 1000),
-      'title': this.contentForm ? this.contentForm.value.title : '',
+      'title': this.title || '',
       'tags': this.tags,
       'cover': {
         'url': !this.hideCover && this.selectedCoverImageUri && Object.keys(this.coverImagesList).length ? this.coverImagesList[this.selectedCoverImageUri] : '',
@@ -533,25 +298,6 @@ export class EditContentComponent implements OnInit, OnDestroy {
   }
 
   initSubscribes() {
-    this.contentForm.valueChanges
-      .pipe(
-        tap(() => this.initSubmitFormView()),
-        debounceTime(2000),
-        map(() => {
-          if (!this.isSubmited) {
-            this.saveDraft(this.draftId);
-          }
-        }),
-        takeUntil(this.unsubscribe$)
-      )
-      .subscribe(() => {
-        if (this.contentForm.controls['title'].value && this.contentForm.controls['title'].value.trim() == '') {
-          this.contentForm.controls['title'].reset();
-        }
-        },
-        err => console.log(err)
-      );
-
     this.draftService.draftData$
       .pipe(
         takeUntil(this.unsubscribe$)
@@ -563,6 +309,7 @@ export class EditContentComponent implements OnInit, OnDestroy {
           this.contentService.updateDraft$.emit(draft);
         }
       });
+
     this.tagSubject
       .pipe(
         takeUntil(this.unsubscribe$)
@@ -574,17 +321,37 @@ export class EditContentComponent implements OnInit, OnDestroy {
           }
         }
       );
+
+    this.contentService.publishArticleChanged$
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe(event => {
+        this.onShowStepForm(true);
+      });
+
+    this.contentChangeObs$
+      .pipe(
+        debounceTime(2000),
+        takeUntil(this.unsubscribe$)
+      )
+      .subscribe((data) => {
+        if (!this.isSubmited) {
+          this.saveDraft(this.draftId);
+        }
+        if (this.contentForm.controls['title'].value && this.contentForm.controls['title'].value.trim() == '') {
+          this.contentForm.controls['title'].reset();
+        }
+      });
   }
 
   saveDraft(id = null) {
     const newDraft: any = {
-      title: this.contentForm.value.title || '',
-      content: this.editorContentObject.html.get() || '',
+      title: this.title || '',
+      content: this.content.text || '',
       publication: this.contentForm.value.publication,
       contentUris: this.contentUris || {},
       options: {
         'selectedCoverImageUri': this.selectedCoverImageUri,
-        'selectedCoverImageUrl':  Object.keys(this.coverImagesList).length ? this.coverImagesList[this.selectedCoverImageUri] : '',
+        'selectedCoverImageUrl': Object.keys(this.coverImagesList).length ? this.coverImagesList[this.selectedCoverImageUri] : '',
         'additionalCoverImage': this.additionalCoverImage
       },
       tags: this.tags || [],
@@ -598,15 +365,8 @@ export class EditContentComponent implements OnInit, OnDestroy {
     }
   }
 
-  initFroala($event) {
-    this.editorContentInitObject = $event;
-    this.editorContentInitObject.initialize();
-    setTimeout(() => {
-      this.editorContentObject.$placeholder[0].textContent = this.translateService.instant('edit-content.write_something');
-    }, 20);
-  }
-
   onShowStepForm(flag: boolean) {
+    this.contentForm.value.content = this.content.text;
     if (!this.contentForm.value.content || UtilService.calculateContentLength(this.contentForm.value.content).length <= 20) {
       this.contentLengthNotEnough = !!this.contentForm.value.content;
       this.warningShown = true;
@@ -616,7 +376,7 @@ export class EditContentComponent implements OnInit, OnDestroy {
       }, 2000);
       return false;
     }
-
+    this.initSubmitFormView();
     if (flag && this.showStoryForm == true) {
       this.changeStep();
     } else {
@@ -627,7 +387,7 @@ export class EditContentComponent implements OnInit, OnDestroy {
 
     if (flag && this.submitStep == 1) {
       this.detectedLanguage = '';
-      const selectedText = this.editorContentObject.html.get().replace(/<\/?[^>]+(>|$)/g, '');
+      const selectedText = this.content.text.replace(/<\/?[^>]+(>|$)/g, '');
       this.contentService.detectLanguage(selectedText)
         .pipe(
           takeUntil(this.unsubscribe$)
@@ -645,6 +405,9 @@ export class EditContentComponent implements OnInit, OnDestroy {
   onBoostToggle() {
     this.boostField = !this.boostField;
     this.isWhiteSpaceShown = this.boostField;
+    if (!this.boostField) {
+      this.chosenPriceProgress = 0;
+    }
   }
 
   changeStep() {
@@ -658,6 +421,19 @@ export class EditContentComponent implements OnInit, OnDestroy {
     } else if (this.submitStep == 2) {
       this.submit();
     }
+  }
+
+  previousStep() {
+    this.submitStep = 1;
+    this.boostField = false;
+    this.editBoost = false;
+    this.chosenDay = 1;
+    this.chosenPrice = 0;
+    this.chosenPriceProgress = 0;
+  }
+
+  openModal() {
+    this.isWhiteSpaceShown = this.boostField;
   }
 
   loadCurrentFee() {
@@ -675,16 +451,17 @@ export class EditContentComponent implements OnInit, OnDestroy {
 
   calculateContentFee() {
     let signesCount = 1; // content unit sign fee
-    const contentBlocks = this.editorContentObject.html.blocks();
     let skipNext = false;
-
-    contentBlocks.forEach((node) => {
+    const fakeDom = new DOMParser().parseFromString(this.content.text, 'text/html');
+    const contentBlocks = fakeDom.children[0].children[1].children;
+    for (let i = 0; i < contentBlocks.length; i++) {
+      const node = contentBlocks.item(i);
       if (skipNext) {
         skipNext = false;
         return;
       }
-      const nodeHtml = $.trim(node.innerHTML);
-      if (['LI'].includes(node.tagName) || ['LI'].includes(node.parentNode.tagName) || ['BLOCKQUOTE'].includes(node.parentNode.tagName)) {
+      const nodeHtml = node.innerHTML.trim();
+      if (['LI'].includes(node.tagName) || ['LI'].includes(node.parentNode.nodeName) || ['BLOCKQUOTE'].includes(node.parentNode.nodeName)) {
         return;
       } else if (nodeHtml != '' && nodeHtml != '<br>') {
         if (['blockquote'].some(el => node.outerHTML.includes(el))) {
@@ -692,7 +469,7 @@ export class EditContentComponent implements OnInit, OnDestroy {
         }
         signesCount++;
       }
-    });
+    }
 
     if (this.additionalCoverImage && this.additionalCoverImage['uri'] && this.additionalCoverImage['uri'] == this.selectedCoverImageUri) {
       signesCount++;
@@ -772,7 +549,7 @@ export class EditContentComponent implements OnInit, OnDestroy {
       this.router.navigate([`/user/login`]);
     }
 
-    if (!UtilService.calculateContentLength(this.contentForm.value.content)) {
+    if (!UtilService.calculateContentLength(this.content.text)) {
       this.uiNotificationService.error(this.translateService.instant('edit-content.error'), this.translateService.instant('edit-content.content_empty'));
       return false;
     } else if (!UtilService.calculateContentLength(this.contentForm.value.title)) {
@@ -780,29 +557,17 @@ export class EditContentComponent implements OnInit, OnDestroy {
       return false;
     }
     this.loading = true;
-    const title = this.contentForm.value.title.trim();
     const password = this.contentForm.value.password;
-    const contentTitle = (title) ? `<h1>${title}</h1>` : '';
+    const contentTitle = (this.title) ? `<h1>${this.title.trim()}</h1>` : '';
     let uploadedContentHtml = '';
-    const contentBlocks = this.editorContentObject.html.blocks();
     const calls = [];
-    let skipNext = false;
-
-    contentBlocks.forEach((node) => {
-      if (skipNext) {
-        skipNext = false;
-        return;
-      }
-      const nodeHtml = $.trim(node.innerHTML);
-      if (['LI'].includes(node.tagName) || ['LI'].includes(node.parentNode.tagName) || ['BLOCKQUOTE'].includes(node.parentNode.tagName)) {
-        return;
-      } else if ((node.outerHTML.match(/<(tr|thead|th|td|tbody|tfoot)/)) && !node.outerHTML.match(/<table/)) {
-        return;
-      } else if (nodeHtml != '' && nodeHtml != '<br>' && !nodeHtml.match(/<img/)) {
-        if (['blockquote'].some(el => node.outerHTML.includes(el))) {
-          skipNext = true;
-        }
-        calls.push(this.contentService.uploadTextFiles(node.outerHTML));
+    const fakeDom = new DOMParser().parseFromString(this.content.text, 'text/html');
+    const contentBlocks = fakeDom.children[0].children[1].children;
+    for (let i = 0; i < contentBlocks.length; i++) {
+      const node = contentBlocks.item(i);
+      const nodeHtml = node.tagName === 'P' ? node.textContent.trim() : node.innerHTML.trim();
+      if (nodeHtml != '' && nodeHtml != '<br>' && !nodeHtml.match(/<img/)) {
+         calls.push(this.contentService.uploadTextFiles(node.outerHTML));
       } else if (nodeHtml.match(/<img/)) {
         let outerText = node.outerHTML;
         const regex = /<img[^>]*data-uri="([^"]*)"/g;
@@ -818,7 +583,7 @@ export class EditContentComponent implements OnInit, OnDestroy {
       } else {
         calls.push(of(node.outerHTML));
       }
-    });
+    }
 
     forkJoin(calls).subscribe((data: any) => {
         if (data.length) {
@@ -839,7 +604,7 @@ export class EditContentComponent implements OnInit, OnDestroy {
           contentData = `${contentCover} ${contentTitle} ${uploadedContentHtml}`;
         }
 
-        this.contentForm.value.content = this.contentForm.value.content.replace(/contenteditable="[^"]*"/g, '');
+        this.contentForm.controls.content.setValue(this.contentForm.value.content.replace(/contenteditable="[^"]*"/g, ''));
 
         if (Object.keys(this.contentUris).length) {
           this.contentService.signFiles(Object.keys(this.contentUris), this.feeWhole, this.feeFraction, this.currentTime, this.draftId, password)
@@ -912,7 +677,7 @@ export class EditContentComponent implements OnInit, OnDestroy {
       this.currentContentData['cover'] = {
         'url': this.coverImagesList[this.selectedCoverImageUri]
       };
-      contentUrisChange.call(this);
+      this.contentUrisChange();
       this.saveDraft(this.draftId);
     }
     this.calculateContentFee();
@@ -988,7 +753,8 @@ export class EditContentComponent implements OnInit, OnDestroy {
           delay(3000),
           takeUntil(this.unsubscribe$)
         )
-        .subscribe(() => { });
+        .subscribe(() => {
+        });
       return;
     }
     return true;
@@ -1005,7 +771,7 @@ export class EditContentComponent implements OnInit, OnDestroy {
       };
     }
     this.hideCover = !this.hideCover;
-    contentUrisChange.call(this);
+    this.contentUrisChange();
     this.saveDraft(this.draftId);
   }
 
@@ -1014,13 +780,14 @@ export class EditContentComponent implements OnInit, OnDestroy {
     this.chosenDay = 1;
     this.chosenPrice = 0;
     this.isWhiteSpaceShown = false;
+    this.editBoost = false;
+    this.chosenPriceProgress = 0;
   }
 
-  insertImage(options) {
-    this.showGallery = false;
-    this.editorContentObject.selection.setAtStart(this.cursorHostElement);
-    this.editorContentObject.selection.restore();
-    this.editorContentObject.image.insert(options.url, options.sanitize, options.data, options.existingImage, options.response);
+  confirmBoostModal() {
+    this.isWhiteSpaceShown = false;
+    this.editBoost = true;
+    this.whiteOverlay = false;
   }
 
   onAmountRangeChange(data) {
@@ -1043,15 +810,59 @@ export class EditContentComponent implements OnInit, OnDestroy {
     }
   }
 
-  cancelCrop() {
-    this.croppingImage = null;
-    this.showCropModal = false;
-    // document.querySelector('html').classList.remove('overflow-hidden');
+  onImageDelete(data) {
+    console.log('delete ', data);
+    const image = data.name ? data : data.img;
+    const imageUri = image._attrs.get('data-uri');
+    delete this.coverImagesList[imageUri];
+    this.selectedCoverImageUri = '';
+    let deletedImageCount = 0;
+    const fakeDom = new DOMParser().parseFromString(this.content.text, 'text/html');
+    const contentBlocks = fakeDom.children[0].children[1].children;
+    for (let i = 0; i < contentBlocks.length; i++) {
+      const node = contentBlocks.item(i);
+      const nodeHtml = node.innerHTML.trim();
+      if (nodeHtml.match(/<img/)) {
+        const outerText = node.outerHTML;
+        const regex = /<img[^>]*data-uri="([^"]*)"/g;
+        const regexData = regex.exec(outerText);
+        if (regexData && regexData.length > 1 && regexData[1] && imageUri == regexData[1]) {
+          deletedImageCount++;
+        }
+      }
+    }
+    if (deletedImageCount == 1) {
+      delete this.contentUris[imageUri];
+    }
   }
 
-  addCroppedImage(event: ImageCroppedEvent) {
-    this.croppedImage = event;
-    addCroppedImage.call(this);
+  onImageInsert(responseData) {
+    console.log('insert ', responseData);
+    if (responseData) {
+      this.contentUris[responseData.uri] = responseData.link.replace(/&amp;/g, '&');
+      this.selectedCoverImageUri = responseData.uri;
+      this.contentUrisChange();
+    }
+  }
+
+  onEditorReady(editor) {
+    console.log(editor);
+  }
+
+  onContentChange(text?: string) {
+    this.content.text = text ? text : this.content.text;
+    this.content.title = this.title;
+    this.contentForm.controls['title'].setValue(this.title);
+    this.contentForm.controls['content'].setValue(this.content.text);
+    this.contentChangeObs$.next(text ? text : '');
+  }
+
+  contentUrisChange() {
+    if (this.additionalCoverImage['uri'] && this.contentUris[this.additionalCoverImage['uri']] && (this.selectedCoverImageUri != this.additionalCoverImage['uri'] || this.hideCover)) {
+      delete this.contentUris[this.additionalCoverImage['uri']];
+    } else if (!this.contentUris[this.selectedCoverImageUri]) {
+      this.contentUris[this.selectedCoverImageUri] = this.coverImagesList[this.selectedCoverImageUri];
+    }
   }
 
   ngOnDestroy(): void {

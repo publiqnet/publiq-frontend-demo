@@ -42,16 +42,14 @@ export class LoginComponent implements OnInit, OnDestroy {
     this.buildForm();
     this.loginForm.statusChanges
       .pipe(
-        takeUntil(this.unsubscribe$)
-      )
+        takeUntil(this.unsubscribe$))
       .subscribe(
       () => this.emailError = ''
     );
 
     this.errorService.errorEventEmiter
       .pipe(
-        takeUntil(this.unsubscribe$)
-      )
+        takeUntil(this.unsubscribe$))
       .subscribe((error: ErrorEvent) => {
         console.log(error);
         if (error.action === 'login') {
@@ -71,8 +69,7 @@ export class LoginComponent implements OnInit, OnDestroy {
     }
     this.oauthService.authenticate(this.loginForm.value.email, true)
       .pipe(
-        takeUntil(this.unsubscribe$)
-      )
+        takeUntil(this.unsubscribe$))
       .subscribe(oauthData => {
           this.formView = '';
         if (oauthData.status == 204) {

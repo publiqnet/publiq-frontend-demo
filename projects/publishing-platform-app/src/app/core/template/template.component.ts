@@ -35,14 +35,14 @@ export class TemplateComponent implements OnInit, AfterViewInit, OnDestroy {
       this.isBrowser = true;
       this.hideFooter = false;
       this.accountService.accountUpdated$
+        .pipe(takeUntil(this.unsubscribe$))
         .subscribe(result => {
           this.account = Boolean(result);
         });
 
       this.contentService.hideFooter$
         .pipe(
-          takeUntil(this.unsubscribe$)
-        )
+          takeUntil(this.unsubscribe$))
         .subscribe(visibility => this.hideFooter = visibility);
     }
   }

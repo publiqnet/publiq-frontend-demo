@@ -84,7 +84,9 @@ export class BoostModalComponent implements OnInit, OnChanges, OnDestroy {
 
   initDefaultData() {
     this.boostDays = 1;
-    this.translateService.onLangChange.subscribe(lang => {
+    this.translateService.onLangChange
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe(lang => {
     });
     this.boostPassword = '';
     this.submitError = false;
@@ -92,9 +94,7 @@ export class BoostModalComponent implements OnInit, OnChanges, OnDestroy {
 
   loadCurrentBoostFee() {
     this.contentService.getFee()
-      .pipe(
-        takeUntil(this.unsubscribe$)
-      )
+      .pipe(takeUntil(this.unsubscribe$))
       .subscribe(feeData => {
         this.feeWhole = feeData.whole ? feeData.whole : 0;
         this.feeFraction = feeData.fraction ? feeData.fraction : 0;
@@ -133,6 +133,7 @@ export class BoostModalComponent implements OnInit, OnChanges, OnDestroy {
     }
     if (this.boostPassword) {
       this.contentService.cancelStoryBoosting(this.contentUri, this.cancelHash, this.feeWhole, this.feeFraction, this.currentTime, this.boostPassword)
+        .pipe(takeUntil(this.unsubscribe$))
         .subscribe(data => {
           this.uiNotificationService.success(this.translateService.instant('author.success'), this.translateService.instant('author.boost_successfully_canceled'));
           this.cancelBoost.emit('cancel');
@@ -161,9 +162,7 @@ export class BoostModalComponent implements OnInit, OnChanges, OnDestroy {
     }
     if (this.boostPassword && this.modalType == 'boost') {
       this.contentService.contentBoost(this.contentUri, this.chosenPrice, this.chosenDay, this.feeWhole, this.feeFraction, this.currentTime, this.boostPassword)
-        .pipe(
-          takeUntil(this.unsubscribe$)
-        )
+        .pipe(takeUntil(this.unsubscribe$))
         .subscribe(data => {
           this.submittedBoost.emit('submitted');
             this.uiNotificationService.success(this.translateService.instant('author.success'), this.translateService.instant('author.boost_successfully_added'));

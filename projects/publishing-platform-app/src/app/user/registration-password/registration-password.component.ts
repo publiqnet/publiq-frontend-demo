@@ -71,8 +71,7 @@ export class RegistrationPasswordComponent implements OnInit, OnDestroy {
           this.token = params.code;
           return this.oauthService.signupConfirmation(params.code);
         }),
-        takeUntil(this.unsubscribe$)
-      )
+        takeUntil(this.unsubscribe$))
       .subscribe(result => {
         this.stringToSign = result.stringToSign;
         this.tokenCheckStatus = TokenCheckStatus.Success;
@@ -81,9 +80,7 @@ export class RegistrationPasswordComponent implements OnInit, OnDestroy {
       });
 
     this.errorService.errorEventEmiter
-      .pipe(
-        takeUntil(this.unsubscribe$)
-      )
+      .pipe(takeUntil(this.unsubscribe$))
       .subscribe((data: ErrorEvent) => {
         if (data.action === 'loadConfirm') {
           this.router.navigate([`/page-not-found`]);
@@ -92,7 +89,9 @@ export class RegistrationPasswordComponent implements OnInit, OnDestroy {
         }
       });
 
-    this.configForm.valueChanges.subscribe(newValues => this.registerError = '');
+    this.configForm.valueChanges
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe(newValues => this.registerError = '');
     if (isPlatformBrowser(this.platformId)) { this.isDataLoaded = true; }
   }
 
@@ -114,7 +113,9 @@ export class RegistrationPasswordComponent implements OnInit, OnDestroy {
       {validator: ValidationService.passwordsEqualValidator}
     );
 
-    this.configForm.valueChanges.subscribe(this.passwordValidation.bind(this));
+    this.configForm.valueChanges
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe(this.passwordValidation.bind(this));
   }
 
   passwordValidation(form) {
@@ -140,8 +141,7 @@ export class RegistrationPasswordComponent implements OnInit, OnDestroy {
           this.oauthService.generateRandomKey();
           return this.accountService.accountAuthenticate(data.token);
         }),
-        takeUntil(this.unsubscribe$)
-      )
+        takeUntil(this.unsubscribe$))
       .subscribe(data => {
         if (isPlatformBrowser(this.platformId) && UtilService.getCookie('redirectUrl')) {
           const redirectUrl = UtilService.getCookie('redirectUrl');

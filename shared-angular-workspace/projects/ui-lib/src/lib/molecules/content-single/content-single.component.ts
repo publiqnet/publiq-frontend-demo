@@ -1,9 +1,11 @@
-import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, OnInit, OnDestroy } from '@angular/core';
 import { Avatar } from '../../../core/models/avatar';
 import { ContentDataOptions } from '../../../core/models/contentData';
 import { HeaderLoggedDataOptions } from '../../../core/models/headerLoggedData';
 import { DropdownDataOptions } from '../../../core/models/dropdownData';
 import { TranslateService } from '@ngx-translate/core';
+import { ReplaySubject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 enum ContentSingleType {
   related = 'related',
@@ -18,7 +20,7 @@ enum ContentSingleType {
   styleUrls: ['./content-single.component.scss'],
 })
 
-export class ContentSingleComponent implements  OnInit, OnChanges {
+export class ContentSingleComponent implements  OnInit, OnChanges, OnDestroy {
   @Input('type') type: ContentSingleType = ContentSingleType.related;
   @Input('contentData') contentData: ContentDataOptions = null;
   @Input('publicationList') publicationList = [];
@@ -49,6 +51,7 @@ export class ContentSingleComponent implements  OnInit, OnChanges {
   public thumbnailLoaded: boolean = false;
   public originalImageLoaded: boolean = false;
   public imageUri: string;
+  private unsubscribe$ = new ReplaySubject<void>(1);
 
   public menuOpen = {
     publication: false,
@@ -78,11 +81,21 @@ export class ContentSingleComponent implements  OnInit, OnChanges {
       this.imageUri = fileMatch ? fileMatch[1] : null;
     }
 
-    this.translateService.onLangChange.subscribe(lang => {
-      this.dropdownSettings = [
-        { text: this.translateService.instant('ui.content-single.boost_story'), value: 'boost_story' },
-        { text: this.translateService.instant('ui.content-single.edit_story'), value: 'edit_story' },
-      ];
+    this.translateService.onLangChange
+      .pipe(
+        takeUntil(this.unsubscribe$)
+      )
+      .subscribe(lang => {
+        if (this.canOnlyDelete) {
+          this.dropdownSettings = [
+            { text: this.translateService.instant('ui.content-single.delete_story'), value: 'delete_story' }
+          ];
+        } else {
+          this.dropdownSettings = [
+            { text: this.translateService.instant('ui.content-single.boost_story'), value: 'boost_story' },
+            { text: this.translateService.instant('ui.content-single.edit_story'), value: 'edit_story' },
+          ];
+        }
     });
   }
 
@@ -227,5 +240,10 @@ export class ContentSingleComponent implements  OnInit, OnChanges {
   showSkeleton() {
     return (!this.loadOriginalImg && this.contentData.cover.thumbnail && !this.thumbnailLoaded)
       || ((this.loadOriginalImg || !this.contentData.cover.thumbnail) && this.contentData.cover.url  && !this.originalImageLoaded && !this.thumbnailLoaded);
+  }
+
+  ngOnDestroy() {
+    this.unsubscribe$.next();
+    this.unsubscribe$.complete();
   }
 }

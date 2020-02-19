@@ -6,10 +6,10 @@ const moment = moment_;
 
 @Injectable()
 export class UtilService {
-  utcMoment = moment.utc();
+  public utcMoment =  moment.utc();
 
-  constructor(private translateService: TranslateService) {
-  }
+  constructor(private translateService: TranslateService) {}
+
   charactersLimit(string, limit: number = 32) {
     return string.length > limit ? `${string.substring(0, limit)}...` : string;
   }
@@ -28,6 +28,7 @@ export class UtilService {
   }
 
   dateToName(value) {
+    this.utcMoment = moment.utc();
     const difference = Math.round((moment(this.utcMoment, 'MM-DD-YYYY Z').valueOf() - value) / 60000);
     let result;
     if (difference <= 1) {

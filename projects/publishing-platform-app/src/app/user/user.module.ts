@@ -14,7 +14,6 @@ import { RegistrationPasswordComponent } from './registration-password/registrat
 import { UserTemplateComponent } from './user-template/user-template.component';
 import { NgxUsefulSwiperModule } from 'ngx-useful-swiper';
 
-
 @NgModule({
   imports: [
     CommonModule,
@@ -23,14 +22,18 @@ import { NgxUsefulSwiperModule } from 'ngx-useful-swiper';
     TranslateModule.forChild(),
     RouterModule.forChild(userRoutes)
   ],
-  declarations: [
-    UserTemplateComponent,
-    LoginComponent,
-    RegisterComponent,
-    RecoverComponent,
-    LoginPasswordComponent,
-    RegistrationPasswordComponent,
-    NewPasswordComponent
-  ]
+    exports: [
+        RecoverComponent,
+        NewPasswordComponent,
+    ],
+    declarations: [
+      UserTemplateComponent,
+      LoginComponent,
+      RegisterComponent,
+      RecoverComponent,
+      LoginPasswordComponent,
+      RegistrationPasswordComponent,
+      NewPasswordComponent,
+    ]
 })
 export class UserModule {}

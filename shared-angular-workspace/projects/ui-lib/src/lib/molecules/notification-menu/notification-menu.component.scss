@@ -69,21 +69,21 @@
       margin: 0 15px 0 0;
     }
     > div:last-child{
-        position: absolute;
-        top: 7px;
-        right: 7px;
-        opacity: 0;
-        transition: .3s ease-out;
+      position: absolute;
+      top: 7px;
+      right: 7px;
+      opacity: 0;
+      transition: .3s ease-out;
       &:focus, &:active{
         outline: none;
       }
-        i{
-          font-size: 18px;
-          color: #C1C4CB;
-          &:focus, &:active{
-            outline: none;
-          }
+      i{
+        font-size: 18px;
+        color: #C1C4CB;
+        &:focus, &:active{
+          outline: none;
         }
+      }
     }
 
     &__content {
@@ -95,6 +95,16 @@
         a {
           font-weight: 600;
           color: pbq-color($grey, 600);
+
+          &:hover {
+            color: pbq-color($grey, 700);
+          }
+        }
+        p {
+          font-weight: 600;
+          color: pbq-color($grey, 600);
+          margin-top: 5px;
+          margin-bottom: 0px;
 
           &:hover {
             color: pbq-color($grey, 700);
@@ -170,6 +180,12 @@
     &--social {
       flex-wrap: wrap;
       justify-content: flex-end;
+      align-items: end;
+      ::ng-deep {
+        ui-avatar {
+          padding-top: 20px;
+        }
+      }
 
       .notification-list__item {
         &__content {
@@ -178,6 +194,7 @@
 
         &__circle {
           transform: translateY(-23px);
+          top: calc(40% - 7px);
         }
       }
     }

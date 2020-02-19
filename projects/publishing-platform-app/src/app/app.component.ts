@@ -14,6 +14,7 @@ import { LinkService } from './core/services/link.service';
 import { ContentService } from './core/services/content.service';
 import { PublicationService } from './core/services/publication.service';
 import { Account } from './core/services/models/account';
+import { UiNotificationService } from './core/services/ui-notification.service';
 
 @Component({
   selector: 'app-root',
@@ -39,11 +40,12 @@ export class AppComponent implements OnInit, OnDestroy {
     private state: TransferState,
     private contentService: ContentService,
     private linkService: LinkService,
-    @Optional() @Inject(APP_BASE_HREF) private baseHref: string,
-    @Inject(PLATFORM_ID) private platformId,
-    @Optional() @Inject(REQUEST) private request: any,
     public translateService: TranslateService,
     private publicationService: PublicationService,
+    private uiNotificationService: UiNotificationService,
+    @Optional() @Inject(APP_BASE_HREF) private baseHref: string,
+    @Inject(PLATFORM_ID) private platformId,
+    @Optional() @Inject(REQUEST) private request: any
   ) {
   }
 
@@ -57,9 +59,9 @@ export class AppComponent implements OnInit, OnDestroy {
       this.accountService.accountUpdated$
       .pipe(
         filter((account: any) => account),
-        takeUntil(this.unsubscribe$)
-      )
+        takeUntil(this.unsubscribe$))
       .subscribe((account: Account) => {
+        this.uiNotificationService.initNotificationListener();
         if (account && account.language) {
           this.updateLanguage(account.language);
         }
@@ -67,8 +69,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
       this.accountService.logoutDataChanged
       .pipe(
-        takeUntil(this.unsubscribe$)
-      )
+        takeUntil(this.unsubscribe$))
       .subscribe(() => this.publicationService.reset());
 
       this.translateService.use((typeof window !== 'undefined' && localStorage) ? (localStorage.getItem('lang') || 'en') : 'en');
@@ -85,8 +86,7 @@ export class AppComponent implements OnInit, OnDestroy {
       this.router.events
         .pipe(
           filter(event => event instanceof NavigationEnd),
-          takeUntil(this.unsubscribe$)
-        )
+          takeUntil(this.unsubscribe$))
         .subscribe(event => {
           window.scrollTo(0, 0);
         });

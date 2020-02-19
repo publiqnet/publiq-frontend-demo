@@ -1,0 +1,7 @@
+<div *ngIf="accountService.accountInfo">
+  <ckeditor [config]="config" [editor]="CKEditor" (ready)="onReady($event)" [(ngModel)]="content" (change)="onChange($event)" #editor></ckeditor>
+  <div *ngIf="showGalleryModal">
+    <app-gallery-modal (closeEvent)="showGalleryModal = !$event" (onInsertImage)="insertImage($event)"></app-gallery-modal>
+  </div>
+  <app-crop-image *ngIf="showCropModal" [imageFile]="croppingImage" (save)="addCroppedImage($event)" (cancel)="cancelCrop()"></app-crop-image>
+</div>

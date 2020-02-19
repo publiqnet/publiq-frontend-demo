@@ -19,6 +19,12 @@ export class UserTemplateComponent implements OnInit, OnDestroy {
   public swiperConfig: SwiperOptions;
   isDataLoaded: boolean = false;
   public translationsReady: boolean = false;
+  public languagesList = {
+    'en': 'EN',
+    'jp': 'JP',
+    'es': 'ES'
+  };
+
   constructor(
     private router: Router,
     @Inject(PLATFORM_ID) private platformId: Object,
@@ -30,9 +36,7 @@ export class UserTemplateComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.activeRoute = this.router.url.substring(this.router.url.lastIndexOf('/') + 1);
     this.router.events
-      .pipe(
-        takeUntil(this.unsubscribe$)
-      )
+      .pipe(takeUntil(this.unsubscribe$))
       .subscribe(event => {
         if (event instanceof NavigationEnd) {
           const currentUrl = (event.urlAfterRedirects) ? event.urlAfterRedirects : event.url;
@@ -79,6 +83,10 @@ export class UserTemplateComponent implements OnInit, OnDestroy {
     this.router.navigate([`/${route}`]);
   }
 
+  showForgotPassword() {
+    return this.activeRoute == 'login' || (this.router.url.includes('user/signin') && !['login', 'register', 'recover'].includes(this.activeRoute));
+  }
+
   useLang(lang) {
     if (this.translateService.currentLang != lang && !this.accountService.loggedIn()) {
       localStorage.setItem('lang', lang);
@@ -90,4 +98,5 @@ export class UserTemplateComponent implements OnInit, OnDestroy {
     this.unsubscribe$.next();
     this.unsubscribe$.complete();
   }
+
 }

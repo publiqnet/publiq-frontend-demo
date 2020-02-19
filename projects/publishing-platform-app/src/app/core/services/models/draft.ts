@@ -40,7 +40,12 @@ export class Draft {
           this['slug'] = options[i] ? options[i] : '';
           this[i] = options[i] ? options[i] : '';
         } else if (i == 'content') {
-          this['description'] = options[i] ? options[i].replace(/(<([^>]+)>)/ig, '') : '';
+          this['description'] = options[i] ? options[i].replace(/<figcaption(?:.|\n)*?>.*?<\/figcaption>/gm, '')
+            .replace(/<(?:.|\n)*?>/gm, '')
+            .replace(/(\r\n|\n|\r)/gm, '')
+            .replace(/<\/?[^>]+(>|$)/g, '')
+            .replace(/&nbsp;/g, '')
+            .replace(/&lt;/g, '').trim() : '';
           this[i] = options[i] ? options[i] : '';
         } else if (i == 'updated') {
           this['published'] = options[i] ? options[i] : '';

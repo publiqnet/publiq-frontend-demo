@@ -1,7 +1,7 @@
-import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
 import { FormControlHelper } from '../../../core/classes/formControlHelper';
-import { fromEvent } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
+import { fromEvent, ReplaySubject } from 'rxjs';
+import { debounceTime, takeUntil } from 'rxjs/operators';
 
 enum ProgressType {
   default = 'default',
@@ -16,7 +16,7 @@ enum ProgressType {
   providers: [FormControlHelper.controlValueAccessor(ProgressComponent)]
 })
 
-export class ProgressComponent extends FormControlHelper implements AfterViewInit, OnChanges {
+export class ProgressComponent extends FormControlHelper implements AfterViewInit, OnChanges, OnDestroy {
   @Input('type') type: ProgressType = ProgressType.default;
   @Input() className: string = '';
   @Input() minValue: number = 0;
@@ -30,6 +30,7 @@ export class ProgressComponent extends FormControlHelper implements AfterViewIni
   @ViewChild('amountValue', {static: false}) amountValue: ElementRef;
   @Output() onDaysRange = new EventEmitter<any>();
   @Output() onAmountRange = new EventEmitter<any>();
+  private unsubscribe$ = new ReplaySubject<void>(1);
 
   ngAfterViewInit(): void {
     if (this.daysRange && this.daysRange.nativeElement && this.selectedDaysValue != this.daysRange.nativeElement.value) {
@@ -47,6 +48,9 @@ export class ProgressComponent extends FormControlHelper implements AfterViewIni
     }
     if (this.type === 'days' && this.daysRange) {
       fromEvent(this.daysRange.nativeElement, 'input')
+        .pipe(
+          takeUntil(this.unsubscribe$)
+        )
         .subscribe(
           (event: KeyboardEvent) => {
             this.daysRange.nativeElement.innerHTML = event['srcElement']['value'];
@@ -60,6 +64,9 @@ export class ProgressComponent extends FormControlHelper implements AfterViewIni
 
     if (this.type === 'amount' && this.amountRange) {
       fromEvent(this.amountRange.nativeElement, 'input')
+        .pipe(
+          takeUntil(this.unsubscribe$)
+        )
         .subscribe(
           (event: KeyboardEvent) => {
             const bulletPosition = ((this.amountRange.nativeElement.value - this.amountRange.nativeElement.min) / (this.amountRange.nativeElement.max - this.amountRange.nativeElement.min));
@@ -96,6 +103,11 @@ export class ProgressComponent extends FormControlHelper implements AfterViewIni
     this.selectedAmountValue = value;
     this.onChange(this.selectedAmountValue);
     this.onAmountRange.emit(this.selectedAmountValue);
+  }
+
+  ngOnDestroy() {
+    this.unsubscribe$.next();
+    this.unsubscribe$.complete();
   }
 }
 

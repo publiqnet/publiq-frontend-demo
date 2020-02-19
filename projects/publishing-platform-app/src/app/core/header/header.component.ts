@@ -17,6 +17,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { UiNotificationService } from '../services/ui-notification.service';
 import { BrowserNotificationService } from '../services/browser-notification.service';
 import { BrowserNotification, BrowserNotificationOptions } from '../services/models/browserNotification';
+import { NotificationListener } from '../services/notificationListener';
 
 enum NotificationActions {
   REDIRECT = 'redirect',
@@ -29,7 +30,9 @@ enum NotificationActions {
   MARK_ALL_AS_READ = 'mark-all-as-read',
   DELETE_NOTIFICATION = 'delete-notification',
   DELETE_ALL_NOTIFICATIONS = 'delete-all-notifications',
-  SHARE_ARTICLE = 'share'
+  SHARE_ARTICLE = 'share',
+  REDIRECT_ARTICLE = 'redirect-article',
+
 }
 
 enum NotificationTypes {
@@ -37,7 +40,7 @@ enum NotificationTypes {
   publication_invitation_new = 'Publication Invitation',
   publication_invitation_cancelled = 'Publication Invitation Cancelled',
   publication_membership_cancelled = 'Publication Membership Cancelled',
-  publication_invitation_accepted  = 'Publication Invitation Accepted',
+  publication_invitation_accepted = 'Publication Invitation Accepted',
   publication_invitation_rejected = 'Publication Invitation Rejected',
   publication_request_cancelled = 'Publication Request Cancelled',
   publication_request_accepted = 'Publication Request Accepted',
@@ -46,7 +49,6 @@ enum NotificationTypes {
   new_article = 'New Article',
   subscribe_user = 'User Subscription',
   share_article = 'Article Shared'
-
 }
 
 @Component({
@@ -91,11 +93,11 @@ export class HeaderComponent implements OnInit, AfterViewInit, OnDestroy {
     private utilService: UtilService,
     public translate: TranslateService,
     private decimalPipe: DecimalPipe,
-    private notificationService: UiNotificationService,
     public sharedData: SharedDataService,
     public publicationService: PublicationService,
     private location: Location,
     private browserNotificationService: BrowserNotificationService,
+    private uiNotificationService: UiNotificationService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
   }
@@ -106,100 +108,73 @@ export class HeaderComponent implements OnInit, AfterViewInit, OnDestroy {
       this.accountService.accountUpdated$
         .pipe(
           switchMap(() => this.contentService.getAllTags()),
-          takeUntil(this.unsubscribe$)
-        )
+          takeUntil(this.unsubscribe$))
         .subscribe((tagsList: Tag[]) => {
           this.tagsList = tagsList;
           this.updateHeaderData();
         });
 
       this.accountService.accountUpdated$
-        .pipe(takeUntil(this.unsubscribe$))
+        .pipe(
+          filter((account: any) => account),
+          takeUntil(this.unsubscribe$)
+        )
         .subscribe((info) => {
-          if (info && this.allowRequests) {
-            this.allowRequests = false;
-            timer(10, 10000)
-              .pipe(
-                switchMap((emittedNumber: any) => {
-                  this.emittedNumber = emittedNumber;
-                  return this.notificationService.getNotifications(this.emittedNumber === 0 ? this.notificationCount : 20, 0);
-                }),
-                tap((res) => {
-                  this.notificationLastId = this.emittedNumber === 0 ?
-                    (res.notifications && res.notifications.length ? res.notifications[res.notifications.length - 1]['id'] : 0)
-                    : this.notificationLastId;
-                  this.notifications = this.emittedNumber === 0 ? [...res.notifications.map(n => new Notification(n))]
-                    : this.notifications;
-                  this.seeMoreChecker = this.emittedNumber === 0 ? res.more : this.seeMoreChecker;
-                  this.newNotificationsCount = this.emittedNumber === 0 ? res.unseenCount : this.newNotificationsCount;
+          this.getNotifications();
+        });
 
-                  const unseenCount = res.unseenCount - this.newNotificationsCount;
-                  if (unseenCount > 0 && this.emittedNumber > 0) {
-                    if (unseenCount <= res.notifications.length) {
-                      const unseenNotifications: Notification[] = res.notifications.slice(0, unseenCount).map(n => new Notification(n));
-                      this.notifications = [...unseenNotifications, ...this.notifications];
-                      this.newNotificationsCount = res.unseenCount;
-                      this.showBrowserNotifications(unseenNotifications);
-                    } else {
-                      this.notificationService.getNotifications(unseenCount, 0)
-                        .pipe(take(1))
-                        .subscribe((innerRes) => {
-                          const unseenNotifications: Notification[] = innerRes.notifications.map(n => new Notification(n));
-                          this.notifications = [...unseenNotifications, ...this.notifications];
-                          this.showBrowserNotifications(unseenNotifications);
-                          this.newNotificationsCount = innerRes.unseenCount;
-                        });
-                    }
-                  }
-                  this.updateHeaderData();
-                }),
-                takeWhile(() => this.stopNotificationTimer)).subscribe();
-            this.firstCheck += 1;
+      this.sharedData.currentArticle
+        .pipe(takeUntil(this.unsubscribe$))
+        .subscribe(article => {
+          if (article) {
+            this.headerData.articleData = {
+              user: article.author,
+              title: article.title,
+              slug: article.uri,
+              followingAuthor: article.author.subscribed,
+              isCurrentUser: this.accountService.loggedIn() && (article.author.publicKey === this.accountService.accountInfo.publicKey)
+            };
           } else {
-            if (this.firstCheck) {
-              this.allowRequests = false;
-              this.stopNotificationTimer = false;
-            }
+            this.headerData.articleData = null;
           }
         });
 
-      this.sharedData.currentArticle.subscribe(article => {
-        if (article) {
-          this.headerData.articleData = {
-            user: article.author,
-            title: article.title,
-            slug: article.uri,
-            followingAuthor: article.author.subscribed,
-            isCurrentUser: this.accountService.loggedIn() && (article.author.publicKey === this.accountService.accountInfo.publicKey)
-          };
-        } else {
-          this.headerData.articleData = null;
-        }
-      });
-      this.sharedData.currentPublication.subscribe(publication => {
-        if (publication) {
-          this.headerData.publicationData = {
-            title: publication.title,
-            logo: publication.logo,
-            cover: publication.cover,
-            views: publication.views,
-            storiesCount: publication.storiesCount,
-            subscribersCount: publication.subscribersCount,
-            membersCount: publication.membersCount,
-            following: publication.following,
-            memberStatus: publication.memberStatus,
-            slug: publication.slug
-          };
-        } else {
-          this.headerData.publicationData = null;
-        }
-      });
+      this.sharedData.currentPublication
+        .pipe(takeUntil(this.unsubscribe$))
+        .subscribe(publication => {
+          if (publication) {
+            this.headerData.publicationData = {
+              title: publication.title,
+              logo: publication.logo,
+              cover: publication.cover,
+              views: publication.views,
+              storiesCount: publication.storiesCount,
+              subscribersCount: publication.subscribersCount,
+              membersCount: publication.membersCount,
+              following: publication.following,
+              memberStatus: publication.memberStatus,
+              slug: publication.slug
+            };
+          } else {
+            this.headerData.publicationData = null;
+          }
+        });
+
+      this.uiNotificationService.notificationsListenerDataChanged
+        .pipe(takeUntil(this.unsubscribe$))
+        .subscribe((notificationsListenerData: NotificationListener[]) => {
+          if (notificationsListenerData && notificationsListenerData.length) {
+            notificationsListenerData.forEach((nextNotificationListener: NotificationListener) => {
+              if (nextNotificationListener.type == 'notification') {
+                this.updateNotificationsData(nextNotificationListener.data, true);
+              }
+            });
+          }
+        });
     }
 
     this.contentService.updateDraft$
-      .pipe(
-        takeUntil(this.unsubscribe$)
-      )
+      .pipe(takeUntil(this.unsubscribe$))
       .subscribe(draftData => {
         if (draftData && draftData.updated) {
           const draftUpdated = {'updated': Date.parse(draftData.updated) / 1000};
@@ -211,9 +186,7 @@ export class HeaderComponent implements OnInit, AfterViewInit, OnDestroy {
       });
 
     this.translate.onLangChange
-      .pipe(
-        takeUntil(this.unsubscribe$)
-      )
+      .pipe(takeUntil(this.unsubscribe$))
       .subscribe(lang => {
         this.updateHeaderData();
       });
@@ -269,8 +242,7 @@ export class HeaderComponent implements OnInit, AfterViewInit, OnDestroy {
   onPublicationFollow(event) {
     const followType = this.headerData.publicationData.following ? this.publicationService.unfollow(event.slug) : this.publicationService.follow(event.slug);
     followType.pipe(
-      takeUntil(this.unsubscribe$)
-    )
+      takeUntil(this.unsubscribe$))
       .subscribe
       (() => {
         this.headerData.publicationData.following = !this.headerData.publicationData.following;
@@ -285,8 +257,7 @@ export class HeaderComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     const followType = this.headerData.articleData.followingAuthor ? this.accountService.unfollow(event.slug) : this.accountService.follow(event.slug);
     followType.pipe(
-      takeUntil(this.unsubscribe$)
-    )
+      takeUntil(this.unsubscribe$))
       .subscribe
       ((data) => {
         this.headerData.articleData.followingAuthor = !this.headerData.articleData.followingAuthor;
@@ -296,38 +267,42 @@ export class HeaderComponent implements OnInit, AfterViewInit, OnDestroy {
 
 
   getNotifications() {
-    if (this.accountService.loggedIn()) { // todo @Sam review for better solution
-      this.notificationService.getNotifications(this.notificationCount, this.notificationLastId)
-        .pipe(
-          takeUntil(this.unsubscribe$)
-        )
+    if (this.accountService.loggedIn()) {
+      this.uiNotificationService.getNotifications(this.notificationCount, this.notificationLastId)
+        .pipe(takeUntil(this.unsubscribe$))
         .subscribe(res => {
-          if (res.notifications && res.notifications.length) {
-
-            this.seeMoreChecker = res.more;
-            this.seeMoreLoading = false;
-            this.blockInfiniteScroll = false;
-
-            this.newNotificationsCount = res.unseenCount;
-            this.notifications.push(...res.notifications.map(n => new Notification(n)));
-            this.notificationLastId = res.notifications[res.notifications.length - 1]['id'];
-          } else {
-            this.seeMoreChecker = false;
-            this.seeMoreLoading = false;
-            this.blockInfiniteScroll = false;
-          }
-          this.updateHeaderData();
+          this.updateNotificationsData(res);
         });
     }
+  }
+
+  updateNotificationsData(data, reset: boolean = false) {
+    if (data.notifications && data.notifications.length) {
+
+      this.seeMoreChecker = data.more;
+      this.seeMoreLoading = false;
+      this.blockInfiniteScroll = false;
+
+      this.newNotificationsCount = data.unseenCount;
+      if (reset) {
+        this.notifications = data.notifications.map(n => new Notification(n));
+      } else {
+        this.notifications.push(...data.notifications.map(n => new Notification(n)));
+      }
+      this.notificationLastId = data.notifications[data.notifications.length - 1]['id'];
+    } else {
+      this.seeMoreChecker = false;
+      this.seeMoreLoading = false;
+      this.blockInfiniteScroll = false;
+    }
+    this.updateHeaderData();
   }
 
   searchEvent(event) {
     if (event) {
       document.querySelector('html').classList.add('overflow-hidden');
       this.contentService.getDefaultSearchData()
-        .pipe(
-          takeUntil(this.unsubscribe$)
-        )
+        .pipe(takeUntil(this.unsubscribe$))
         .subscribe((data: any) => {
           this.defaultSearchData = data;
         });
@@ -343,6 +318,7 @@ export class HeaderComponent implements OnInit, AfterViewInit, OnDestroy {
     this.searchWord = searchValue;
     if (this.showSearch && this.searchWord != '') {
       this.contentService.searchByWord(this.searchWord)
+        .pipe(takeUntil(this.unsubscribe$))
         .subscribe((data: Search) => {
           this.searchData = data;
         }, error => {
@@ -408,6 +384,11 @@ export class HeaderComponent implements OnInit, AfterViewInit, OnDestroy {
         className: 'inline-items language-switcher ' + (this.translate.currentLang == 'en' ? 'selected' : ''),
       },
       {
+        text: 'ES',
+        value: 'es',
+        className: 'inline-items language-switcher ' + (this.translate.currentLang == 'es' ? 'selected' : ''),
+      },
+      {
         text: 'JP',
         value: 'jp',
         className: 'inline-items language-switcher ' + (this.translate.currentLang == 'jp' ? 'selected' : ''),
@@ -446,7 +427,7 @@ export class HeaderComponent implements OnInit, AfterViewInit, OnDestroy {
         if (!this.location.isCurrentPathEqualTo(`/`)) {
           this.router.navigate([`/`]);
         }
-      } else if (['en', 'jp'].includes(event.slug)) {
+      } else if (['en', 'jp', 'es'].includes(event.slug)) {
         this.changeLang(event.slug);
       } else if (event.slug == 'profile') {
         this.router.navigate([`/a/${this.accountService.accountInfo.publicKey}`]);
@@ -485,20 +466,23 @@ export class HeaderComponent implements OnInit, AfterViewInit, OnDestroy {
         }
         this.router.navigate([`/p/${e.slug.slug.publication.slug}`]);
         break;
-/*      case NotificationActions.REDIRECT_INVITATIONS:
-        if (!e.slug.slug.isRead) {
-          this.markAsRead(e, true);
-        }
-        const openInvitations = {openInvitations: true};
-        this.router.navigate([`/p/my-publications`, openInvitations]);
+      case NotificationActions.REDIRECT_ARTICLE:
+        this.router.navigate([`/s/${e.slug.slug}`]);
         break;
-      case NotificationActions.REDIRECT_PB_REQUESTS:
-        if (!e.slug.slug.isRead) {
-          this.markAsRead(e, true);
-        }
-        const openRequests = {openRequests: true};
-        this.router.navigate([`/p/${e.slug.slug.publication.slug}`, openRequests]);
-        break;*/
+      /*      case NotificationActions.REDIRECT_INVITATIONS:
+              if (!e.slug.slug.isRead) {
+                this.markAsRead(e, true);
+              }
+              const openInvitations = {openInvitations: true};
+              this.router.navigate([`/p/my-publications`, openInvitations]);
+              break;
+            case NotificationActions.REDIRECT_PB_REQUESTS:
+              if (!e.slug.slug.isRead) {
+                this.markAsRead(e, true);
+              }
+              const openRequests = {openRequests: true};
+              this.router.navigate([`/p/${e.slug.slug.publication.slug}`, openRequests]);
+              break;*/
       case NotificationActions.SHARE_ARTICLE:
         this.onShare(e.slug.platform, e.slug.data);
         break;
@@ -509,10 +493,10 @@ export class HeaderComponent implements OnInit, AfterViewInit, OnDestroy {
         this.markAsRead(e, false);
         break;
       case NotificationActions.MARK_ALL_AS_READ:
-        this.notificationService.readAllNotifications()
+        this.uiNotificationService.readAllNotifications()
           .pipe(
             switchMap(() => {
-              return this.newNotificationsCount ? this.notificationService.resetNewNotificationsCount() : of(null);
+              return this.newNotificationsCount ? this.uiNotificationService.resetNewNotificationsCount() : of(null);
             }),
             takeUntil(this.unsubscribe$))
           .subscribe(res => {
@@ -524,13 +508,15 @@ export class HeaderComponent implements OnInit, AfterViewInit, OnDestroy {
           });
         break;
       case NotificationActions.DELETE_NOTIFICATION:
-        this.notificationService.deleteNotification(e.slug.slug.slug).subscribe(() => {
-          this.updateHeaderData();
-        });
+        this.uiNotificationService.deleteNotification(e.slug.slug.slug)
+          .pipe(takeUntil(this.unsubscribe$))
+          .subscribe(() => {
+            this.updateHeaderData();
+          });
         this.notifications = this.notifications.filter((item: Notification) => e.slug.slug.slug !== item.slug);
         break;
       case NotificationActions.DELETE_ALL_NOTIFICATIONS:
-        this.notificationService.deleteAllNotifications().subscribe(() => {
+        this.uiNotificationService.deleteAllNotifications().subscribe(() => {
           this.updateHeaderData();
         });
         this.notifications = [];
@@ -559,7 +545,7 @@ export class HeaderComponent implements OnInit, AfterViewInit, OnDestroy {
   onNotificationsTabScrollEvent = function seeMoreEvent(event) {
     if (event === 'scrolledDown') {
       if (this.newNotificationsCount) {
-        this.notificationService.resetNewNotificationsCount()
+        this.uiNotificationService.resetNewNotificationsCount()
           .pipe(takeUntil(this.unsubscribe$))
           .subscribe();
       }
@@ -577,14 +563,15 @@ export class HeaderComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.newNotificationsCount) {
       this.newNotificationsCount = 0;
       this.updateHeaderData();
-      this.notificationService.resetNewNotificationsCount()
+      this.uiNotificationService.resetNewNotificationsCount()
         .pipe(takeUntil(this.unsubscribe$))
         .subscribe();
     }
   }
 
   private markAsRead = (e, readStatus) => {
-    this.notificationService.toggleStatus(e.slug.slug.slug, readStatus)
+    this.uiNotificationService.toggleStatus(e.slug.slug.slug, readStatus)
+      .pipe(takeUntil(this.unsubscribe$))
       .subscribe(res => {
         this.notifications.forEach((notification: Notification) => {
           notification.slug == e.slug.slug.slug ? notification.isRead = readStatus : notification.isRead = notification.isRead;
@@ -617,7 +604,7 @@ export class HeaderComponent implements OnInit, AfterViewInit, OnDestroy {
           .pipe(
             tap((permission) => {
               if (permission === 'denied') {
-                this.notificationService.info(NotificationTypes[notification.type], customNotification.body);
+                this.uiNotificationService.info(NotificationTypes[notification.type], customNotification.body);
               }
             }),
             takeUntil(this.unsubscribe$)

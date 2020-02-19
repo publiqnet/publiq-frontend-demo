@@ -28,6 +28,7 @@ export interface AccountOptions {
   listView?: boolean;
   bio?: string;
   subscribed: boolean;
+  jwtToken?: string;
 }
 export class Account {
   options;
@@ -56,6 +57,7 @@ export class Account {
   listView?: boolean;
   bio?: string;
   subscribed: boolean;
+  jwtToken: string;
   constructor(options?: AccountOptions) {
     for (const i in options) {
       if (options.hasOwnProperty(i)) {

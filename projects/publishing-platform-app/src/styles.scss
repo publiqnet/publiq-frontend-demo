@@ -20,8 +20,17 @@ body {
     overflow: hidden;
   }
 }
-html.overflow-hidden{
-  overflow: hidden;
+html {
+  &.story-scroll-disabled {
+    &, & body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+    }
+  }
+  &.overflow-hidden{
+    overflow: hidden;
+  }
 }
 a {
   color: $blue;
@@ -2118,6 +2127,23 @@ p.sponsored{
         right: 15px;
       }
     }
+    &__hint {
+      position: absolute;
+      top: 17px; right: 65px;
+      font: 600 15px/1.33 $open-sans;
+      color: pbq-color($lightgrey, 700);
+      transition: 300ms opacity;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+    }
+    &:hover {
+      .new-story {
+        &__hint {
+          opacity: 1;
+        }
+      }
+    }
   }
 }
 
@@ -2475,5 +2501,8 @@ p.sponsored{
     line-height: 18px;
     cursor: pointer;
     margin-bottom: 5px;
+    text-overflow: ellipsis;
+    max-width: 200px;
+    overflow: hidden;
   }
 }

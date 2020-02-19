@@ -2,12 +2,11 @@ import { Injectable, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
+import { Observable } from 'rxjs';
 declare const $: any;
 
 @Injectable()
 export class UtilService {
-  static lang: string = 'en';
-  utcMoment = moment.utc();
 
   constructor(
     private ngZone: NgZone,
@@ -15,6 +14,8 @@ export class UtilService {
     private translateService: TranslateService
   ) {
   }
+  static lang: string = 'en';
+  utcMoment = moment.utc();
 
   static getCookie(name) {
     const value = '; ' + document.cookie;
@@ -42,7 +43,18 @@ export class UtilService {
   }
 
   static calculateContentLength(contentHtml) {
-    return (contentHtml) ? contentHtml.replace(/<(?:.|\n)*?>/gm, '').replace(/(\r\n|\n|\r)/gm, '').replace(/<\/?[^>]+(>|$)/g, '').replace(/&nbsp;/g, '').trim() : 0;
+    return (contentHtml) ? contentHtml.replace(/<figcaption(?:.|\n)*?>.*?<\/figcaption>/gm, '')
+      .replace(/<(?:.|\n)*?>/gm, '')
+      .replace(/(\r\n|\n|\r)/gm, '')
+      .replace(/<\/?[^>]+(>|$)/g, '')
+      .replace(/&nbsp;/g, '')
+      .trim() : 0;
+  }
+
+  static async getImageBlob(url: string) {
+    return await fetch(url,
+    { mode: 'cors'
+    }).then(r => r.blob());
   }
 
   routerChangeHelper(route: string, slug: any) {
@@ -90,10 +102,23 @@ export class UtilService {
     return <File>theBlob;
   }
 
-  async getImageBlob(url: string) {
-    return await fetch(url,
-    { mode: 'cors'
-    }).then(r => r.blob());
+  getImageSize(url) {
+    return new Observable($obs => {
+      const img = new Image();
+
+      img.onload = function () {
+        $obs.next({width: img.width, height: img.height});
+      };
+      img.src = url;
+    });
+  }
+
+  htmlFromString (text: string, wholeDocument: boolean = false): Document | HTMLCollection | void {
+    if (!text) { return; }
+    const parser = new DOMParser();
+    const document = parser.parseFromString(text, 'text/html');
+
+    return wholeDocument ? document : document.children[0].children[1].children;
   }
 
 }

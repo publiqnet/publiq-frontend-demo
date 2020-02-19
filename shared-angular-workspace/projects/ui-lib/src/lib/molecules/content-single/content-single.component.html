@@ -33,8 +33,8 @@
         <!--          <div class="story__image__like">-->
         <!--            <i (click)="onLikeClick($event, contentData.uri)" class="icon-like"></i>-->
         <!--          </div>-->
-        <ng-container *ngIf="contentData && contentData.cover && contentData.cover.url && canEditContent">
-          <div class="story__image__publication">
+        <ng-container *ngIf="contentData && contentData.cover && contentData.cover.url && (canEditContent || canOnlyDelete)">
+          <div class="story__image__publication" *ngIf="canEditContent">
             <ui-dropdown-list [type]="'publication-dropdown'" [delta]="85" [optionsData]="publicationList" [position]="'bottom'" [icon]="'publication'" (onItemSelect)="selectPublication($event)" [(isOpen)]="menuOpen.publication" [selectedPublication]="(contentData.publication && contentData.publication.slug) ? contentData.publication.slug : ''" [shadowed]="true"></ui-dropdown-list>
           </div>
           <div class="story__image__settings--menu">
@@ -82,8 +82,8 @@
       <!--      <div class="story__meta-single-actions">-->
       <!--        <ui-button [iconButton]="true" iconClassName="like" size="small" (btnClicked)="onLikeClick($event, contentData.uri)"></ui-button>-->
       <!--      </div>-->
-      <div class="story__meta-single-actions" *ngIf="contentData && canEditContent && type !== 'grid'">
-        <span class="story__meta-single-actions--publication">
+      <div class="story__meta-single-actions" *ngIf="contentData && (canEditContent || canOnlyDelete) && type !== 'grid'">
+        <span class="story__meta-single-actions--publication" *ngIf="canEditContent">
           <ui-dropdown-list [type]="'publication-dropdown'" [delta]="type == 'single' ? 40 : 65" [optionsData]="publicationList" [position]="'bottom'" [icon]="'publication'" (onItemSelect)="selectPublication($event)" [(isOpen)]="menuOpen.publication" [selectedPublication]="(contentData.publication && contentData.publication.slug) ? contentData.publication.slug : ''" [shadowed]="true"></ui-dropdown-list>
         </span>
         <span class="story__meta-single-actions--settings">
@@ -96,8 +96,8 @@
         <i class="icon-preview"></i>
         <span>{{contentData.view_count ? contentData.view_count : 0}}</span>
       </div>
-      <div *ngIf="canEditContent" class="grid-view-options">
-        <span>
+      <div *ngIf="canEditContent || canOnlyDelete" class="grid-view-options">
+        <span *ngIf="canEditContent">
           <ui-dropdown-list [type]="'publication-dropdown'" [delta]="85" [optionsData]="publicationList" [position]="'bottom'" [icon]="'publication'" (onItemSelect)="selectPublication($event)" [(isOpen)]="menuOpen.publication" [selectedPublication]="(contentData.publication && contentData.publication.slug) ? contentData.publication.slug : ''" [shadowed]="true"></ui-dropdown-list>
         </span>
         <span>

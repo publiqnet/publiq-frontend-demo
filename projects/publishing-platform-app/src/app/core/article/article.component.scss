@@ -133,7 +133,7 @@
       }
     }
 
-    .image-wrapper {
+    .image-wrapper, figure {
       display: block;
       margin: 0 auto;
 
@@ -184,6 +184,28 @@
           max-width: 100%;
           width: calc(100% - 15px);
         }
+      }
+    }
+
+    figure {
+      &.media {
+        margin: 0 auto 20px;
+        max-width: 870px;
+
+        @include media-xl { max-width: 644px; }
+        @include media-lg { max-width: 470px; }
+        @include media-md { max-width: 530px; }
+        @include media-sm {
+          max-width: 100%;
+          width: calc(100% - 30px);
+        }
+      }
+      &.image {
+        margin: 0 auto 20px;
+      }
+
+      figcaption {
+        margin: 8px 0;
       }
     }
   }
@@ -492,7 +514,7 @@
 ::ng-deep .content-skeleton {
   max-width: 870px;
   margin: 0 auto 15px;
-  background: #F7F8F9;;
+  background: #F7F8F9;
   border-radius: 10px;
   height: 40px;
   position: relative;
@@ -647,6 +669,13 @@
           color: #8D929A;
         }
       }
+    }
+
+    &--grid {
+      max-width: 870px;
+      @include media-xl { max-width: 644px; }
+      @include media-lg { max-width: 470px; }
+      @include media-sm { max-width: calc(100% - 30px); }
     }
 
     @mixin dm {

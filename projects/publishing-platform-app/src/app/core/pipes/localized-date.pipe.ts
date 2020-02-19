@@ -5,7 +5,8 @@ import { UtilService } from '../services/util.service';
 
 enum Languages {
   JP = 'ja-JA',
-  EN = 'en-EN'
+  EN = 'en-EN',
+  ES = 'es-ES'
 }
 
 @Pipe({
@@ -18,7 +19,7 @@ export class LocalizedDatePipe implements PipeTransform {
   }
 
   transform(value: any, pattern: string = 'mediumDate'): any {
-    const lang = this.translateService.currentLang === 'jp' ? Languages.JP : Languages.EN;
+    const lang = (this.translateService.currentLang && Languages[this.translateService.currentLang.toUpperCase()]) ? Languages[this.translateService.currentLang.toUpperCase()] : Languages.EN;
     const datePipe: DatePipe = new DatePipe(lang);
     const result = this.utilService.dateToName(value) || datePipe.transform(value, pattern);
     return result;

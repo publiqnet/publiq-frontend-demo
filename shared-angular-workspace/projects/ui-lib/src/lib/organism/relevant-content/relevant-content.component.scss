@@ -104,6 +104,7 @@
 
     > div {
       display: inline-block;
+      margin-right: 20px;
 
       .arrow {
         &--left  {
@@ -130,16 +131,39 @@
           color: pbq-color($grey, 100);
         }
       }
+
+      @include media-sm {
+        margin-right: 0;
+      }
     }
   }
 
   &__items {
     &--all-single {
+      ::ng-deep .story--single-small {
+        @media (min-width: 1024px) {
+          max-width: 430px;
+        }
+      }
+
       > div:first-child {
         ::ng-deep .story--single-small {
           @include media-xl {
             padding: 0;
           }
+        }
+      }
+
+      > div:last-child {
+        margin-left: 20px;
+        ::ng-deep .story--single-small {
+          @media (min-width: 1024px) {
+            margin-left: auto;
+          }
+        }
+
+        @include media-sm {
+          margin-left: 0;
         }
       }
     }

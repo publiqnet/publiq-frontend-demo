@@ -1,4 +1,4 @@
-import { Component, Inject, OnDestroy, OnInit, PLATFORM_ID } from '@angular/core';
+import { AfterContentChecked, ChangeDetectorRef, Component, EventEmitter, Inject, Input, OnDestroy, OnInit, Output, PLATFORM_ID } from '@angular/core';
 import { AccountService } from '../../core/services/account.service';
 import { NavigationStart, Router } from '@angular/router';
 
@@ -15,10 +15,12 @@ import { isPlatformBrowser } from '@angular/common';
   templateUrl: './recover.component.html',
   styleUrls: ['./recover.component.css']
 })
-export class RecoverComponent implements OnInit, OnDestroy {
+export class RecoverComponent implements OnInit, AfterContentChecked, OnDestroy {
 
   public formView = 'recoverForm';
   public recoverForm: FormGroup;
+  @Input() data: {} = {};
+  @Output() closeModal = new EventEmitter<any>();
   public brainKey = '';
   public loading = false;
   public brainKeyError = '';
@@ -31,6 +33,7 @@ export class RecoverComponent implements OnInit, OnDestroy {
               private errorService: ErrorService,
               private oauthService: OauthService,
               private FormBuilder: FormBuilder,
+              private cdRef: ChangeDetectorRef,
               @Inject(PLATFORM_ID) private platformId,
               private router: Router) {
   }
@@ -46,9 +49,7 @@ export class RecoverComponent implements OnInit, OnDestroy {
     this.buildForm();
     this.isPasswordMode = false;
     this.errorService.errorEventEmiter
-      .pipe(
-        takeUntil(this.unsubscribe$)
-      )
+      .pipe(takeUntil(this.unsubscribe$))
       .subscribe((error: ErrorEvent) => {
         if (error.action === 'recover') {
           this.loading = false;
@@ -56,10 +57,18 @@ export class RecoverComponent implements OnInit, OnDestroy {
         }
       });
 
-    this.recoverForm.valueChanges.subscribe(newValues => {
+    this.recoverForm.valueChanges
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe(newValues => {
       this.brainKeyError = '';
     });
-    if (isPlatformBrowser(this.platformId)) { this.isDataLoaded = true; }
+  }
+
+  ngAfterContentChecked(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      this.isDataLoaded = true;
+      this.cdRef.detectChanges();
+    }
   }
 
   private buildForm() {
@@ -72,8 +81,7 @@ export class RecoverComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.oauthService.recoverAuthenticate(this.recoverForm.value.brainKey)
       .pipe(
-        takeUntil(this.unsubscribe$)
-      )
+        takeUntil(this.unsubscribe$))
       .subscribe(authData => {
         this.stringToSign = authData.stringToSign;
         this.brainKey = this.recoverForm.value.brainKey;

@@ -14,7 +14,7 @@ import { Router } from '@angular/router';
   styleUrls: ['./publication-modal.component.scss']
 })
 export class PublicationModalComponent implements OnInit, OnDestroy {
-  @Output() onCloseModal = new EventEmitter<boolean>();
+  @Output() onCloseModal = new EventEmitter<number | boolean>();
   @Output() updatePublicationData = new EventEmitter<boolean>();
   @Input() modalType: string;
   @Input() invitations = [];
@@ -40,7 +40,9 @@ export class PublicationModalComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.publicationForm.valueChanges.subscribe(
+    this.publicationForm.valueChanges
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe(
       () => {
         this.descriptionError = '';
         this.titleError = '';
@@ -48,11 +50,11 @@ export class PublicationModalComponent implements OnInit, OnDestroy {
     );
   }
 
-  closePopup() {
+  closeModal(invitationsCount?: number) {
     this.publicationForm.reset();
     this.logoImage = null;
     this.coverImage = null;
-    this.onCloseModal.emit();
+    this.onCloseModal.emit(invitationsCount);
   }
 
   onSubmit() {
@@ -89,7 +91,7 @@ export class PublicationModalComponent implements OnInit, OnDestroy {
       .subscribe(() => {
         this.loading = false;
         this.updatePublicationData.emit();
-        this.closePopup();
+        this.closeModal();
         this.notificationService.success(this.translateService.instant('publication.success'), this.translateService.instant('publication.added'));
       }, () => {
         this.loading = false;
@@ -166,18 +168,22 @@ export class PublicationModalComponent implements OnInit, OnDestroy {
 
   answer(e, i) {
     if (e.answer) {
-      this.publicationService.acceptInvitationBecomeMember(e.publicationSlug).subscribe(
+      this.publicationService.acceptInvitationBecomeMember(e.publicationSlug)
+        .pipe(takeUntil(this.unsubscribe$))
+        .subscribe(
         () => {
           this.invitations.splice(i, 1);
           this.updatePublicationData.emit();
-          this.closePopup();
+          // this.closePopup();
         }
       );
     } else {
-      this.publicationService.rejectInvitationBecomeMember(e.publicationSlug).subscribe(
+      this.publicationService.rejectInvitationBecomeMember(e.publicationSlug)
+        .pipe(takeUntil(this.unsubscribe$))
+        .subscribe(
         () => {
           this.invitations.splice(i, 1);
-          this.closePopup();
+          // this.closePopup();
         }
       );
     }

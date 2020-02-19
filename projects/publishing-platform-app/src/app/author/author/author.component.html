@@ -8,7 +8,7 @@
             <div class="row profile-metadata">
                 <div class="col-2 profile-metadata__avatar profile-metadata__avatar--editable">
                     <div class="profile-metadata__hover" [ngClass]="{'hover-avatar' : isCurrentUser}">
-                        <ui-avatar [size]="'large'" [avatarData]="{'image': getCurrentImage(), 'fullName': author.fullName}" [avatarData]="{'image': getCurrentImage(), 'fullName': author.fullName}"></ui-avatar>
+                        <ui-avatar [size]="'large'" [avatarData]="{'image': currentImage ? currentImage : null, 'fullName': author.fullName}"></ui-avatar>
                         <i class="icon-close" [ngClass]="{'icon-close--hover' : currentImage && isCurrentUser}" (click)="removeCurrentImage()"></i>
                         <label class="profile-metadata__hover__upload" for="profilePic" [ngStyle]="{'cursor': !isCurrentUser ? 'default' : 'pointer'}">
               <input *ngIf="isCurrentUser" type="file" (change)="showUploadedImage($event)"
@@ -60,26 +60,28 @@
         </form>
 
         <div class="row profile-statistics" [ngClass]="{'editable-disabled' : editMode}">
-            <div class="col-lg-2 offset-lg-2 col-3 offset-0 datum-mob">
-                <div class="datum" *ngIf="false">
-                    <span class="datum__value">{{author && author.rating ? author.rating.toFixed(1) : 0}}</span>
-                    <span class="datum__descriptor">RATING</span>
-                    <span class="datum__rating"><img src="assets/images/rating.svg" alt="rating"></span>
-                </div>
+            <div class="col-lg-6 col-md-8 col-12 col-12-center offset-lg-2">
+              <div class="datum">
+                <span class="datum__value">{{author && author.views ? author.views : 0}}</span>
+                <span class="datum__descriptor">{{ 'author.views' | translate }}</span>
+              </div>
+              <div class="datum">
+                <span class="datum__value">{{author && author.articlesCount ? author.articlesCount : 0}}</span>
+                <span class="datum__descriptor">{{ 'author.stories' | translate }}</span>
+              </div>
+              <div class="datum followers-section" (click)="((!canFollow || isCurrentUser) && author.articlesCount > 0) && showFollowersList()" [ngClass]="((!canFollow || isCurrentUser) && author.articlesCount > 0) ? 'pointer' : null">
+                <span class="datum__value">{{author && author.subscribersCount ? author.subscribersCount : 0}}</span>
+                <span class="datum__descriptor">{{ 'author.followers' | translate }}</span>
+              </div>
             </div>
-            <div class="col-lg-6 col-md-8 col-12 col-12-center">
-                <div class="datum">
-                    <span class="datum__value">{{author && author.views ? author.views : 0}}</span>
-                    <span class="datum__descriptor">{{ 'author.views' | translate }}</span>
-                </div>
-                <div class="datum">
-                    <span class="datum__value">{{author && author.articlesCount ? author.articlesCount : 0}}</span>
-                    <span class="datum__descriptor">{{ 'author.stories' | translate }}</span>
-                </div>
-                <div class="datum">
-                    <span class="datum__value">{{author && author.subscribersCount ? author.subscribersCount : 0}}</span>
-                    <span class="datum__descriptor">{{ 'author.followers' | translate }}</span>
-                </div>
+            <div class="col-lg-2 offset-lg-2 col-3 offset-0 datum-mob">
+<!--                <div class="datum">-->
+<!--                  <div class="datum" *ngIf="false">-->
+<!--                      <span class="datum__value">{{author && author.rating ? author.rating.toFixed(1) : 0}}</span>-->
+<!--                      <span class="datum__descriptor">RATING</span>-->
+<!--                      <span class="datum__rating"><img src="assets/images/rating.svg" alt="rating"></span>-->
+<!--                  </div>-->
+<!--                </div>-->
             </div>
         </div>
     </div>
@@ -132,9 +134,14 @@
                       </div>
                     </div>
                   </div>
-                  <div class="grid-style__info">
-                      <h4>{{ 'author.your_email' | translate }}: <span class="lighten">{{accountService.accountInfo.email}}</span>
-                      </h4>
+                  <div class="grid-style__info account-info-section">
+                    <h4>{{ 'author.your_email' | translate }}: <span class="lighten">{{accountService.accountInfo.email}}</span></h4>
+                    <div class="change-password">
+                      <h3 class="change-password__title">{{'author.password' | translate}}</h3>
+                      <div>
+                        <ui-button [text]="'author.change' | translate" [type]="'ordinary'" (btnClicked)="openPopup(true, 3)"></ui-button>
+                      </div>
+                    </div>
                   </div>
                   <div class="grid-style__choose">
                       <div>
@@ -217,7 +224,13 @@
                 </div>
                 <div *ngIf="selectedTab == '2' && !loading">
                     <div *ngIf="drafts && drafts.length > 0; else no_content">
-                        <ui-draft *ngFor="let oDraft of drafts; let index = index" [type]="'single'" (deleteClick)="deleteDraft(oDraft.id, index)" (editClick)="editDraft(oDraft.id)" (contentClick)="editDraft(oDraft.id)" [draftData]="oDraft"></ui-draft>
+                        <ui-draft *ngFor="let oDraft of drafts; let index = index"
+                                  [type]="'single'"
+                                  (deleteClick)="deleteDraft(oDraft.id, index)"
+                                  (editClick)="editDraft(oDraft.id)"
+                                  (contentClick)="editDraft(oDraft.id)"
+                                  [draftData]="oDraft">
+                        </ui-draft>
                     </div>
                     <div *ngIf="seeMoreDraftLoading" class="empty">
                       <div style="display: inline-block">
@@ -283,43 +296,55 @@
         <span class="custom-modal__close" (click)="openPopup(false)">
       <i class="icon icon-close"></i>
     </span>
-        <div *ngIf="showPrivateKey">
-            <h3>{{ 'author.private_key' | translate }}</h3>
-            <span *ngIf="!passwordVerified">{{ 'author.password_title' | translate }}
-        <b>{{ 'author.private_key' | translate }}</b></span>
-            <ui-input [type]="'password'" [inputId]="'private-key'" [placeholder]="'author.password' | translate" (focus)="focusFunction()" (keyup)="keyupFunc($event, 'generatePrivateKey')" [(ngModel)]="password" [inputValue]="password" [hidden]="passwordVerified"></ui-input>
-            <span class="text-error" *ngIf="passError && !passwordVerified">{{passError}}</span>
-            <div *ngIf="passwordVerified">
-                <div class="password-container">
-                    <p>{{ 'author.private_key_hint' | translate }}</p>
-                    <p class="password-block" (click)="copy(decriptedPrivateKey)">{{decriptedPrivateKey}}</p>
-                </div>
-            </div>
-        </div>
-        <div *ngIf="showPhase">
-            <h3>{{ 'author.recovery_phrase' | translate }}</h3>
-            <span *ngIf="!passwordVerified">{{ 'author.password_title' | translate }}
-        <b>{{ 'author.recovery_phrase' | translate }}</b></span>
-            <ui-input [type]="'password'" [inputId]="'recovery-phase'" [placeholder]="'author.password' | translate" (focus)="focusFunction()" (keyup)="keyupFunc($event, 'generateBK')" [(ngModel)]="password" [inputValue]="password" [hidden]="passwordVerified"></ui-input>
-            <span class="text-error" *ngIf="passError && !passwordVerified">{{passError}}</span>
-            <div *ngIf="passwordVerified">
-                <div class="password-container">
-                    <p>{{ 'author.recovery_phrase_hint_reduced' | translate }}</p>
-                    <div class="password-block" (click)="copy(decryptedBrainKey)">
-                        {{decryptedBrainKey}}
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="custom-modal__buttons">
-            <ng-container *ngIf="showPrivateKey && !passwordVerified">
-                <ui-button [text]="'author.submit' | translate" (btnClicked)="generatePrivateKey()" [className]="'cancel-modal'" [type]="'primary'" [disabled]="passwordValidator()"></ui-button>
-            </ng-container>
-            <ng-container *ngIf="showPhase && !passwordVerified">
-                <ui-button [text]="'author.submit' | translate" (btnClicked)="generateBK()" [className]="'cancel-modal'" [type]="'primary'" [disabled]="passwordValidator()"></ui-button>
-            </ng-container>
-        </div>
+    <div *ngIf="showPrivateKey">
+      <h3>{{ 'author.private_key' | translate }}</h3>
+      <span *ngIf="!passwordVerified">{{ 'author.password_title' | translate }}
+      <b>{{ 'author.private_key' | translate }}</b></span>
+      <ui-input [type]="'password'" [inputId]="'private-key'" [placeholder]="'author.password' | translate" (focus)="focusFunction()" (keyup)="keyupFunc($event, 'generatePrivateKey')" [(ngModel)]="password" [inputValue]="password" [hidden]="passwordVerified"></ui-input>
+      <span class="text-error" *ngIf="passError && !passwordVerified">{{passError}}</span>
+      <div *ngIf="passwordVerified">
+          <div class="password-container">
+              <p>{{ 'author.private_key_hint' | translate }}</p>
+              <p class="password-block" (click)="copy(decriptedPrivateKey)">{{decriptedPrivateKey}}</p>
+          </div>
+      </div>
+    </div>
+    <div *ngIf="showPhase">
+      <h3>{{ 'author.recovery_phrase' | translate }}</h3>
+      <span *ngIf="!passwordVerified">{{ 'author.password_title' | translate }}
+      <b>{{ 'author.recovery_phrase' | translate }}</b></span>
+      <ui-input [type]="'password'" [inputId]="'recovery-phase'" [placeholder]="'author.password' | translate" (focus)="focusFunction()" (keyup)="keyupFunc($event, 'generateBK')" [(ngModel)]="password" [inputValue]="password" [hidden]="passwordVerified"></ui-input>
+      <span class="text-error" *ngIf="passError && !passwordVerified">{{passError}}</span>
+      <div *ngIf="passwordVerified">
+          <div class="password-container">
+              <p>{{ 'author.recovery_phrase_hint_reduced' | translate }}</p>
+              <div class="password-block" (click)="copy(decryptedBrainKey)">
+                  {{decryptedBrainKey}}
+              </div>
+          </div>
+      </div>
+    </div>
+    <div *ngIf="showChangeMode" class="recover-password-block">
+      <h3 *ngIf="!passwordVerified">{{ 'author.change_password' | translate }}</h3>
+      <span *ngIf="!passwordVerified">{{ 'author.change_password_title' | translate }}
+      <b>{{ 'author.new_password' | translate }}</b></span>
+      <ui-input [type]="'password'" [inputId]="'change-password'" [placeholder]="'author.password' | translate" (focus)="focusFunction()" (keyup)="keyupFunc($event, 'changePassword')" [(ngModel)]="password" [inputValue]="password" [hidden]="passwordVerified"></ui-input>
+      <span class="text-error" *ngIf="passError && !passwordVerified">{{passError}}</span>
+      <div *ngIf="passwordVerified">
+        <app-new-password [brainKey]="changeDecryptedBrainKey" [stringToSign]="stringToSign" (closeModal)="closePasswordModal($event)" [data]="changeData"></app-new-password>
+      </div>
+    </div>
+    <div class="custom-modal__buttons">
+      <ng-container *ngIf="showPrivateKey && !passwordVerified">
+          <ui-button [text]="'author.submit' | translate" (btnClicked)="generatePrivateKey()" [className]="'cancel-modal'" [type]="'primary'" [disabled]="passwordValidator()"></ui-button>
+      </ng-container>
+      <ng-container *ngIf="showPhase && !passwordVerified">
+          <ui-button [text]="'author.submit' | translate" (btnClicked)="generateBK()" [className]="'cancel-modal'" [type]="'primary'" [disabled]="passwordValidator()"></ui-button>
+      </ng-container>
+      <ng-container *ngIf="showChangeMode && !passwordVerified">
+        <ui-button [text]="'author.submit' | translate" (btnClicked)="changePasswordBK()" [className]="'cancel-modal'" [type]="'primary'" [disabled]="passwordValidator()"></ui-button>
+      </ng-container>
+    </div>
     </div>
 </div>
 
@@ -327,6 +352,7 @@
 <div class="container container--new-story" *ngIf="isCurrentUser">
     <div class="new-story" [class.new-story__current]="isCurrentUser" [routerLink]="'/content/newcontent'">
         <img src="assets/images/new-story.svg" alt="new story">
+        <small class="new-story__hint">{{'header.new_story' | translate}}</small>
     </div>
 </div>
 <!--end-->
@@ -353,4 +379,14 @@
 </div>
 <div *ngIf="showHistoryModal">
   <app-custom-dialog [case]="'history'" [properties]="contentVersions" (closeConfirmModal)="closeHistoryModal($event)"></app-custom-dialog>
+</div>
+<div *ngIf="showFollowersModal">
+  <app-followers-modal
+     [followersData]="followersList"
+     [hasMore]="hasMoreFollowers"
+     [modalType]="'followers'"
+     (onCloseModal)="closeFollowersModal()"
+     [followersCount]="author.subscribersCount"
+     (onSeeMore)="seeMoreFollowers($event)">
+  </app-followers-modal>
 </div>

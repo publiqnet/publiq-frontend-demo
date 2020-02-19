@@ -468,10 +468,6 @@ a {
         height: 100%;
         object-fit: cover;
         object-position: center;
-        @include media-sm {
-          object-fit: inherit;
-          height: auto;
-        }
       }
 
       &__views, &__like, &__publication, &__settings--menu { display: none; }
@@ -493,9 +489,14 @@ a {
 
     .story__title {
       font: 700 17px/20px $vollkorn;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      word-break: break-word;
     }
 
     .story__data {
+      width: 0;
       min-height: 80px;
       display: inline-flex;
       flex-direction: column;
@@ -503,6 +504,10 @@ a {
       align-items: flex-start;
       flex-grow: 1;
       align-self: center;
+
+      a.title-bold {
+        width: 100%;
+      }
     }
 
     ::ng-deep ui-avatar {
@@ -521,6 +526,12 @@ a {
 
     .story__meta-single-actions {
       display: none;
+    }
+
+    &.story--coverless {
+      .story__image {
+        margin-left: 0;
+      }
     }
 
     @include media-xl {
@@ -728,15 +739,18 @@ a {
         a {
           font-weight: 600;
           color: inherit;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          overflow: hidden;
+          max-width: 330px;
+          display: inline-block;
+          vertical-align: top;
           @include media-xl {
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            overflow: hidden;
             max-width: 250px;
-            display: inline-block;
-            vertical-align: top;
           }
-
+          @include  media-lg {
+            max-width: 190px;
+          }
           &:hover {
             color: pbq-color($lightgrey, 700);
           }

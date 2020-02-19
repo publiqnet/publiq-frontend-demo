@@ -1,8 +1,8 @@
 <div class="gallery-modal-layer">
   <div class="gallery-modal">
-    <!--todo: translate-->
     <div class="gallery-modal__title">
-      <h3>Image Library
+      <h3>
+        {{'gallery-modal.image_library' | translate}}
         <span class="gallery-modal__title__close" (click)="close()">
           <i class="icon-close"></i>
         </span>
@@ -18,12 +18,12 @@
       <ngx-masonry class="gallery-items" [class.masonry]="isMasonryLoaded" [options]="myOptions"
                    (layoutComplete)="onLayoutComplete($event)" #masonry>
         <ngxMasonryItem class="gallery-items__item" *ngFor="let img of images">
-          <img [src]="img.thumbnail" (click)="insertInFroala(img)" alt="item" class="masonry-item">
+          <img [src]="img.thumbnail" (click)="insertImage(img)" alt="item" class="masonry-item">
         </ngxMasonryItem>
       </ngx-masonry>
       <div class="no-search-result" *ngIf="noImages">
         <img src="assets/images/no_result.svg" alt="No search result">
-        <span>No image found</span>
+        <span>{{'gallery-modal.image_not_found' | translate}}</span>
       </div>
     </div>
    <!-- <div class="loading-items" *ngIf="seeMoreLoading">

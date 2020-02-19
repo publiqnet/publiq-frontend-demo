@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
 import { Avatar } from '../../../core/models/avatar';
 import { ListItemOptions } from '../../../core/models/listItem';
 import { DropdownRoleDataOptions } from '../../../core/models/dropdownRoleData';

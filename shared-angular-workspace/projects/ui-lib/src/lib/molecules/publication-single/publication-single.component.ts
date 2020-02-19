@@ -1,9 +1,11 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, OnDestroy } from '@angular/core';
 import { Avatar } from '../../../core/models/avatar';
 import { PublicationDataOptions } from '../../../core/models/publicationData';
 import { ListItemOptions } from '../../../core/models/listItem';
 import { TranslateService } from '@ngx-translate/core';
 import { AnimationProperties } from '../../../core/models/animation-options';
+import { ReplaySubject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 enum PublicationSingleType {
   follow = 'follow',
@@ -18,7 +20,7 @@ enum PublicationSingleType {
   styleUrls: ['./publication-single.component.scss'],
 })
 
-export class PublicationSingleComponent implements OnInit, OnChanges {
+export class PublicationSingleComponent implements OnInit, OnChanges, OnDestroy {
   @Input('type') type: PublicationSingleType = PublicationSingleType.follow;
   @Input('publicationData') publicationData: PublicationDataOptions = null;
   @Input() userNotificationData: ListItemOptions = null;
@@ -32,6 +34,7 @@ export class PublicationSingleComponent implements OnInit, OnChanges {
   public avatarData: Avatar = null;
   public animationAction: boolean; // (un)follow icons animation action
   public animationOptions: AnimationProperties | any; // (un)follow icons animation options
+  private unsubscribe$ = new ReplaySubject<void>(1);
   public statusList = {
     1: this.translateService.instant('ui.publication-single.owner'),
     2: this.translateService.instant('ui.publication-single.editor'),
@@ -43,7 +46,11 @@ export class PublicationSingleComponent implements OnInit, OnChanges {
   ngOnInit(): void {
     this.animationAction = false;
     this.animationOptions = {type: 'user', loop: 0.5};
-    this.translateService.onLangChange.subscribe(lang => {
+    this.translateService.onLangChange
+      .pipe(
+        takeUntil(this.unsubscribe$)
+      )
+      .subscribe(lang => {
       this.statusList = {
         1: this.translateService.instant('ui.publication-single.owner'),
         2: this.translateService.instant('ui.publication-single.editor'),
@@ -91,5 +98,10 @@ export class PublicationSingleComponent implements OnInit, OnChanges {
 
   createOptions(name: string) {
     return  {...this.animationOptions, name: name};
+  }
+
+  ngOnDestroy() {
+    this.unsubscribe$.next();
+    this.unsubscribe$.complete();
   }
 }

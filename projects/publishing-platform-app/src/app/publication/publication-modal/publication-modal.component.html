@@ -1,6 +1,6 @@
 <div class="modal-overlay">
     <div class="custom-modal" [ngClass]="{'invitors-modal': modalType !== 'invitation'}">
-        <span class="custom-modal__close" (click)="closePopup()">
+        <span class="custom-modal__close" (click)="closeModal(invitations.length)">
       <i class="icon icon-close"></i>
     </span>
 
@@ -49,7 +49,7 @@
                 </div>
             </form>
             <div class="create-form__button-space">
-                <ui-button [size]="'large'" [className]="'modal-button'" [text]="'publication.cancel_uppercase' | translate" (click)="closePopup()"></ui-button>
+                <ui-button [size]="'large'" [className]="'modal-button'" [text]="'publication.cancel_uppercase' | translate" (click)="closeModal()"></ui-button>
                 <ui-button [size]="'large'" [className]="'modal-button'" [type]="'primary'" [text]="'publication.create' | translate" (click)="onSubmit()" [disabled]="loading"></ui-button>
 
             </div>

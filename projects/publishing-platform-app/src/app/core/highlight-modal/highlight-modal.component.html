@@ -5,7 +5,9 @@
   <div class="highlight"
        [class.highlight--picture]="highlightImage"
        [class.highlight--active]="highlightImageLoaded"
-       (click)="onFinished()">
+       (mousedown)="startSkipping($event)"
+       (mouseup)="checkSkipping($event)"
+       (mouseleave)="skip = true;">
     <a routerLink="/s/{{highlight.uri}}" class="highlight__title" [style.font-family]="highlight.highlightFont">{{highlight.title}}</a>
     <i class="highlight__closer icon-close" (click)="timeFinished.emit(null);"></i>
     <div class="highlight__tags">

@@ -34,16 +34,13 @@ export class EditDraftComponent implements OnInit, OnDestroy {
           this.draftId = params['id'];
           return this.draftService.get(this.draftId);
         }),
-        takeUntil(this.unsubscribe$)
-      )
+        takeUntil(this.unsubscribe$))
       .subscribe((draft: Draft) => {
           this.draft = draft;
       });
 
     this.errorService.errorEventEmiter
-      .pipe(
-        takeUntil(this.unsubscribe$)
-      )
+      .pipe(takeUntil(this.unsubscribe$))
       .subscribe((data: ErrorEvent) => {
           if (data.action === 'getDraftById') {
             this.router.navigate(['/page-not-found']);

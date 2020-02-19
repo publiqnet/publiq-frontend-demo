@@ -64,11 +64,21 @@
       }
 
       .signinup__footer {
-        text-align: right;
-
+        &.register {
+          display: flex;
+          justify-content: space-between;
+          flex-direction: row-reverse;
+        }
+        &.login {
+          text-align: right;
+        }
         a {
           font-weight: 600;
           color: $blue;
+          i {
+            transform: rotate(-180deg);
+            display: inline-block;
+          }
         }
 
         @include media-lg {
