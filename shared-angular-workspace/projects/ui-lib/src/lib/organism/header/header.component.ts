@@ -9,11 +9,11 @@ import {
   Output,
   SimpleChanges,
   ViewChild,
-  ChangeDetectorRef, DoCheck
+  ChangeDetectorRef, DoCheck, OnDestroy
 } from '@angular/core';
 import { HeaderDataOptions } from '../../../core/models/headerData';
-import { debounceTime } from 'rxjs/operators';
-import { fromEvent } from 'rxjs';
+import { debounceTime, takeUntil } from 'rxjs/operators';
+import { fromEvent, ReplaySubject } from 'rxjs';
 import { ListItemOptions } from '../../../core/models/listItem';
 import { Avatar } from '../../../core/models/avatar';
 
@@ -23,7 +23,7 @@ import { Avatar } from '../../../core/models/avatar';
   styleUrls: ['./header.component.scss']
 })
 
-export class HeaderComponent implements OnChanges, AfterViewInit, DoCheck {
+export class HeaderComponent implements OnChanges, AfterViewInit, DoCheck, OnDestroy {
   @Input() headerData: HeaderDataOptions;
   @Input() showSearchBar: boolean = false;
   @Input() articleReadPercent: number = 0;
@@ -52,6 +52,7 @@ export class HeaderComponent implements OnChanges, AfterViewInit, DoCheck {
   @Input() seeMoreLoading: boolean = false;
   @Output() isOpenChange: EventEmitter<any> = new EventEmitter();
   @Output() seeMore: EventEmitter<any> = new EventEmitter<any>();
+  private unsubscribe$ = new ReplaySubject<void>(1);
   @ViewChild('overlayMenuList', {static: false}) overlayMenuList: ElementRef;
   @ViewChild('notificationMenuList', {static: false}) notificationMenuList: ElementRef;
   @ViewChild('profileMenuList', {static: false}) profileMenuList: ElementRef;
@@ -106,7 +107,10 @@ export class HeaderComponent implements OnChanges, AfterViewInit, DoCheck {
 
     fromEvent(this.searchBar.nativeElement, 'input').pipe(
       debounceTime(600),
-    ).subscribe(
+    ).pipe(
+        takeUntil(this.unsubscribe$)
+      )
+      .subscribe(
       (event: KeyboardEvent) => {
         this.onInputChange.emit(event['srcElement']['value']);
       }
@@ -269,5 +273,10 @@ export class HeaderComponent implements OnChanges, AfterViewInit, DoCheck {
   onSocialClick(event, type) {
     console.log(event);
     console.log(type);
+  }
+
+  ngOnDestroy() {
+    this.unsubscribe$.next();
+    this.unsubscribe$.complete();
   }
 }

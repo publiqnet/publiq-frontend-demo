@@ -48,8 +48,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
     this.buildForm();
     this.registerForm.valueChanges
       .pipe(
-        takeUntil(this.unsubscribe$)
-      )
+        takeUntil(this.unsubscribe$))
       .subscribe(() => {
           this.emailError = '';
         },
@@ -58,8 +57,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
 
     this.errorService.errorEventEmiter
       .pipe(
-        takeUntil(this.unsubscribe$)
-      )
+        takeUntil(this.unsubscribe$))
       .subscribe((data: ErrorEvent) => {
           if (data.action === 'preRegister') {
             this.formView = 'registerForm';
@@ -83,8 +81,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
 
     this.oauthService.authenticate(this.registerForm.value.email, true)
       .pipe(
-        takeUntil(this.unsubscribe$)
-      )
+        takeUntil(this.unsubscribe$))
       .subscribe(oauthData => {
         if (oauthData.status == 204) {
           this.formView = 'successRegisterMessage';

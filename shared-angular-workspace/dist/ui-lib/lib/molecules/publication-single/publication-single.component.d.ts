@@ -1,4 +1,4 @@
-import { EventEmitter, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { EventEmitter, OnInit, OnChanges, SimpleChanges, OnDestroy } from '@angular/core';
 import { Avatar } from '../../../core/models/avatar';
 import { PublicationDataOptions } from '../../../core/models/publicationData';
 import { ListItemOptions } from '../../../core/models/listItem';
@@ -10,7 +10,7 @@ declare enum PublicationSingleType {
     search = "list",
     staff = "staff"
 }
-export declare class PublicationSingleComponent implements OnInit, OnChanges {
+export declare class PublicationSingleComponent implements OnInit, OnChanges, OnDestroy {
     translateService: TranslateService;
     type: PublicationSingleType;
     publicationData: PublicationDataOptions;
@@ -25,6 +25,7 @@ export declare class PublicationSingleComponent implements OnInit, OnChanges {
     avatarData: Avatar;
     animationAction: boolean;
     animationOptions: AnimationProperties | any;
+    private unsubscribe$;
     statusList: {
         1: any;
         2: any;
@@ -41,5 +42,6 @@ export declare class PublicationSingleComponent implements OnInit, OnChanges {
     _onNotificationClick(data: any): void;
     animate(animate: boolean): void;
     createOptions(name: string): any;
+    ngOnDestroy(): void;
 }
 export {};

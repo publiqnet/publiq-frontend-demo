@@ -1,8 +1,11 @@
 import { ApplicationRef, ComponentFactoryResolver, ComponentRef, EmbeddedViewRef, Injectable, Injector } from '@angular/core';
 import { NotificationCardComponent } from 'ui-lib';
 import { HttpHelperService, HttpMethodTypes } from 'helper-lib';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { AccountService } from './account.service';
+import { NotificationListener } from './notificationListener';
+import { Content } from './models/content';
 
 export enum NotificationTypeList {
   success = 'success',
@@ -15,16 +18,25 @@ export interface Notification {
   type: NotificationTypeList;
 }
 
+declare var EventSourcePolyfill: any;
+
 @Injectable()
 export class UiNotificationService {
   private defaultDuration: number = 3000;
   private removeFromDOMDuration: number = 1000;
   private readonly url = environment.backend + '/api/notification';
 
+  notificationListenerInitialized: boolean = false;
+  notificationsListenerDataChanged = new Subject<NotificationListener[]>();
+
+  private readonly eventSourcePolyfillUrl = environment.mercure;
+  private readonly eventSourcePolyfillMainTopic = 'http://publiq.site/notification';
+
   constructor(
     private componentFactoryResolver: ComponentFactoryResolver,
     private appRef: ApplicationRef,
     private injector: Injector,
+    private accountService: AccountService,
     private httpHelperService: HttpHelperService
   ) {}
 
@@ -69,6 +81,26 @@ export class UiNotificationService {
   private removeDialogComponentFromBody(dialogComponentRef: ComponentRef<NotificationCardComponent>) {
     this.appRef.detachView(dialogComponentRef.hostView);
     dialogComponentRef.destroy();
+  }
+
+  initNotificationListener() {
+    if (!this.notificationListenerInitialized) {
+      const eventSource = new EventSourcePolyfill(this.eventSourcePolyfillUrl + '?topic=' + encodeURIComponent(this.eventSourcePolyfillMainTopic), {
+        headers: {
+          'Authorization': 'Bearer ' + this.accountService.accountInfo.jwtToken
+        }
+      });
+
+      eventSource.onopen = event => {
+        this.notificationListenerInitialized = true;
+      };
+
+      eventSource.onmessage = event => {
+        if (event && event.data) {
+          this.notificationsListenerDataChanged.next(JSON.parse(event.data).map(nextData => new NotificationListener(nextData)));
+        }
+      };
+    }
   }
 
   getNotifications(count, lastId) {

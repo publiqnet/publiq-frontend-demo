@@ -1,8 +1,8 @@
-import { AfterViewInit, ElementRef, EventEmitter, OnChanges, SimpleChanges, ChangeDetectorRef, DoCheck } from '@angular/core';
+import { AfterViewInit, ElementRef, EventEmitter, OnChanges, SimpleChanges, ChangeDetectorRef, DoCheck, OnDestroy } from '@angular/core';
 import { HeaderDataOptions } from '../../../core/models/headerData';
 import { ListItemOptions } from '../../../core/models/listItem';
 import { Avatar } from '../../../core/models/avatar';
-export declare class HeaderComponent implements OnChanges, AfterViewInit, DoCheck {
+export declare class HeaderComponent implements OnChanges, AfterViewInit, DoCheck, OnDestroy {
     private cdr;
     headerData: HeaderDataOptions;
     showSearchBar: boolean;
@@ -32,6 +32,7 @@ export declare class HeaderComponent implements OnChanges, AfterViewInit, DoChec
     seeMoreLoading: boolean;
     isOpenChange: EventEmitter<any>;
     seeMore: EventEmitter<any>;
+    private unsubscribe$;
     overlayMenuList: ElementRef;
     notificationMenuList: ElementRef;
     profileMenuList: ElementRef;
@@ -82,4 +83,5 @@ export declare class HeaderComponent implements OnChanges, AfterViewInit, DoChec
     onLogoClick(event: MouseEvent, slug: any): void;
     onSeeMoreEvent(event: any): void;
     onSocialClick(event: any, type: any): void;
+    ngOnDestroy(): void;
 }

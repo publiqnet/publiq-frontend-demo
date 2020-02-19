@@ -81,8 +81,7 @@ export class SearchResultComponent implements OnInit, OnDestroy {
             return this.contentService.searchPublicationsByWord(data.queryParam, this.defaultCount);
         }
       }),
-      takeUntil(this.unsubscribe$)
-    )
+      takeUntil(this.unsubscribe$))
       .subscribe(data => {
         this.seeMoreChecker = data.more;
         this.searchResult = data;
@@ -121,9 +120,7 @@ export class SearchResultComponent implements OnInit, OnDestroy {
   followUser(event, item) {
     const followType = item.subscribed ? this.accountService.unfollow(item.publicKey) : this.accountService.follow(item.publicKey);
     followType
-      .pipe(
-        takeUntil(this.unsubscribe$)
-      )
+      .pipe(takeUntil(this.unsubscribe$))
       .subscribe((author: Account) => {
         item.subscribed = !item.subscribed;
       });
@@ -153,9 +150,7 @@ export class SearchResultComponent implements OnInit, OnDestroy {
     this.seeMoreLoading = true;
     this.blockInfiniteScroll = true;
     this.search()
-      .pipe(
-        takeUntil(this.unsubscribe$)
-      )
+      .pipe(takeUntil(this.unsubscribe$))
       .subscribe(
         (data) => {
           this.seeMoreChecker = data.more;
@@ -281,8 +276,7 @@ export class SearchResultComponent implements OnInit, OnDestroy {
           const publicationsList = [...publicationsData.membership, ...publicationsData.owned];
           return publicationsList;
         }),
-        takeUntil(this.unsubscribe$)
-      )
+        takeUntil(this.unsubscribe$))
       .subscribe(publicationsList => {
         if (publicationsList.length) {
           publicationsList.forEach(publication => {

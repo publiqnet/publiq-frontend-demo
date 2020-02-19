@@ -99,9 +99,7 @@ export class SearchComponent implements OnChanges, OnDestroy, OnInit {
   followUser(event, item) {
     const followType = item.subscribed ? this.accountService.unfollow(item.publicKey) : this.accountService.follow(item.publicKey);
     followType
-      .pipe(
-        takeUntil(this.unsubscribe$)
-      )
+      .pipe(takeUntil(this.unsubscribe$))
       .subscribe((author: Account) => {
         item.subscribed = !item.subscribed;
       });

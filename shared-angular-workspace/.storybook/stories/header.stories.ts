@@ -171,6 +171,11 @@ storiesOf('Publiq Design|Organisms.Header', module)
             {
               'text': 'JP',
               'value': 'jp',
+              'className': 'inline-items language-switcher',
+            },
+            {
+              'text': 'JP',
+              'value': 'jp',
               'className': 'inline-items language-switcher selected',
             },
           ],

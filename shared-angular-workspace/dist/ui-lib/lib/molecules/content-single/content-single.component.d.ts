@@ -1,4 +1,4 @@
-import { EventEmitter, OnChanges, SimpleChanges, OnInit } from '@angular/core';
+import { EventEmitter, OnChanges, SimpleChanges, OnInit, OnDestroy } from '@angular/core';
 import { ContentDataOptions } from '../../../core/models/contentData';
 import { HeaderLoggedDataOptions } from '../../../core/models/headerLoggedData';
 import { DropdownDataOptions } from '../../../core/models/dropdownData';
@@ -9,7 +9,7 @@ declare enum ContentSingleType {
     grid = "grid",
     edit = "edit"
 }
-export declare class ContentSingleComponent implements OnInit, OnChanges {
+export declare class ContentSingleComponent implements OnInit, OnChanges, OnDestroy {
     translateService: TranslateService;
     type: ContentSingleType;
     contentData: ContentDataOptions;
@@ -41,6 +41,7 @@ export declare class ContentSingleComponent implements OnInit, OnChanges {
     thumbnailLoaded: boolean;
     originalImageLoaded: boolean;
     imageUri: string;
+    private unsubscribe$;
     menuOpen: {
         publication: boolean;
         settings: boolean;
@@ -74,5 +75,6 @@ export declare class ContentSingleComponent implements OnInit, OnChanges {
     showOriginal(): boolean;
     showThumbnail(): boolean;
     showSkeleton(): boolean;
+    ngOnDestroy(): void;
 }
 export {};

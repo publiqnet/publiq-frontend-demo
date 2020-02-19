@@ -1,5 +1,5 @@
 <div class="row">
-  <div class="col-12 col-xl-9 relevant-content__heading" [ngClass]="titleClassName">
+  <div class="col-12 col-xl-12 relevant-content__heading" [ngClass]="titleClassName">
     <h2 class="shadowed-heading" (click)="onTitleClick()" [attr.data-shadow-text]="title">{{title}}</h2>
     <div *ngIf="contentList.length > 4">
       <i class="icon-arrow-up arrow--left" [class.arrow--inactive]="currentIndex < 4" (click)="changeIndex(-4)"></i>
@@ -17,10 +17,10 @@
 </div>
 
 <div class="row relevant-content__items relevant-content__items--all-single" *ngIf="type === 'all-single'" [ngClass]="itemsClassName">
-  <div class="col-xl-5 col-md-6">
+  <div class="col-12 col-sm">
     <ui-content-single *ngFor="let content of contentList.slice(currentIndex , currentIndex + 2)" [loadOriginalImg]="false" [contentData]="content" type="single-small" (publicationClick)="onPublicationClick($event)" (contentClick)="onContentClick($event)" (accountClick)="onAccountClick($event)" (tagClick)="onTagClick($event)"></ui-content-single>
   </div>
-  <div class="offset-xl-1 col-xl-6 col-md-6">
+  <div class="col-12 col-sm">
     <ui-content-single *ngFor="let content of contentList.slice(currentIndex + 2, currentIndex + 4)" [loadOriginalImg]="false" [contentData]="content" type="single-small" (publicationClick)="onPublicationClick($event)" (contentClick)="onContentClick($event)" (accountClick)="onAccountClick($event)" (tagClick)="onTagClick($event)"></ui-content-single>
   </div>
 </div>

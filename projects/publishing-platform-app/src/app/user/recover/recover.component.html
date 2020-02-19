@@ -15,5 +15,5 @@
       </div>
     </form>
   </div>
-  <app-new-password [brainKey]="brainKey" [stringToSign]="stringToSign" *ngIf="isPasswordMode"></app-new-password>
+  <app-new-password [brainKey]="brainKey" [stringToSign]="stringToSign" *ngIf="isPasswordMode" [data]="data" (closeModal)="closeModal.emit($event)"></app-new-password>
 </div>

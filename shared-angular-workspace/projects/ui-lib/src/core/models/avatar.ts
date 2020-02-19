@@ -6,7 +6,7 @@ export interface AvatarOptions {
   bio?: string;
   public_key?: string;
   thumbnail?: string;
-  subscribersCount?: number;
+  subscribersCount?: number | string;
   subscribed?: boolean;
 }
 
@@ -19,7 +19,7 @@ export class Avatar {
   thumbnail: string;
   public_key: string;
   bio: string;
-  subscribersCount: number;
+  subscribersCount: number | string;
   subscribed: boolean;
 
   constructor(options?: AvatarOptions) {

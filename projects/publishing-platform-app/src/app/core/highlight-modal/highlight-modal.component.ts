@@ -13,6 +13,8 @@ export class HighlightModalComponent implements OnInit, OnChanges, OnDestroy {
   @Input('highlight') highlight: Content = null;
   public highlightImage: string = null;
   public highlightImageLoaded: boolean = false;
+  public skip: boolean = true;
+  public skipTimeout: any;
 
   constructor(
     public utilService: UtilService,
@@ -21,7 +23,7 @@ export class HighlightModalComponent implements OnInit, OnChanges, OnDestroy {
 
   ngOnInit() {
     if (isPlatformBrowser(this.platformId)) {
-      document.body.style.overflow = 'hidden';
+      document.querySelector('html').classList.add('story-scroll-disabled');
     }
   }
 
@@ -57,13 +59,31 @@ export class HighlightModalComponent implements OnInit, OnChanges, OnDestroy {
     }
   }
 
+  startSkipping(e) {
+    this.skipTimeout = setTimeout(() => {
+      this.skip = false;
+    }, 500);
+  }
+
+  checkSkipping(e) {
+    clearTimeout(this.skipTimeout);
+
+    if (this.skip) {
+      setTimeout(() => {
+        this.onFinished();
+      });
+    } else {
+      this.skip = true;
+    }
+  }
+
   onFinished() {
     this.timeFinished.emit(this.highlight);
   }
 
   ngOnDestroy () {
     if (isPlatformBrowser(this.platformId)) {
-      document.body.style.overflow = null;
+      document.querySelector('html').classList.remove('story-scroll-disabled');
     }
   }
 }

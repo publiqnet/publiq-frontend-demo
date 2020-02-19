@@ -463,6 +463,17 @@
   align-items: center;
   font-family: $open-sans;
   font-size: 0;
+  &.followers-section {
+    &.pointer {
+      .datum__value {
+        color: $blue;
+        cursor: pointer;
+      }
+      .datum__descriptor {
+        cursor: pointer;
+      }
+    }
+  }
 
   &__value {
     font-size: 13px;
@@ -548,6 +559,42 @@
     padding: 0 0 20px;
     padding-top: 20px;
     margin-bottom: 20px;
+    &.account-info-section {
+      display: flex;
+      justify-content: space-between;
+      h4 {
+        width: 50%;
+      }
+      .change-password {
+        display: flex;
+        align-items: flex-start;
+        width: 50%;
+        justify-content: space-between;
+        border-left: 1px solid #C1C4CB;
+        &__title {
+          margin: 0;
+          font-family: $open-sans;
+          font-weight: 600;
+          font-size: 20px;
+          color: #2B2B2B;
+          padding-left: 40px;
+        }
+      }
+      @include media-xl {
+        flex-direction: column;
+        h4 {
+          width: 100%;
+        }
+        .change-password {
+          width: 100%;
+          border-left: none;
+          margin-top: 20px;
+          &__title {
+            padding-left: 0px;
+          }
+        }
+      }
+    }
     @include media-sm {
       border-bottom: none;
     }
@@ -569,20 +616,20 @@
       }
     }
   }
+  div.grid-style__choose {
+    flex-grow: 0;
+    flex-shrink: 0;
+    flex-basis: 50px;
+    display: inline-flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding-bottom: 20px;
+    @include media-sm {
+      display: none;
+    }
+  }
   > div {
     flex-grow: 1;
-
-    &:last-child {
-      flex-grow: 0;
-      flex-shrink: 0;
-      flex-basis: 50px;
-      display: inline-flex;
-      justify-content: flex-end;
-      align-items: center;
-      @include media-sm {
-        display: none;
-      }
-    }
 
     .grid-icon {
       font-size: 24px;
@@ -994,6 +1041,26 @@
         color: $red;
         display: block;
         margin-bottom: 10px;
+      }
+    }
+  }
+  .recover-password-block {
+    ::ng-deep {
+      ui-textarea {
+        textarea {
+          width: 100%;
+        }
+      }
+      ui-button {
+       button {
+         width: 100%;
+         border-radius: 10px;
+         margin-top: 50px;
+         cursor: pointer;
+         &:hover {
+           background: #2c56d3;
+         }
+       }
       }
     }
   }

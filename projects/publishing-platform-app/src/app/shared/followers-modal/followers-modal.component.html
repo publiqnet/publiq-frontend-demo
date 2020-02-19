@@ -1,0 +1,28 @@
+<div class="modal-overlay">
+  <div class="custom-modal" infinite-scroll [infiniteScrollDistance]="2" [scrollWindow]="false"
+       [infiniteScrollThrottle]="50" [infiniteScrollDisabled]="blockInfiniteScroll"
+       (scrolled)="hasMore ? seeMore() : ''">
+    <span class="custom-modal__close" (click)="closePopup()">
+      <i class="icon icon-close"></i>
+    </span>
+
+    <!--see followers-->
+    <div *ngIf="followersData?.length" class="followers-form">
+      <h3>{{'author.followers' | translate}} <b>({{followersCount}})</b></h3>
+      <ui-user-single
+        *ngFor="let follower of followersData, let i=index"
+        [type]="'followers'"
+        (onFollowChange)="followUser(follower)"
+        [className]="'followers-list'"
+        (onUserClick)="getUser(follower.publicKey)"
+        [userData]="{user: follower, isFollowing: follower.subscribed, description: follower.bio}"
+        [showFollowButton]="follower.publicKey !== accountService.accountInfo.publicKey">
+      </ui-user-single>
+    </div>
+    <div *ngIf="seeMoreLoading" class="animation-center">
+      <div style="display: inline-block">
+        <ui-loader [size]="100" [color]="'blue'"></ui-loader>
+      </div>
+    </div>
+  </div>
+</div>

@@ -59,8 +59,7 @@ export class LoginPasswordComponent implements OnInit, OnDestroy {
             this.token = params.code;
             return this.oauthService.signinCheckCode(params.code);
           }),
-          takeUntil(this.unsubscribe$)
-        )
+          takeUntil(this.unsubscribe$))
         .subscribe(result => {
           this.stringToSign = result.stringToSign;
           this.encryptedBrainKey = result.brainKey;
@@ -72,9 +71,7 @@ export class LoginPasswordComponent implements OnInit, OnDestroy {
         });
 
       this.errorService.errorEventEmiter
-        .pipe(
-          takeUntil(this.unsubscribe$)
-        )
+        .pipe(takeUntil(this.unsubscribe$))
         .subscribe((data: ErrorEvent) => {
             if (data.action === 'loadConfirm') {
               this.router.navigate([`/page-not-found`]);
@@ -84,7 +81,9 @@ export class LoginPasswordComponent implements OnInit, OnDestroy {
           }
         );
 
-      this.configForm.valueChanges.subscribe(newValues => this.loginError = '');
+      this.configForm.valueChanges
+        .pipe(takeUntil(this.unsubscribe$))
+        .subscribe(newValues => this.loginError = '');
     }
   }
 
@@ -106,8 +105,7 @@ export class LoginPasswordComponent implements OnInit, OnDestroy {
     this.oauthService.signinGetToken(this.encryptedBrainKey, this.stringToSign, this.token, this.configForm.value.password)
       .pipe(
         switchMap((data: any) => this.accountService.accountAuthenticate(data.token)),
-        takeUntil(this.unsubscribe$)
-      )
+        takeUntil(this.unsubscribe$))
       .subscribe(() => {
         if (isPlatformBrowser(this.platformId) && UtilService.getCookie('redirectUrl')) {
           const redirectUrl = UtilService.getCookie('redirectUrl');

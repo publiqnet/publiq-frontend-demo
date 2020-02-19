@@ -27,7 +27,7 @@ export class LanguageGuard implements CanActivate, CanActivateChild {
       )
       .subscribe(url => {
         const lang = url.split('/')[1];
-        if (['en', 'jp'].includes(lang)) {
+        if (['en', 'jp', 'es'].includes(lang)) {
           // isPlatformBrowser(this.platformId) && this.translateService.use(lang || 'en');
           this.router.navigate([url.replace(/\/[a-zA-Z]{2}/, '')]);
         } else {

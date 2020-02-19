@@ -14,7 +14,7 @@ declare const $: any;
 })
 export class GalleryModalComponent implements OnInit, OnDestroy, AfterViewInit {
   @Output() public closeEvent = new EventEmitter();
-  @Output() public insertImage = new EventEmitter();
+  @Output() public onInsertImage = new EventEmitter();
   @ViewChild('masonry', {static: false}) masonry: NgxMasonryComponent;
   @ViewChild('searchBar', {static: false}) searchBar: ElementRef;
   public blockInfiniteScroll: boolean = false;
@@ -117,9 +117,9 @@ export class GalleryModalComponent implements OnInit, OnDestroy, AfterViewInit {
     this.closeEvent.emit(true);
   }
 
-  insertInFroala(img: Image) {
+  insertImage(img: Image) {
     this.searchBar.nativeElement.blur();
-    this.insertImage.emit({url: img.url, sanitize: true, data: {uri: img.uri, link: img.url}, existingImage: '', response: `{"uri": "${img.uri}", "link": "${img.url}"}`});
+    this.onInsertImage.emit({url: img.url, uri: img.uri, link: img.url });
   }
 
   calculateLastImageiUri() {

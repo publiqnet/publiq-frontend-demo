@@ -74,7 +74,7 @@
                              [contentData]="content"></ui-content-single>
         </div>
       </ng-container>
-      <ng-container *ngIf="contentArray.length">
+      <ng-container *ngIf="contentArray && contentArray.length">
         <ui-relevant-content (contentClick)="utilService.routerChangeHelper('content',$event)"
                              *ngIf="firstRelevantBlock.length" [type]="'all-single'" [contentList]="firstRelevantBlock"
                              [title]="'homepage.interesting_writers_first' | translate"></ui-relevant-content>
@@ -230,10 +230,7 @@
           <div class="copyright-space">
             <span class="copyright-space__text">  {{ 'homepage.publiq' | translate }}</span>
             <div class="copyright-space__items">
-              <span class="copyright-space__items__item" [ngClass]="{'selected' : translateService.currentLang == 'en'}"
-                    (click)="useLang('en')">EN</span>
-              <span class="copyright-space__items__item" [ngClass]="{'selected' : translateService.currentLang == 'jp'}"
-                    (click)="useLang('jp')">JP</span>
+              <span *ngFor="let language of languagesList | keyvalue" class="copyright-space__items__item" [ngClass]="{'selected' : translateService.currentLang == language.key}" (click)="useLang(language.key)">{{language.value}}</span>
             </div>
           </div>
         </div>

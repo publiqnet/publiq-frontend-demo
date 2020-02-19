@@ -1,14 +1,14 @@
 import { Component, OnDestroy, OnInit, Input } from '@angular/core';
-import { ActivatedRoute, NavigationEnd, NavigationStart, ParamMap, Router, RouterEvent } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { PublicationService } from '../../core/services/publication.service';
-import { AccountService } from '../../core/services/account.service';
-
 import { Publication } from '../../core/services/models/publication';
 import { Publications } from '../../core/services/models/publications';
-
 import { ReplaySubject } from 'rxjs';
-import { filter, takeUntil } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
+import { NotificationListener } from '../../core/services/notificationListener';
+import { UiNotificationService } from '../../core/services/ui-notification.service';
+import { Author } from '../../core/services/models/author';
 
 @Component({
   selector: 'app-my-publications',
@@ -22,6 +22,7 @@ export class MyPublicationsComponent implements OnInit, OnDestroy {
   public invitations: Publication[];
   public requests: Publication[];
   public subscriptions = [];
+  public invitationsCount: number = 0;
   @Input() showCustomModal: boolean = false;
   showModalType = 'invitation';
 
@@ -31,7 +32,8 @@ export class MyPublicationsComponent implements OnInit, OnDestroy {
     public router: Router,
     private activeRoute: ActivatedRoute,
     public publicationService: PublicationService,
-    public translateService: TranslateService
+    public translateService: TranslateService,
+    private uiNotificationService: UiNotificationService
   ) {
 
   }
@@ -40,6 +42,7 @@ export class MyPublicationsComponent implements OnInit, OnDestroy {
     this.myPublications = data.owned;
     this.membership = data.membership;
     this.invitations = data.invitations;
+    this.invitationsCount = this.invitations && this.invitations.length;
     this.requests = data.requests;
     this.publications = this.myPublications.concat(this.membership);
     this.publications = this.publications.map((el: any) => {
@@ -49,20 +52,9 @@ export class MyPublicationsComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.openInvitations();
-    this.router.events.pipe(
-      filter((event: RouterEvent) => event instanceof NavigationEnd),
-      takeUntil(this.unsubscribe$))
-      .subscribe(() => {
-        this.openInvitations();
-    });
     this.getMyPublications();
     this.getMySubscriptions();
-  }
-
-  private openInvitations = () => {
-    const openInvitations = this.activeRoute.snapshot.paramMap.get('openInvitations');
-    if (openInvitations === 'true') { this.openPublicationModal(true, 'invitation'); }
+    this.initDataChangeListner();
   }
 
   openPublicationModal(flag: boolean, type: string = null) {
@@ -70,11 +62,14 @@ export class MyPublicationsComponent implements OnInit, OnDestroy {
     this.showModalType = type;
   }
 
+  closeModal(invitationsCount?: number) {
+    this.showCustomModal = false;
+    this.invitationsCount = invitationsCount;
+  }
+
   getMyPublications() {
     this.publicationService.getMyPublications()
-      .pipe(
-        takeUntil(this.unsubscribe$)
-      )
+      .pipe(takeUntil(this.unsubscribe$))
       .subscribe((data: Publications) => {
         this.PublicationsData = data;
       });
@@ -82,18 +77,14 @@ export class MyPublicationsComponent implements OnInit, OnDestroy {
 
   getMySubscriptions() {
     this.publicationService.getUserSubscriptions()
-      .pipe(
-        takeUntil(this.unsubscribe$)
-      )
+      .pipe(takeUntil(this.unsubscribe$))
       .subscribe((data: Publications[]) => {
         this.subscriptions = data;
       });
   }
 
   unfollow(publication, index) {
-    this.publicationService.unfollow(publication.slug).pipe(
-      takeUntil(this.unsubscribe$)
-    )
+    this.publicationService.unfollow(publication.slug).pipe(takeUntil(this.unsubscribe$))
       .subscribe(
         () => {
           this.subscriptions.splice(index, 1);
@@ -111,7 +102,32 @@ export class MyPublicationsComponent implements OnInit, OnDestroy {
     }
   }
 
-  ngOnDestroy() {
+  private initDataChangeListner() {
+    this.uiNotificationService.notificationsListenerDataChanged
+      .pipe(
+        takeUntil(this.unsubscribe$)
+      )
+      .subscribe((listenerData: NotificationListener[]) => {
+        if (!(listenerData && listenerData.length)) { return; }
+        listenerData.filter(listener => listener.type === 'publication_invitation_new' || listener.type === 'publication_invitation_cancelled')
+          .forEach(listener => {
+            switch (listener.type) {
+              case 'publication_invitation_new' :
+                this.invitationsCount += 1;
+                this.invitations.push({...listener.data.publication, inviter: new Author(listener.data.performer)});
+                break;
+              case 'publication_invitation_cancelled' :
+                this.invitationsCount -= 1;
+                const index = this.invitations.findIndex((invitation) => invitation.slug === listener.data.publication.slug);
+                this.invitations.splice(index, 1);
+                break;
+            }
+          });
+      });
+  }
 
+  ngOnDestroy() {
+    this.unsubscribe$.next();
+    this.unsubscribe$.complete();
   }
 }

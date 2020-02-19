@@ -12,14 +12,14 @@
         <router-outlet></router-outlet>
       </div>
     </div>
-    <div *ngIf="contentService.translationsReady" class="signinup__footer">
-      <a href="#" *ngIf="activeRoute == 'login'" class=""
+    <div *ngIf="contentService.translationsReady" class="signinup__footer" [ngClass]="activeRoute != 'login' ? 'register' : 'login'">
+      <a href="#" class="" *ngIf="showForgotPassword()"
          (click)="changeRoute($event, '/user/recover')">{{'user-template.forgot_password' | translate}}</a>
       <p class="signinup__footer--terms d-none">{{'user-template.agree_to'| translate}}<a
         href="">{{'user-template.terms_and_conditions'| translate}}</a></p>
       <a href="#" *ngIf="activeRoute != 'login'"
-         (click)="changeRoute($event, '/user/login')">{{'user-template.back_to_login' | translate }}  <i
-        class="icon-arrow-right"></i></a>
+         (click)="changeRoute($event, '/user/login')"><i
+        class="icon-arrow-right"></i> {{'user-template.back_to_login' | translate }}  </a>
     </div>
   </div>
   <div class="signinup__side signinup__side--dark d-none d-sm-inline-block">
@@ -28,8 +28,9 @@
                                     class="signinup__header__logo d-none d-lg-inline-block pointer" alt="PUBLIQ">
       </a>
       <div class="signinup__header__language">
-        <span [ngClass]="{'language--active': translateService.currentLang == 'en'}" (click)="useLang('en')">EN</span>
-        <span [ngClass]="{'language--active': translateService.currentLang == 'jp'}" (click)="useLang('jp')">JP</span>
+        <span *ngFor="let language of languagesList | keyvalue" [ngClass]="{'language--active': translateService.currentLang == language.key}" (click)="useLang(language.key)">
+          {{language.value}}
+        </span>
       </div>
     </div>
 

@@ -12,6 +12,7 @@ import { AccountService } from './account.service';
 import { Router } from '@angular/router';
 import { UtilService } from './util.service';
 import { TranslateService } from '@ngx-translate/core';
+import { Account } from './models/account';
 
 @Injectable()
 export class PublicationService {
@@ -249,7 +250,19 @@ export class PublicationService {
     return this.httpHelperService.call(HttpMethodTypes.delete, `${this.url}/${slug}/delete-member/${publicKey}`);
   }
 
+  deleteArticle(slug: string, uri: string) {
+    return this.httpHelperService.call(HttpMethodTypes.delete, `${this.url}/${slug}/article/${uri}`);
+  }
+
   reset() {
     this.myPublications$ = new BehaviorSubject(null);
+  }
+
+  getPublicationFollowers(slug: string, count: number, lastId: number): Observable<any> {
+    return this.httpHelperService.call(HttpMethodTypes.get, this.url + `/${slug}/subscribers/${count}/${lastId}`)
+      .pipe(map((data: any) => {
+        data.subscribers = data.subscribers.map(subscriber => new Account(subscriber));
+        return data;
+      }));
   }
 }

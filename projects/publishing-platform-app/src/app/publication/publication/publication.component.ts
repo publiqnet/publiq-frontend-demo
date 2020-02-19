@@ -1,7 +1,7 @@
-import { AfterViewInit, Component, ElementRef, HostListener, Inject, Input, OnDestroy, OnInit, PLATFORM_ID, Renderer2, Sanitizer, SecurityContext, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, Inject, Input, OnDestroy, OnInit, PLATFORM_ID, Renderer2, ViewChild } from '@angular/core';
 import { NgxMasonryComponent, NgxMasonryOptions } from 'ngx-masonry';
 import { debounce, delay, distinctUntilChanged, filter, map, mergeMap, switchMap, takeUntil, takeWhile, tap } from 'rxjs/operators';
-import { ActivatedRoute, NavigationEnd, ParamMap, Router, RouterEvent } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { Publication } from '../../core/services/models/publication';
 import { fromEvent, interval, merge, Observable, of, ReplaySubject, Subject, Subscription, timer } from 'rxjs';
 import { AccountService } from '../../core/services/account.service';
@@ -20,9 +20,9 @@ import { ContentService } from '../../core/services/content.service';
 import { environment } from '../../../environments/environment';
 import { SharedDataService } from '../../core/services/shared-data.service';
 import { TranslateService } from '@ngx-translate/core';
-import { getImageSize } from '../../content/froala-configs/froala-editor-custom-configs';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Publications } from '../../core/services/models/publications';
+import { NotificationListener } from '../../core/services/notificationListener';
 
 @Component({
   selector: 'app-publication',
@@ -75,7 +75,7 @@ export class PublicationComponent implements OnInit, AfterViewInit, OnDestroy {
   public membersOdd = [];
   public membersEven = [];
   public subscribers = [];
-  public pendings = [];
+  public pendings: Author[] = [];
   public haveResult: boolean;
   public searchedMembers = [];
   public searchedResult: boolean;
@@ -125,15 +125,19 @@ export class PublicationComponent implements OnInit, AfterViewInit, OnDestroy {
   public showBoostModal: boolean = false;
   public showHighlightModal: boolean = false;
   public showHistoryModal: boolean = false;
+  public showFollowersModal: boolean = false;
   public selectedBoostData: any = {};
   showBoostModalType: string = 'boost';
   public contentVersions = [];
   public publicationsList = [];
+  private followersCount = 5;
+  public followersList: Account[];
+  public hasMoreFollowers: boolean;
   // ------
   private unsubscribe$ = new ReplaySubject<void>(1);
 
   constructor(
-    private accountService: AccountService,
+    public accountService: AccountService,
     private route: ActivatedRoute,
     private publicationService: PublicationService,
     public utilService: UtilService,
@@ -153,6 +157,7 @@ export class PublicationComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit() {
     this.initDefaultData();
+    this.initDataChangeListner();
     this.translateService.onLangChange.subscribe(lang => {
       this.coverMenuItems = [
         {
@@ -183,13 +188,6 @@ export class PublicationComponent implements OnInit, AfterViewInit, OnDestroy {
         }
       ];
     });
-    this.changeTab();
-    this.router.events.pipe(
-      filter((event: RouterEvent) => event instanceof NavigationEnd),
-      takeUntil(this.unsubscribe$))
-      .subscribe(() => {
-        this.changeTab();
-      });
     this.isBrowser = isPlatformBrowser(this.platformId);
     if (this.isBrowser) {
       this.documentElement = (window.document.documentElement || window.document.body) as any;
@@ -224,8 +222,10 @@ export class PublicationComponent implements OnInit, AfterViewInit, OnDestroy {
             };
           }
           if (this.publication) {
-            if (!this.publication.cover) { return; }
-            getImageSize(this.publication && this.publication.cover)
+            if (!this.publication.cover) {
+              return;
+            }
+            this.utilService.getImageSize(this.publication && this.publication.cover)
               .pipe(
                 tap((img: { height: string, width: string }) => {
                   this.coverHeight = img.height;
@@ -272,11 +272,6 @@ export class PublicationComponent implements OnInit, AfterViewInit, OnDestroy {
         'text': this.translateService.instant('publication.contributor'),
       }
     ];
-  }
-
-  private changeTab = () => {
-    const openRequests = this.route.snapshot.paramMap.get('openRequests');
-    this.activeTab = openRequests === 'true' ? 'members' : this.activeTab;
   }
 
   searchSubscriptions() {
@@ -600,7 +595,11 @@ export class PublicationComponent implements OnInit, AfterViewInit, OnDestroy {
     )
       .subscribe(
         () => {
-          this.publication.subscribersCount += this.publication.following ? -1 : 1;
+          if (this.publication.following) {
+            this.publication.subscribersCount--;
+          } else {
+            this.publication.subscribersCount++;
+          }
           this.contentService.updateSearchData = true;
           this.publication.following = !this.publication.following;
           this.updateHeaderPublicationData(this.publication);
@@ -900,7 +899,20 @@ export class PublicationComponent implements OnInit, AfterViewInit, OnDestroy {
     } else if (event == 'history_story') {
       this.contentVersions = data.previousVersions;
       this.showHistoryModal = true;
+    } else if (event == 'delete_story') {
+      this.deleteArticleFromPublication(data.uri);
     }
+  }
+
+  deleteArticleFromPublication(uri) {
+    this.publicationService.deleteArticle(this.publication.slug, uri)
+      .pipe(
+        takeUntil(this.unsubscribe$)
+      )
+      .subscribe(data => {
+        this.uiNotificationService.success(this.translateService.instant('publication.success'), this.translateService.instant('publication.article_successfully_removed'));
+        this.getPublicationStories();
+      });
   }
 
   closeHighlightModal() {
@@ -909,7 +921,9 @@ export class PublicationComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   closeHistoryModal(event) {
-    if (event.closeHistory) { this.showHistoryModal = false; }
+    if (event.closeHistory) {
+      this.showHistoryModal = false;
+    }
     this.hideOverflow(this.showHistoryModal);
   }
 
@@ -1161,6 +1175,33 @@ export class PublicationComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  private initDataChangeListner() {
+    this.uiNotificationService.notificationsListenerDataChanged
+      .pipe(
+        takeUntil(this.unsubscribe$)
+      )
+      .subscribe((listenerData: NotificationListener[]) => {
+        if (!listenerData && listenerData.length) { return; }
+        if (this.isMyPublication) {
+          listenerData.filter(listener => (listener.type === 'publication_invitation_accepted' || listener.type === 'publication_invitation_rejected')
+            && listener.data.publication.slug === this.publication.slug)
+            .forEach(listener => {
+              const index = this.pendings.findIndex((pending) => pending.publicKey === listener.data.performer.publicKey);
+              this.pendings.splice(index, 1);
+              if (listener.type === 'publication_invitation_accepted') {
+                listener.data.performer.memberStatus = listener.data.memberStatus;
+                this.publication.membersCount++;
+                this.members.length % 2 == 0 ? this.membersOdd.push(new Author(listener.data.performer)) : this.membersEven.push(new Author(listener.data.performer));
+                this.membersEven.push();
+              }
+            });
+        } else {
+          const data = listenerData.filter(listener => listener.type === 'publication_invitation_new' && listener.data.publication.slug === this.publication.slug);
+          this.publication.inviter = !this.publication.inviter && data.length ? new Author(data[0].data.performer) : this.publication.inviter;
+        }
+      });
+  }
+
   ngOnDestroy() {
     this.articlesLoaded = false;
     this.seoService.updateTags();
@@ -1168,5 +1209,31 @@ export class PublicationComponent implements OnInit, AfterViewInit, OnDestroy {
     this.unsubscribe$.complete();
     this.sharedData.headerSecondActive = false;
     this.sharedData.currentPublication.next(null);
+  }
+
+  showFollowersList() {
+    document.querySelector('body').classList.add('no-scroll');
+    this.publicationService.getPublicationFollowers(this.publication.slug, this.followersCount, 0)
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe((data: any) => {
+        this.followersList = [...data.subscribers];
+        this.hasMoreFollowers = data.more;
+        this.showFollowersModal = true;
+    });
+  }
+
+  closeFollowersModal() {
+    this.showFollowersModal = false;
+    this.followersList = [];
+    document.querySelector('body').classList.remove('no-scroll');
+  }
+
+  seeMoreFollowers(data: any) {
+    this.publicationService.getPublicationFollowers(this.publication.slug, this.followersCount, this.followersList.length)
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe((data: any) => {
+        this.followersList = [...this.followersList, ...data.subscribers];
+        this.hasMoreFollowers = data.more;
+    });
   }
 }

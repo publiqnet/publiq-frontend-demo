@@ -2,8 +2,8 @@
     <div class="row publications-heading">
         <div class="col-lg-6 offset-lg-2 col-9">
             <h1>{{'publication.publications' | translate}}</h1>
-            <div *ngIf="invitations && invitations.length" class="arrowed-action" (click)="openPublicationModal(true, 'invitation')">
-                <span>{{'publication.invitations' | translate}}<small>({{invitations.length}})</small></span>
+            <div *ngIf="invitationsCount" class="arrowed-action" (click)="openPublicationModal(true, 'invitation')">
+                <span>{{'publication.invitations' | translate}}<small>({{invitationsCount}})</small></span>
                 <i class="icon-arrow-right"></i>
             </div>
         </div>
@@ -14,7 +14,7 @@
     <div class="row publications-staff" *ngIf="publications && publications.length">
         <div class="col-lg-8 offset-lg-2">
             <!-- <h2 class="section-heading">Staff</h2> -->
-            <ui-publication-single className="staff-publication" type="staff" (getSelectedMember)="memberClick($event)" [publicationData]="publication" *ngFor="let publication of publications;" (getPublicationSlug)="changeRoute('/p/' + $event)"></ui-publication-single>
+            <ui-publication-single *ngFor="let publication of publications;" [className]="'staff-publication'" [type]="'staff'" (getSelectedMember)="memberClick($event)" [publicationData]="publication" (getPublicationSlug)="changeRoute('/p/' + $event)"></ui-publication-single>
         </div>
     </div>
     <div class="not-found local" *ngIf="publications && !publications.length">
@@ -24,11 +24,12 @@
     <div class="row publications-following" *ngIf="subscriptions && subscriptions.length">
         <div class="col-lg-8 offset-lg-2">
             <h2 class="section-heading">{{'publication.following' | translate}}</h2>
-            <ui-publication-single className="staff-publication following" type="follow" [publicationData]="publication" *ngFor="let publication of subscriptions;let i=index" (getPublicationSlug)="changeRoute('/p/' + $event)" (follow)="unfollow(publication, i)"></ui-publication-single>
+            <ui-publication-single *ngFor="let publication of subscriptions;let i=index"
+                                   className="staff-publication following" type="follow" [publicationData]="publication" (getPublicationSlug)="changeRoute('/p/' + $event)" (follow)="unfollow(publication, i)"></ui-publication-single>
         </div>
     </div>
 </div>
 
 <ng-container *ngIf="showCustomModal">
-    <app-publication-modal (onCloseModal)="openPublicationModal(false)" (updatePublicationData)="getMyPublications()" [modalType]="showModalType" [invitations]="invitations"></app-publication-modal>
+    <app-publication-modal (onCloseModal)="closeModal($event)" (updatePublicationData)="getMyPublications()" [modalType]="showModalType" [invitations]="invitations"></app-publication-modal>
 </ng-container>

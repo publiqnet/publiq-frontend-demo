@@ -33,7 +33,8 @@ import { isPlatformBrowser } from '@angular/common';
 import { UtilsService } from 'shared-lib';
 import { ClipboardService } from 'ngx-clipboard';
 import { TranslateService } from '@ngx-translate/core';
-import { setHebrewMonth } from '@ng-bootstrap/ng-bootstrap/datepicker/hebrew/hebrew';
+import { NotificationListener } from '../../core/services/notificationListener';
+import { OauthService } from 'helper-lib';
 
 enum ModalConfirmActions {
   DeleteOne,
@@ -81,6 +82,7 @@ export class AuthorComponent implements OnInit, OnDestroy {
   public animationAction: boolean;
   public boostType: string = 'boost';
   public decryptedBrainKey: string;
+  public changeDecryptedBrainKey: string;
   public publishedContent: Content[] = [];
   public loading = true;
   public drafts: Array<any>;
@@ -95,6 +97,8 @@ export class AuthorComponent implements OnInit, OnDestroy {
   public showBoostModal: boolean = false;
   public showHighlightModal: boolean = false;
   public showHistoryModal: boolean = false;
+  public showPasswordModal: boolean = false;
+  public showFollowersModal: boolean = false;
   public selectedBoostData: any = {};
   public feeWhole: number = 0;
   public feeFraction: number = 0;
@@ -105,6 +109,7 @@ export class AuthorComponent implements OnInit, OnDestroy {
   public boostSubmitError: boolean = false;
   protected password: string = '';
   private authorId: string;
+  public changeData: {} = {'page' : 'author'};
   private unsubscribe$ = new ReplaySubject<void>(1);
   bioTextElement: ElementRef;
   authorNameElement: ElementRef;
@@ -123,6 +128,7 @@ export class AuthorComponent implements OnInit, OnDestroy {
   disableSave: boolean = false;
   showPrivateKey: boolean = false;
   showPhase: boolean = false;
+  showChangeMode: boolean = false;
   showModal: boolean = false;
   showSecurityModal: boolean = false;
   passwordVerified = false;
@@ -145,8 +151,12 @@ export class AuthorComponent implements OnInit, OnDestroy {
   editMode: boolean = false;
   modalProps: any = {};
   showBoostModalType: string = 'boost';
+  private followersCount = 5;
+  public followersList: Account[];
+  public hasMoreFollowers: boolean;
+  private stringToSign = '';
 
-  constructor(
+    constructor(
     private activatedRoute: ActivatedRoute,
     private router: Router,
     private uiNotificationService: UiNotificationService,
@@ -162,6 +172,7 @@ export class AuthorComponent implements OnInit, OnDestroy {
     private publicationService: PublicationService,
     public _clipboardService: ClipboardService,
     public translateService: TranslateService,
+    private oauthService: OauthService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
   }
@@ -205,8 +216,7 @@ export class AuthorComponent implements OnInit, OnDestroy {
             }
             return this.contentService.getContents(this.authorId, this.startFromUri, this.storiesDefaultCount, this.boostedStoriesCount);
           }),
-          takeUntil(this.unsubscribe$)
-        )
+          takeUntil(this.unsubscribe$))
         .subscribe((contents: any) => {
           this.publishedContent = this.publishedContent.concat(contents.data);
           this.seeMoreChecker = contents.more;
@@ -217,18 +227,13 @@ export class AuthorComponent implements OnInit, OnDestroy {
         }, error => this.errorService.handleError('loadAuthorData', error));
 
       this.accountService.followAuthorChanged
-        .pipe(
-          takeUntil(this.unsubscribe$)
-        )
+        .pipe(takeUntil(this.unsubscribe$))
         .subscribe(data => {
-          this.accountService.getAuthorByPublicKey(this.author.publicKey);
           this.canFollow = false;
         });
 
       this.errorService.errorEventEmiter
-        .pipe(
-          takeUntil(this.unsubscribe$)
-        )
+        .pipe(takeUntil(this.unsubscribe$))
         .subscribe((data: ErrorEvent) => {
           if (data.action === 'loadAuthorData') {
             this.router.navigate([`/page-not-found`]);
@@ -239,7 +244,9 @@ export class AuthorComponent implements OnInit, OnDestroy {
         }
         );
 
-      this.translateService.onLangChange.subscribe(lang => {
+      this.translateService.onLangChange
+        .pipe(takeUntil(this.unsubscribe$))
+        .subscribe(lang => {
         this.tabs = [
           {
             'value': '1',
@@ -263,6 +270,23 @@ export class AuthorComponent implements OnInit, OnDestroy {
           DeleteAllDrafts : this.translateService.instant('author.delete_all_drafts_question')
         };
       });
+
+      this.uiNotificationService.notificationsListenerDataChanged
+        .pipe(takeUntil(this.unsubscribe$))
+        .subscribe((notificationsListenerData: NotificationListener[]) => {
+          if (notificationsListenerData && notificationsListenerData.length) {
+            let updatedStoriesCount = 0;
+            notificationsListenerData.forEach((nextNotificationListener: NotificationListener) => {
+              if (nextNotificationListener.type == 'article_published') {
+                updatedStoriesCount++;
+              }
+            });
+
+            if (updatedStoriesCount > 0) {
+              this.refreshStories();
+            }
+          }
+        });
     }
   }
 
@@ -293,9 +317,7 @@ export class AuthorComponent implements OnInit, OnDestroy {
 
   loadCurrentBoostFee() {
     this.contentService.getFee()
-      .pipe(
-        takeUntil(this.unsubscribe$)
-      )
+      .pipe(takeUntil(this.unsubscribe$))
       .subscribe(feeData => {
         this.feeWhole = feeData.whole ? feeData.whole : 0;
         this.feeFraction = feeData.fraction ? feeData.fraction : 0;
@@ -308,6 +330,7 @@ export class AuthorComponent implements OnInit, OnDestroy {
   refreshStories() {
     this.startFromUri = null;
     this.contentService.getContents(this.authorId, this.startFromUri, this.storiesDefaultCount, this.boostedStoriesCount)
+      .pipe(takeUntil(this.unsubscribe$))
       .subscribe(contents => {
         this.publishedContent = contents.data;
         this.seeMoreChecker = contents.more;
@@ -321,7 +344,7 @@ export class AuthorComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe(boostData => {
         this.boostStates = boostData;
-      });
+    });
   }
 
   onBoostModal(data) {
@@ -373,8 +396,7 @@ export class AuthorComponent implements OnInit, OnDestroy {
     this.hideOverflow(this.showHistoryModal);
   }
 
-  @HostListener('document:keydown', ['$event']) onKeydownHandler(event: KeyboardEvent) {
-  }
+  @HostListener('document:keydown', ['$event']) onKeydownHandler(event: KeyboardEvent) {}
 
   @HostListener('window:resize', [])
   calculateTextareaHeight() {
@@ -528,6 +550,17 @@ export class AuthorComponent implements OnInit, OnDestroy {
       });
   }
 
+  showFollowersList() {
+    document.querySelector('body').classList.add('no-scroll');
+    this.accountService.getAuthorSubscribers(this.author.publicKey, this.followersCount, 0)
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe((data: any) => {
+        this.followersList = [...data.subscribers];
+        this.hasMoreFollowers = data.more;
+        this.showFollowersModal = true;
+      });
+  }
+
   getMyPublications() {
     this.publicationsList = [];
     this.publicationService.getMyPublications()
@@ -557,10 +590,6 @@ export class AuthorComponent implements OnInit, OnDestroy {
         }
         this.loading = false;
       });
-  }
-
-  historyClicked(uri) {
-    this.router.navigate([`/s/${uri}`]);
   }
 
   hideOverflow(elem) {
@@ -626,8 +655,7 @@ export class AuthorComponent implements OnInit, OnDestroy {
     } else { of([]); }
 
     contentObservable.pipe(
-      takeUntil(this.unsubscribe$)
-    )
+      takeUntil(this.unsubscribe$))
       .subscribe(
         (loadedData: any) => {
           if (type === LoadDataType.Stories) {
@@ -675,16 +703,11 @@ export class AuthorComponent implements OnInit, OnDestroy {
       of(this.translateService.instant('author.invalid_file_size'))
         .pipe(
           delay(3000),
-          takeUntil(this.unsubscribe$)
-        )
+          takeUntil(this.unsubscribe$))
         .subscribe(() => { });
       return;
     }
     return true;
-  }
-
-  getCurrentImage() {
-    return this.currentImage ? this.sanitizer.bypassSecurityTrustUrl(this.currentImage) : null;
   }
 
   onSubmit() {
@@ -710,6 +733,7 @@ export class AuthorComponent implements OnInit, OnDestroy {
     formData.append('listView', (this.listType == 'single') ? 'true' : '');
 
     this.accountService.updateAccount(formData)
+      .pipe(takeUntil(this.unsubscribe$))
       .subscribe(data => {
         this.publishedContent = this.publishedContent.map((content: Content) => {
           content.author.first_name = this.authorForm.controls['firstName'].value;
@@ -773,13 +797,25 @@ export class AuthorComponent implements OnInit, OnDestroy {
       this.passwordVerified = false;
       this.passError = '';
       this.password = '';
+      this.showPasswordModal = false;
+      this.showChangeMode = false;
+      this.showPhase = false;
+      this.showPrivateKey = false;
     }
     if (type == 1) {
       this.showPrivateKey = true;
       this.showPhase = false;
+      this.showChangeMode = false;
+      this.password = '';
     } else if (type == 2) {
       this.showPhase = true;
       this.showPrivateKey = false;
+      this.showChangeMode = false;
+      this.password = '';
+    } else if (type == 3) {
+      this.showPasswordModal = true;
+      this.showChangeMode = true;
+      this.showPhase = false;
     }
   }
 
@@ -815,10 +851,29 @@ export class AuthorComponent implements OnInit, OnDestroy {
     this.decryptBK(this.accountService.brainKeyEncrypted);
   }
 
+  changePasswordBK() {
+    this.changePasswordDecryptBK(this.accountService.brainKeyEncrypted);
+  }
+
   decryptBK(brainKeyEncrypted) {
     if (this.cryptService.checkPassword(brainKeyEncrypted, this.password)) {
       this.decryptedBrainKey = this.cryptService.getDecryptedBrainKey(brainKeyEncrypted, this.password);
       this.passwordVerified = true;
+    } else {
+      this.passError = this.translateService.instant('author.incorrect_password');
+      this.passwordVerified = false;
+    }
+  }
+
+  changePasswordDecryptBK(EncryptedBrainKey) {
+    if (this.cryptService.checkPassword(EncryptedBrainKey, this.password)) {
+      this.changeDecryptedBrainKey = this.cryptService.getDecryptedBrainKey(EncryptedBrainKey, this.password);
+      this.passwordVerified = true;
+      this.oauthService.recoverAuthenticate(this.changeDecryptedBrainKey)
+        .pipe(takeUntil(this.unsubscribe$))
+        .subscribe(authData => {
+          this.stringToSign = authData.stringToSign;
+        }, error => this.errorService.handleError('recover', error));
     } else {
       this.passError = this.translateService.instant('author.incorrect_password');
       this.passwordVerified = false;
@@ -850,11 +905,15 @@ export class AuthorComponent implements OnInit, OnDestroy {
       });
   }
 
+  closeFollowersModal() {
+    this.showFollowersModal = false;
+    this.followersList = [];
+    document.querySelector('body').classList.remove('no-scroll');
+  }
+
   follow() {
     this.accountService.follow(this.author.publicKey)
-      .pipe(
-        takeUntil(this.unsubscribe$)
-      )
+      .pipe(takeUntil(this.unsubscribe$))
       .subscribe((author: Account) => {
         this.author.subscribersCount++;
         this.contentService.updateSearchData = true;
@@ -868,9 +927,7 @@ export class AuthorComponent implements OnInit, OnDestroy {
       return false;
     }
     this.accountService.unfollow(this.author.publicKey)
-      .pipe(
-        takeUntil(this.unsubscribe$)
-      )
+      .pipe(takeUntil(this.unsubscribe$))
       .subscribe((author: Account) => {
         this.author.subscribersCount--;
         this.contentService.updateSearchData = true;
@@ -909,6 +966,8 @@ export class AuthorComponent implements OnInit, OnDestroy {
   }
 
   clearData() {
+    this.currentImage = null;
+    this.startFromUri = null;
     this.articlesLoaded = false;
     this.isCurrentUser = false;
     this.passwordVerified = false;
@@ -926,9 +985,31 @@ export class AuthorComponent implements OnInit, OnDestroy {
     this.animationAction = animate;
   }
 
+  closePasswordModal(e) {
+    if (e === 'close') {
+      this.showSecurityModal = false;
+      this.showPasswordModal = false;
+      this.password = '';
+      this.passwordVerified = false;
+      this.stringToSign = '';
+      this.changeDecryptedBrainKey = '';
+      this.decryptedBrainKey = '';
+    }
+  }
+
+  seeMoreFollowers(data: any) {
+    this.accountService.getAuthorSubscribers(this.author.publicKey, this.followersCount, this.followersList.length)
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe((data: any) => {
+        this.followersList = [...this.followersList, ...data.subscribers];
+        this.hasMoreFollowers = data.more;
+      });
+  }
+
   ngOnDestroy() {
     this.clearData();
     this.unsubscribe$.next();
     this.unsubscribe$.complete();
   }
+
 }

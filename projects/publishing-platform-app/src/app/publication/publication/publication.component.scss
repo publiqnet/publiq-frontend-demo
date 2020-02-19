@@ -540,7 +540,18 @@
         margin-bottom: 35px;
     }
     .datum {
-        margin: 14px 0;
+      margin: 14px 0;
+      &.followers-section {
+        &.pointer {
+          .datum__value {
+            color: $blue;
+            cursor: pointer;
+          }
+          .datum__descriptor {
+            cursor: pointer;
+          }
+        }
+      }
         &:not(:first-child) {
             margin-left: 25px;
             @include media-sm {

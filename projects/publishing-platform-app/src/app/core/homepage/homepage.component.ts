@@ -88,6 +88,11 @@ export class HomepageComponent implements OnInit, AfterViewInit, OnDestroy {
   private isLoggedIn: any = undefined;
   public loadingHighlightCount: Array<number> = new Array<number>(10);
   private loadingBlockCount: Array<number> = new Array<number>(6);
+  public languagesList = {
+    'en': 'EN',
+    'jp': 'JP',
+    'es': 'ES'
+  };
 
   private unsubscribe$ = new ReplaySubject<void>(1);
 
@@ -337,7 +342,7 @@ export class HomepageComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   highlightFinished(highlight) {
-    if (highlight === null) {
+    if (highlight === null || this.highlightsList.length === 1) {
       return this.selectedHighlight = null;
     }
 

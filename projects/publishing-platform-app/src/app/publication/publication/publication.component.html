@@ -132,7 +132,7 @@
         <span class="datum__value">{{stories.length}}</span>
         <span class="datum__descriptor">{{'publication.stories' | translate}}</span>
       </div>
-      <div class="datum">
+      <div class="datum followers-section" [ngClass]="((publication.following || isMyPublication) && publication.subscribersCount > 0) ? 'pointer' : null" (click)="((publication.following || isMyPublication) && publication.subscribersCount > 0) && showFollowersList()">
         <span class="datum__value">{{publication?.subscribersCount}}</span>
         <span class="datum__descriptor">{{'publication.followers' | translate}}</span>
       </div>
@@ -192,6 +192,7 @@
                                (publicationClick)="utilService.routerChangeHelper('publication',$event.slug)"
                                (tagClick)="onTagClick($event)"
                                [type]="'grid'"
+                               [canOnlyDelete]="accountService.loggedIn() && accountService.accountInfo.publicKey !== content.author.publicKey && isMyPublication"
                                [publicationList]="publicationsList"
                                [canEditContent]="accountService.loggedIn() && accountService.accountInfo.publicKey === content.author.publicKey"
                                (onTagItemSelect)="onRouteChange($event, content)"
@@ -205,6 +206,7 @@
                            (accountClick)="utilService.routerChangeHelper('account', $event.slug)"
                            (contentClick)="utilService.routerChangeHelper('content', $event)"
                            (publicationClick)="utilService.routerChangeHelper('publication', $event.slug)"
+                           [canOnlyDelete]="accountService.loggedIn() && accountService.accountInfo.publicKey !== content.author.publicKey && isMyPublication"
                            [canEditContent]="accountService.loggedIn() && accountService.accountInfo.publicKey === content.author.publicKey"
                            (onTagItemSelect)="onRouteChange($event, content)"
                            [publicationList]="publicationsList"
@@ -262,7 +264,8 @@
                         (follow)="followMember($event, member)"
                         (onNotificationClick)="removeFromPublication($event, member)"
                         [userData]="{ user: member,followMember: member.subscribed }"
-                        [userRoleData]="[{ 'value': 'publication.editor' | translate, 'slug': 2, 'status': member.memberStatus == 2 }, { 'value': 'publication.contributor' | translate, 'slug': 3, 'status': member.memberStatus == 3 }]"
+                        [userRoleData]="[{ 'value': 'publication.editor' | translate, 'slug': 2, 'status': member.memberStatus == 2 },
+                         { 'value': 'publication.contributor' | translate, 'slug': 3, 'status': member.memberStatus == 3 }]"
                         [isOwner]="member.memberStatus == 1"
                         [userNotificationData]="[{'text': ('publication.delete_from_publication' | translate),'value': 'delete'}]"
                         [hasEditPermission]="isMyPublication"
@@ -274,7 +277,8 @@
                         (follow)="followMember($event, member)"
                         (onNotificationClick)="removeFromPublication($event, member)"
                         [userData]="{ user: member,followMember: member.subscribed }"
-                        [userRoleData]="[{ 'value': 'publication.editor' | translate, 'slug': 2, 'status': member.memberStatus == 2 }, { 'value': 'publication.contributor' | translate, 'slug': 3, 'status': member.memberStatus == 3 }]"
+                        [userRoleData]="[{ 'value': 'publication.editor' | translate, 'slug': 2, 'status': member.memberStatus == 2 },
+                         { 'value': 'publication.contributor' | translate, 'slug': 3, 'status': member.memberStatus == 3 }]"
                         [userNotificationData]="[{'text':  ('publication.delete_from_publication' | translate),'value': 'delete'}]"
                         [hasEditPermission]="isMyPublication"
                         [showFollowButton]="currentUser.publicKey !== member.publicKey"></ui-user-single>
@@ -293,10 +297,10 @@
   </div>
   <div class="row">
     <div class="col-12 col-lg-8 offset-lg-2 requests" *ngIf="membersActiveTab === 'requests'">
-      <ui-user-single type="two-actions" [userData]="{user: user}" (onUserClick)="onUserClick($event)"
+      <ui-user-single *ngFor="let user of requests; let i=index"
+                      type="two-actions" [userData]="{user: user}" (onUserClick)="onUserClick($event)"
                       (onPrimaryClicked)="answerRequest($event, 'accept', i)"
                       (onSecondaryClicked)="answerRequest($event, 'reject', i)"
-                      *ngFor="let user of requests; let i=index"
                       [primaryButtonText]="'publication.confirm' | translate"
                       [secondaryButtonText]="'publication.reject' | translate"></ui-user-single>
       <div class="not-found local" *ngIf="!requests.length">
@@ -360,4 +364,15 @@
 
 <div *ngIf="showModal">
   <app-custom-dialog (closeConfirmModal)="doDelete($event)" [case]="'remove-publication'"></app-custom-dialog>
+</div>
+
+<div *ngIf="showFollowersModal">
+  <app-followers-modal
+    [followersData]="followersList"
+    [hasMore]="hasMoreFollowers"
+    [modalType]="'followers'"
+    (onCloseModal)="closeFollowersModal()"
+    [followersCount]="publication.subscribersCount"
+    (onSeeMore)="seeMoreFollowers($event)">
+  </app-followers-modal>
 </div>

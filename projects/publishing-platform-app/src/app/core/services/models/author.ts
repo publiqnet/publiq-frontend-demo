@@ -30,7 +30,7 @@ export class Author {
     thumbnail?: string;
     thumbnailHeight: number;
     thumbnailWidth: number;
-    subscribersCount: number | string;
+    subscribersCount:  number| string;
     constructor(options?: AuthorOptions) {
         for (const i in options) {
             if (options.hasOwnProperty(i)) {

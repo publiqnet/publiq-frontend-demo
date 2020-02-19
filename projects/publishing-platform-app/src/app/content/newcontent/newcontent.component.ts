@@ -1,11 +1,10 @@
 import { AfterViewInit, Component, ElementRef, HostListener, Inject, Input, NgZone, OnDestroy, OnInit, PLATFORM_ID, Renderer2, ViewChild } from '@angular/core';
-import { environment } from '../../../environments/environment';
 import { AccountService } from '../../core/services/account.service';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { ValidationService } from '../../core/validator/validator.service';
 import { TranslateService } from '@ngx-translate/core';
-import { forkJoin, of, ReplaySubject, Subject } from 'rxjs';
-import { debounceTime, delay, map, switchMap, takeUntil, tap } from 'rxjs/operators';
+import { BehaviorSubject, forkJoin, of, ReplaySubject, Subject } from 'rxjs';
+import { debounceTime, delay, map, switchMap, takeUntil } from 'rxjs/operators';
 import { ContentService } from '../../core/services/content.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DraftService } from '../../core/services/draft.service';
@@ -17,11 +16,6 @@ import { UtilService } from '../../core/services/util.service';
 import { UtilsService } from 'shared-lib';
 import { isPlatformBrowser } from '@angular/common';
 import { SharedDataService } from '../../core/services/shared-data.service';
-import { FroalaEditorCustomConfigs, froalaEvents, getImageSize, toggleImageSize, toggleImageSizeModifiers,
-  addCroppedImage, contentUrisChange } from '../froala-configs/froala-editor-custom-configs';
-import { ImageCroppedEvent } from 'ngx-image-cropper';
-
-declare const $: any;
 
 @Component({
   selector: 'app-newcontent',
@@ -29,31 +23,16 @@ declare const $: any;
   styleUrls: ['./newcontent.component.scss']
 })
 export class NewContentComponent implements OnInit, AfterViewInit, OnDestroy {
-  contentUrl = environment.backend + '/api/file/upload';
   showStoryForm: boolean = false;
   boostField: boolean = false;
+  whiteOverlay: boolean = false;
   contentUris = {};
   title: string;
-  content: string;
-  contentOptions: object;
+  content: string = '';
   tags: String[] = [];
   tag: string = '';
   tagSubject = new Subject<any>();
   tagError: boolean;
-  public boostTab = [
-    {
-      'value': '1',
-      'text': `1 ${this.translateService.instant('newcontent.day')}` // '1 Day'
-    },
-    {
-      'value': '3',
-      'text': `3 ${this.translateService.instant('newcontent.days')}` // '3 Days',
-    },
-    {
-      'value': '7',
-      'text': `7 ${this.translateService.instant('newcontent.days')}` // '7 Days',
-    }
-  ];
   public chosenPriceProgress: number = 0;
   public contentId: number;
   public contentForm: FormGroup;
@@ -87,23 +66,13 @@ export class NewContentComponent implements OnInit, AfterViewInit, OnDestroy {
   public remainingSuggestedTags: string[] = [];
   public contentLengthNotEnough: boolean = false;
   public isWhiteSpaceShown: boolean = false;
+  public editBoost: boolean = false;
   public chosenPrice: number = 0;
   public chosenDay: number;
-  public cursorHostElement: HTMLElement;
-  public showGallery = false;
-  // cropping part
-  public croppedImage: ImageCroppedEvent; // blob representation
-  public croppedOriginalImg: any; // jquery representation
-  public showCropModal: boolean = false;
-  public croppingImage: any; // blob representation
-  // ------
   private hasDraft = false;
   private uploadedContentUri: string;
-  private contentObject;
-  private editorContentInitObject;
-  private editorContentObject;
-  private tableEditPopup: boolean = false; // if true then we don't need table popup show event anymore
-  private quickInsertPopup: boolean = false; // if true then we don't need table popup show event anymore
+
+  private contentChangeObs$ = new Subject<any>();
   private unsubscribe$ = new ReplaySubject<void>(1);
   @Input() draft?: Draft;
   @Input('autoresize') maxHeight: number;
@@ -182,10 +151,7 @@ export class NewContentComponent implements OnInit, AfterViewInit, OnDestroy {
     this.contentUris = this.draft.contentUris ? this.draft.contentUris : {};
     this.draftId = this.draft.id;
 
-    if (this.editorContentObject) {
-      this.editorContentObject.html.set(this.content);
-      this.initSubmitFormView();
-    }
+    this.initSubmitFormView();
 
     if (this.draft['options']) {
       if (this.draft['options']['selectedCoverImageUri']) {
@@ -229,34 +195,19 @@ export class NewContentComponent implements OnInit, AfterViewInit, OnDestroy {
     this.chosenPrice = 0;
     this.chosenDay = 1;
     this.initSubmitFormView();
-    this.translateService.onLangChange.subscribe((lang) => {
-      this.boostTab = [
-        {
-          'value': '1',
-          'text': `1 ${this.translateService.instant('newcontent.day')}` // '1 Day'
-        },
-        {
-          'value': '3',
-          'text': `3 ${this.translateService.instant('newcontent.days')}` // '3 Days',
-        },
-        {
-          'value': '7',
-          'text': `7 ${this.translateService.instant('newcontent.days')}` // '7 Days',
-        }
-      ];
-      this.editorContentObject.$placeholder[0].textContent = this.translateService.instant('newcontent.write_something');
-    });
 
     this.stepperData = [
       {'value': this.translateService.instant('newcontent.preview'), 'slug': 'preview', 'status': false},
       {'value': this.translateService.instant('newcontent.boost'), 'slug': 'boost', 'status': true},
     ];
 
-    this.activatedRoute.queryParams.subscribe(params => {
-      if (params && params.publication) {
-        this.selectedPublication.value = params.publication;
-      }
-    });
+    this.activatedRoute.queryParams
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe(params => {
+        if (params && params.publication) {
+          this.selectedPublication.value = params.publication;
+        }
+      });
 
     this.publicationService.getMyPublications()
       .pipe(
@@ -264,7 +215,7 @@ export class NewContentComponent implements OnInit, AfterViewInit, OnDestroy {
           const publicationsList = [...publicationsData.membership, ...publicationsData.owned];
           return publicationsList;
         }),
-        takeUntil(this.unsubscribe$)
+        // takeUntil(this.unsubscribe$)
       )
       .subscribe(publicationsList => {
         if (publicationsList.length) {
@@ -299,235 +250,32 @@ export class NewContentComponent implements OnInit, AfterViewInit, OnDestroy {
         }
       });
 
-    this.contentOptions = {
-      key: environment.froala_editor_key,
-      keepFormatOnDelete: true,
-      toolbarInline: true,
-      toolbarButtons: ['bold', 'italic', 'title', 'paragraphFormat', 'insertLink', 'formatOL', 'formatUL', 'quote'],
-      language: (this.accountService.accountInfo && this.accountService.accountInfo.language == 'jp') ? 'ja' : 'en_us',
-      dragInline: false,
-      pastePlain: true,
-      imageInsertButtons: ['imageBack', '|', 'imageUpload', 'imageByURL'],
-      videoInsertButtons: ['videoByURL'],
-      videoEditButtons: [],
-      quickInsertButtons: ['quickImage', 'search', 'quickVideo'],
-      imageUpload: true,
-      imageUploadMethod: 'POST',
-      paragraphFormat: {
-        N: 'Normal',
-        H2: 'H2',
-        H3: 'H3',
-        H4: 'H4'
-      },
-      listAdvancedTypes: false,
-      linkText: false,
-      linkInsertButtons: ['linkBack'],
-      imageUploadURL: this.contentUrl,
-      videoAllowedTypes: ['mp4', 'webm', 'ogg'],
-      imageAllowedTypes: ['jpeg', 'jpg', 'png', 'gif'],
-      charCounterMax: 65535,
-      charCounterCount: false,
-      lineBreakerTags: ['table', 'hr', 'form'],
-      linkAlwaysBlank: true,
-      imageMaxSize: 5 * 1024 * 1024, // 5MB
-      pasteDeniedAttrs: ['class', 'id', 'style', 'srcset'],
-      imageResize: false,
-      imageEditButtons: ['gridsize', 'containersize', 'fullsize', 'imageCaption',  'imageCrop', 'imageRemove'],
-      imagePasteProcess: true,
-      imageOutputSize: true,
-      imageDefaultWidth: 0,
-      requestHeaders: {
-        'X-API-TOKEN': (this.accountService.accountInfo && this.accountService.accountInfo.token)
-          ? this.accountService.accountInfo.token
-          : ''
-      },
-      events: {
-        ...froalaEvents.call(this),
-        'froalaEditor.initialized': (e, editor) => {
-          const self = this;
-          editor.$el.on('DOMCharacterDataModified DOMNodeInserted', function (event) {
-            const $p = $(event.target).closest('p');
-
-            if ($(event.target).is('.fr-img-caption .fr-inner')) {
-              if (event.target.textContent.length === 1) {
-                const $img = $(event.target).prev(),
-                  $p = $img.closest('p');
-
-                $p.append($img).find('> span').remove();
-              }
-
-              return;
-            }
-
-            if ($(event.target).is('ol, ul')) {
-              $(event.target).removeAttr('style');
-            }
-
-            if ($p.is('.gridsize-image,.containersize-image,.fullsize-image,.defaultsize-image')) {
-              event.preventDefault();
-
-              if ($p.find('img').length === 0) {
-                $p.remove();
-                return;
-              }
-
-              $p.contents().filter(function () {
-                return this.nodeType === 3;
-              }).each(function () {
-                if (['%u200B', ''].indexOf(escape(this.textContent)) !== -1) {
-                  return;
-                }
-
-                const command = $(this).prev('img,span').length ? 'insertAfter' : 'insertBefore',
-                  $newP = $('<p></p>')[command]($p);
-
-                $newP.get(0).appendChild(this);
-                editor.selection.setAtEnd($newP.get(0));
-                editor.selection.restore();
-              });
-            }
-          });
-          editor.$el.on('click', 'img', function () {
-            // const image = new Image()
-            // image.onload = () => {
-            //   console.log(image);
-            // };
-            // image.src = this.src;
-            // self.utilService.getImageBlob(this.src).then((blob) => {
-            //   if (blob.type === 'image/gif') {
-            //     $('.fr-btn[data-cmd="imageCrop"]').addClass('fr-disabled size-disabled');
-            //   } else {
-            //     $('.fr-btn[data-cmd="imageCrop"]').removeClass('fr-disabled size-disabled');
-            //   }
-            // });
-            const parent = $(this).closest('p');
-            $('.active').removeClass('active');
-
-            if (parent.hasClass('containersize-image')) {
-              $('.fr-btn[data-cmd="containersize"] > svg > g').addClass('active');
-            } else if (parent.hasClass('fullsize-image')) {
-              $('.fr-btn[data-cmd="fullsize"] > svg > g').addClass('active');
-            } else if (parent.hasClass('gridsize-image')) {
-              $('.fr-btn[data-cmd="gridsize"] > svg > g').addClass('active');
-            }
-
-            if (!$(this).data('natural-width') || !$(this).data('natural-height')) {
-              getImageSize($(this).attr('src')).subscribe((dimensions: ({ width: number, height: number })) => {
-                $(this).attr('data-natural-width', dimensions.width);
-                $(this).attr('data-natural-height', dimensions.height);
-                toggleImageSizeModifiers(dimensions.width);
-              });
-            } else {
-              toggleImageSizeModifiers($(this).data('natural-width'));
-            }
-            if ($(this).attr('width') && $(this).attr('width') >= 870 && $(this).data('natural-width') === undefined) {
-              $(this).attr('data-size', 'gridsize');
-              toggleImageSize($(this).closest('p'), 'gridsize-image');
-
-              if ($('.active').length) {
-                $('.active').removeClass('active');
-              }
-              $('#icon-grid-1').addClass('active');
-
-              $(this).attr('width', $(this).width());
-              $(this).attr('height', $(this).height());
-              this.saveDraft(this.draftId);
-            }
-            $(editor.popups.get('image.edit')).addClass('image-edit-popup');
-          });
-          this.contentObject = e;
-          this.editorContentObject = editor;
-          if (this.draft) {
-            this.initDraftData();
-          }
-        },
-        'froalaEditor.popups.show.image.insert': function (e, editor) {
-          editor.popups
-            .get('image.insert')
-            .css({
-              zIndex: 9,
-              left: $('.fr-element > p:not([class*="-image"]):first').offset().left
-            });
-        },
-        'froalaEditor.popups.show.video.insert': function (e, editor) {
-          editor.popups
-            .get('video.insert')
-            .css({
-              zIndex: 9,
-              left: $('.fr-element > p:not([class*="-image"]):first').offset().left
-            });
-        },
-        'froalaEditor.html.set': function (e, editor) {
-          editor.events.trigger('charCounter.update');
-        },
-        'froalaEditor.image.beforeRemove': (e, editor, img) => {
-          $('.fr-image-resizer').remove();
-          if ( !img.closest('p').next('p').text() ) { img.closest('p').next('p').remove(); }
-          const imageUri = $(img).attr('data-uri');
-          if (this.coverImagesList[imageUri]) {
-            delete this.coverImagesList[imageUri];
-            this.selectedCoverImageUri = '';
-          }
-
-          if (this.editorContentObject) {
-            let deletedImageCount = 0;
-            const contentBlocks = this.editorContentObject.html.blocks();
-            contentBlocks.forEach((node) => {
-              const nodeHtml = $.trim(node.innerHTML);
-              if (nodeHtml.match(/<img/)) {
-                const outerText = node.outerHTML;
-                const regex = /<img[^>]*data-uri="([^"]*)"/g;
-                const regexData = regex.exec(outerText);
-                if (regexData && regexData.length > 1 && regexData[1] && imageUri == regexData[1]) {
-                  deletedImageCount++;
-                }
-              }
-            });
-            if (deletedImageCount == 1) {
-              delete this.contentUris[imageUri];
-            }
-          }
-        },
-        'froalaEditor.image.error': (e, editor, error) => {
-          if (error && error.code && error.message) {
-            this.uiNotificationService.error(this.translateService.instant('newcontent.error'), error.message);
-          }
-        },
-        'froalaEditor.video.inserted': function (e, editor, $video) {
-          $video.closest('p').find('br:last').remove();
-          $video.closest('p').after('<p data-empty="true"><br></p>');
-        },
-      }
-    };
-    FroalaEditorCustomConfigs.call(this);
   }
 
   initSubmitFormView() {
     this.submitError = false;
+    const fakeDom = new DOMParser().parseFromString(this.content, 'text/html');
+    const contentBlocks = fakeDom.children[0].children[1].children;
 
-    if (this.editorContentObject) {
-      const contentBlocks = this.editorContentObject.html.blocks();
-      contentBlocks.forEach((node) => {
-        const nodeHtml = $.trim(node.innerHTML);
-        if (nodeHtml.match(/<img/)) {
-          const outerText = node.outerHTML;
-          const regex = /<img[^>]*data-uri="([^"]*)"/g;
-          const regexData = regex.exec(outerText);
-          if (regexData && regexData.length > 1 && regexData[1]) {
-            const imgUri = regexData[1];
-            const imgSrc = this.contentUris[imgUri];
-            if (imgUri && imgSrc) {
-              this.coverImagesList[imgUri] = imgSrc;
-            }
+    for (let i = 0; i < contentBlocks.length; i++) {
+      const node = contentBlocks.item(i);
+      const nodeHtml = node.innerHTML.trim();
+      if (nodeHtml.match(/<img/)) {
+        const outerText = node.outerHTML;
+        const regex = /<img[^>]*data-uri="([^"]*)"/g;
+        const regexData = regex.exec(outerText);
+        if (regexData && regexData.length > 1 && regexData[1]) {
+          const imgUri = regexData[1];
+          const imgSrc = this.contentUris[imgUri];
+          if (imgUri && imgSrc) {
+            this.coverImagesList[imgUri] = imgSrc;
           }
         }
-      });
-
-      if (!this.selectedCoverImageUri && Object.keys(this.coverImagesList).length) {
-        this.selectedCoverImageUri = Object.keys(this.coverImagesList)[Object.keys(this.coverImagesList).length - 1];
       }
     }
-
+    if (!this.selectedCoverImageUri && Object.keys(this.coverImagesList).length) {
+      this.selectedCoverImageUri = Object.keys(this.coverImagesList)[Object.keys(this.coverImagesList).length - 1];
+    }
     this.currentContentData = {
       'author': {
         'slug': this.accountService.accountInfo.publicKey,
@@ -536,7 +284,7 @@ export class NewContentComponent implements OnInit, AfterViewInit, OnDestroy {
         'image': this.accountService.accountInfo.image
       },
       'published': Math.round(new Date().getTime() / 1000),
-      'title': this.contentForm ? this.contentForm.value.title : '',
+      'title': this.title,
       'tags': this.tags,
       'cover': {
         'url': !this.hideCover && this.selectedCoverImageUri && Object.keys(this.coverImagesList).length ? this.coverImagesList[this.selectedCoverImageUri] : '',
@@ -550,29 +298,8 @@ export class NewContentComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   initSubscribes() {
-    this.contentForm.valueChanges
-      .pipe(
-        tap(() => this.initSubmitFormView()),
-        debounceTime(2000),
-        map(() => {
-          if (!this.isSubmited) {
-            this.saveDraft(this.draftId);
-          }
-        }),
-        takeUntil(this.unsubscribe$)
-      )
-      .subscribe(() => {
-          if (this.contentForm.controls['title'].value && this.contentForm.controls['title'].value.trim() == '') {
-            this.contentForm.controls['title'].reset();
-          }
-        },
-        err => console.log(err)
-      );
-
     this.draftService.draftData$
-      .pipe(
-        takeUntil(this.unsubscribe$)
-      )
+      .pipe(takeUntil(this.unsubscribe$))
       .subscribe((draft) => {
         if (draft) {
           this.hasDraft = true;
@@ -582,9 +309,7 @@ export class NewContentComponent implements OnInit, AfterViewInit, OnDestroy {
       });
 
     this.tagSubject
-      .pipe(
-        takeUntil(this.unsubscribe$)
-      )
+      .pipe(takeUntil(this.unsubscribe$))
       .subscribe(
         tag => {
           if (typeof tag == 'string') {
@@ -594,11 +319,23 @@ export class NewContentComponent implements OnInit, AfterViewInit, OnDestroy {
       );
 
     this.contentService.publishArticleChanged$
-      .pipe(
-        takeUntil(this.unsubscribe$)
-      )
+      .pipe(takeUntil(this.unsubscribe$))
       .subscribe(event => {
         this.onShowStepForm(true);
+      });
+
+    this.contentChangeObs$
+      .pipe(
+        debounceTime(2000),
+        takeUntil(this.unsubscribe$)
+      )
+      .subscribe((data) => {
+        if (!this.isSubmited) {
+          this.saveDraft(this.draftId);
+        }
+        if (this.contentForm.controls['title'].value && this.contentForm.controls['title'].value.trim() == '') {
+          this.contentForm.controls['title'].reset();
+        }
       });
 
     this.maxBoostPrice = Math.floor(this.accountService.accountInfo.balance - this.currentBoostFee - this.currentFee);
@@ -606,8 +343,8 @@ export class NewContentComponent implements OnInit, AfterViewInit, OnDestroy {
 
   saveDraft(id = null) {
     const newDraft: any = {
-      title: this.contentForm.value.title || '',
-      content: this.editorContentObject.html.get() || '',
+      title: this.title || '',
+      content: this.content || '',
       publication: this.contentForm.value.publication,
       contentUris: this.contentUris,
       options: {
@@ -626,15 +363,8 @@ export class NewContentComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  initFroala($event) {
-    this.editorContentInitObject = $event;
-    this.editorContentInitObject.initialize();
-    setTimeout(() => {
-      this.editorContentObject.$placeholder[0].textContent = this.translateService.instant('newcontent.write_something');
-    }, 20);
-  }
-
   onShowStepForm(flag: boolean) {
+    this.contentForm.controls.content.setValue(this.content);
     if (!this.contentForm.value.content || UtilService.calculateContentLength(this.contentForm.value.content).length <= 20) {
       this.contentLengthNotEnough = !!this.contentForm.value.content;
       this.warningShown = true;
@@ -644,7 +374,7 @@ export class NewContentComponent implements OnInit, AfterViewInit, OnDestroy {
       }, 2000);
       return false;
     }
-
+    this.initSubmitFormView();
     if (flag && this.showStoryForm == true) {
       this.changeStep();
     } else {
@@ -655,11 +385,9 @@ export class NewContentComponent implements OnInit, AfterViewInit, OnDestroy {
 
     if (flag && this.submitStep == 1) {
       this.detectedLanguage = '';
-      const selectedText = this.editorContentObject.html.get().replace(/<\/?[^>]+(>|$)/g, '');
+      const selectedText = this.content.replace(/<\/?[^>]+(>|$)/g, '');
       this.contentService.detectLanguage(selectedText)
-        .pipe(
-          takeUntil(this.unsubscribe$)
-        )
+        .pipe(takeUntil(this.unsubscribe$))
         .subscribe(detectedLanguage => {
           this.detectedLanguage = (detectedLanguage && detectedLanguage.nativeName) ? detectedLanguage.nativeName : '';
           this.suggestedTags = (detectedLanguage && detectedLanguage.keywords && detectedLanguage.keywords.length) ? detectedLanguage.keywords.slice(0, 3) : [];
@@ -672,6 +400,13 @@ export class NewContentComponent implements OnInit, AfterViewInit, OnDestroy {
 
   onBoostToggle() {
     this.boostField = !this.boostField;
+    this.isWhiteSpaceShown = this.boostField;
+    if (!this.boostField) {
+      this.chosenPriceProgress = 0;
+    }
+  }
+
+  openModal() {
     this.isWhiteSpaceShown = this.boostField;
   }
 
@@ -688,11 +423,18 @@ export class NewContentComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  previousStep() {
+    this.submitStep = 1;
+    this.boostField = false;
+    this.editBoost = false;
+    this.chosenDay = 1;
+    this.chosenPrice = 0;
+    this.chosenPriceProgress = 0;
+  }
+
   loadCurrentFee() {
     this.contentService.getFee()
-      .pipe(
-        takeUntil(this.unsubscribe$)
-      )
+      .pipe(takeUntil(this.unsubscribe$))
       .subscribe(feeData => {
         this.feeWhole = feeData.whole ? feeData.whole : 0;
         this.feeFraction = feeData.fraction ? feeData.fraction : 0;
@@ -704,16 +446,17 @@ export class NewContentComponent implements OnInit, AfterViewInit, OnDestroy {
 
   calculateContentFee() {
     let signesCount = 1; // content unit sign fee
-    const contentBlocks = this.editorContentObject.html.blocks();
     let skipNext = false;
-
-    contentBlocks.forEach((node) => {
+    const fakeDom = new DOMParser().parseFromString(this.content, 'text/html');
+    const contentBlocks = fakeDom.children[0].children[1].children;
+    for (let i = 0; i < contentBlocks.length; i++) {
+      const node = contentBlocks.item(i);
       if (skipNext) {
         skipNext = false;
         return;
       }
-      const nodeHtml = $.trim(node.innerHTML);
-      if (['LI'].includes(node.tagName) || ['LI'].includes(node.parentNode.tagName) || ['BLOCKQUOTE'].includes(node.parentNode.tagName)) {
+      const nodeHtml = node.innerHTML.trim();
+      if (['LI'].includes(node.tagName) || ['LI'].includes(node.parentNode.nodeName) || ['BLOCKQUOTE'].includes(node.parentNode.nodeName)) {
         return;
       } else if (nodeHtml != '' && nodeHtml != '<br>') {
         if (['blockquote'].some(el => node.outerHTML.includes(el))) {
@@ -721,7 +464,7 @@ export class NewContentComponent implements OnInit, AfterViewInit, OnDestroy {
         }
         signesCount++;
       }
-    });
+    }
 
     if (this.additionalCoverImage && this.additionalCoverImage['uri'] && this.additionalCoverImage['uri'] == this.selectedCoverImageUri) {
       signesCount++;
@@ -804,7 +547,7 @@ export class NewContentComponent implements OnInit, AfterViewInit, OnDestroy {
       this.openNamePopup = true;
       return;
     }
-    if (!UtilService.calculateContentLength(this.contentForm.value.content)) {
+    if (!UtilService.calculateContentLength(this.content)) {
       this.uiNotificationService.error(this.translateService.instant('newcontent.error'), this.translateService.instant('newcontent.content_empty'));
       return false;
     } else if (!UtilService.calculateContentLength(this.contentForm.value.title)) {
@@ -812,28 +555,16 @@ export class NewContentComponent implements OnInit, AfterViewInit, OnDestroy {
       return false;
     }
     this.loading = true;
-    const title = this.contentForm.value.title.trim();
     const password = this.contentForm.value.password;
-    const contentTitle = (title) ? `<h1>${title}</h1>` : '';
+    const contentTitle = (this.title) ? `<h1>${this.title.trim()}</h1>` : '';
     let uploadedContentHtml = '';
-    const contentBlocks = this.editorContentObject.html.blocks();
     const calls = [];
-    let skipNext = false;
-
-    contentBlocks.forEach((node) => {
-      if (skipNext) {
-        skipNext = false;
-        return;
-      }
-      const nodeHtml = $.trim(node.innerHTML);
-      if (['LI'].includes(node.tagName) || ['LI'].includes(node.parentNode.tagName) || ['BLOCKQUOTE'].includes(node.parentNode.tagName)) {
-        return;
-      } else if ((node.outerHTML.match(/<(tr|thead|th|td|tbody|tfoot)/)) && !node.outerHTML.match(/<table/)) {
-        return;
-      } else if (nodeHtml != '' && nodeHtml != '<br>' && !nodeHtml.match(/<img/)) {
-        if (['blockquote'].some(el => node.outerHTML.includes(el))) {
-          skipNext = true;
-        }
+    const fakeDom = new DOMParser().parseFromString(this.content, 'text/html');
+    const contentBlocks = fakeDom.children[0].children[1].children;
+    for (let i = 0; i < contentBlocks.length; i++) {
+      const node = contentBlocks.item(i);
+      const nodeHtml = node.tagName === 'P' ? node.textContent.trim() : node.innerHTML.trim();
+      if (nodeHtml != '' && nodeHtml != '<br>' && !nodeHtml.match(/<img/)) {
         calls.push(this.contentService.uploadTextFiles(node.outerHTML));
       } else if (nodeHtml.match(/<img/)) {
         let outerText = node.outerHTML;
@@ -850,7 +581,7 @@ export class NewContentComponent implements OnInit, AfterViewInit, OnDestroy {
       } else {
         calls.push(of(node.outerHTML));
       }
-    });
+    }
 
     forkJoin(calls).subscribe((data: any) => {
         if (data.length) {
@@ -871,7 +602,7 @@ export class NewContentComponent implements OnInit, AfterViewInit, OnDestroy {
           contentData = `${contentCover} ${contentTitle} ${uploadedContentHtml}`;
         }
 
-        this.contentForm.value.content = this.contentForm.value.content.replace(/contenteditable="[^"]*"/g, '');
+        this.contentForm.controls.content.setValue(this.contentForm.value.content.replace(/contenteditable="[^"]*"/g, ''));
 
         if (Object.keys(this.contentUris).length) {
           this.contentService.signFiles(Object.keys(this.contentUris), this.feeWhole, this.feeFraction, this.currentTime, this.draftId, password)
@@ -986,7 +717,7 @@ export class NewContentComponent implements OnInit, AfterViewInit, OnDestroy {
       this.currentContentData['cover'] = {
         'url': this.coverImagesList[this.selectedCoverImageUri]
       };
-      contentUrisChange.call(this);
+      this.contentUrisChange();
       this.saveDraft(this.draftId);
     }
     this.calculateContentFee();
@@ -994,6 +725,12 @@ export class NewContentComponent implements OnInit, AfterViewInit, OnDestroy {
 
   hasCoversList() {
     return Object.keys(this.coverImagesList).length > 1;
+  }
+
+  confirmBoostModal() {
+    this.isWhiteSpaceShown = false;
+    this.editBoost = true;
+    this.whiteOverlay = false;
   }
 
   uploadCover(event) {
@@ -1080,7 +817,7 @@ export class NewContentComponent implements OnInit, AfterViewInit, OnDestroy {
       };
     }
     this.hideCover = !this.hideCover;
-    contentUrisChange.call(this);
+    this.contentUrisChange();
     this.saveDraft(this.draftId);
   }
 
@@ -1089,24 +826,64 @@ export class NewContentComponent implements OnInit, AfterViewInit, OnDestroy {
     this.chosenDay = 1;
     this.chosenPrice = 0;
     this.isWhiteSpaceShown = false;
+    this.editBoost = false;
+    this.chosenPriceProgress = 0;
   }
 
-  insertImage(options) {
-    this.showGallery = false;
-    this.editorContentObject.selection.setAtStart(this.cursorHostElement);
-    this.editorContentObject.selection.restore();
-    this.editorContentObject.image.insert(options.url, options.sanitize, options.data, options.existingImage, options.response);
+  onImageDelete(data) {
+    console.log('delete ', data);
+    const image = data.name ? data : data.img;
+    const imageUri = image._attrs.get('data-uri');
+    delete this.coverImagesList[imageUri];
+    this.selectedCoverImageUri = '';
+    let deletedImageCount = 0;
+    const fakeDom = new DOMParser().parseFromString(this.content, 'text/html');
+    const contentBlocks = fakeDom.children[0].children[1].children;
+    for (let i = 0; i < contentBlocks.length; i++) {
+      const node = contentBlocks.item(i);
+      const nodeHtml = node.innerHTML.trim();
+      if (nodeHtml.match(/<img/)) {
+        const outerText = node.outerHTML;
+        const regex = /<img[^>]*data-uri="([^"]*)"/g;
+        const regexData = regex.exec(outerText);
+        if (regexData && regexData.length > 1 && regexData[1] && imageUri == regexData[1]) {
+          deletedImageCount++;
+        }
+      }
+    }
+    if (deletedImageCount == 1) {
+      delete this.contentUris[imageUri];
+    }
   }
 
-  cancelCrop() {
-    this.croppingImage = null;
-    this.showCropModal = false;
-    // document.querySelector('html').classList.remove('overflow-hidden');
+  onImageInsert(responseData) {
+    console.log('insert ', responseData);
+    if (responseData) {
+      this.contentUris[responseData.uri] = responseData.link.replace(/&amp;/g, '&');
+      this.selectedCoverImageUri = responseData.uri;
+      this.contentUrisChange();
+    }
   }
 
-  addCroppedImage(event: ImageCroppedEvent) {
-    this.croppedImage = event;
-    addCroppedImage.call(this);
+  onEditorReady(editor) {
+    if (this.draft) {
+      this.initDraftData();
+    }
+  }
+
+  onContentChange(content?: string) {
+    this.content = content ? content : this.content;
+    this.contentForm.controls['title'].setValue(this.title);
+    this.contentForm.controls['content'].setValue(this.content);
+    this.contentChangeObs$.next(content ? content : '');
+  }
+
+  contentUrisChange() {
+    if (this.additionalCoverImage['uri'] && this.contentUris[this.additionalCoverImage['uri']] && (this.selectedCoverImageUri != this.additionalCoverImage['uri'] || this.hideCover)) {
+      delete this.contentUris[this.additionalCoverImage['uri']];
+    } else if (!this.contentUris[this.selectedCoverImageUri]) {
+      this.contentUris[this.selectedCoverImageUri] = this.coverImagesList[this.selectedCoverImageUri];
+    }
   }
 
   ngOnDestroy() {

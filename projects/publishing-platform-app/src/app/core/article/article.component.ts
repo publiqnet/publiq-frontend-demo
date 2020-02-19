@@ -71,20 +71,22 @@ export class ArticleComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     this.activatedRoute.params
       .pipe(
-        takeUntil(this.unsubscribe$)
-      )
+        takeUntil(this.unsubscribe$))
       .subscribe((params: any) => {
         this.firstArticleUri = params.uri;
         this.currentUri = params.uri;
         if (isPlatformServer(this.platformId)) {
           this.contentService.getContentSeoByUri(params.uri)
+            .pipe(takeUntil(this.unsubscribe$))
             .subscribe((data: any) => {
               this.seoData = data;
               this.updateSeoTags(data);
             });
         } else {
           Fingerprint2.get({}, (components) => {
-            const fingerprint = Fingerprint2.x64hash128(components.map(function (component) { return component.value; }).join(''), 31).trim();
+            const fingerprint = Fingerprint2.x64hash128(components.map(function (component) {
+              return component.value;
+            }).join(''), 31).trim();
             this.fingerprint = fingerprint;
             this.getArticleData(params.uri, true);
           });
@@ -96,32 +98,29 @@ export class ArticleComponent implements OnInit, AfterViewInit, OnDestroy {
     this.accountService.followAuthorChanged
       .pipe(
         filter((data) => data.from === 'header'),
-        takeUntil(this.unsubscribe$)
-      )
+        takeUntil(this.unsubscribe$))
       .subscribe(data => {
         this.toggleStatus(data);
         this.cdr.detectChanges();
-    });
+      });
 
     interval(100).pipe(
       tap(() => {
         if (this.content) {
           this.content.nativeElement.addEventListener('load', (event) => {
-            let uri;
-            if (event.target && event.target.dataset && event.target.dataset.uri) {
-              uri = event.target.dataset.uri;
-            } else if (event.path && event.path[0]) {
-              uri = event.path[0]['dataset']['uri'];
-            } else {
-              return false;
+            if (event.target && event.target.nodeName === 'IMG') {
+              const container: HTMLDivElement = this.renderer.parentNode(event.target);
+              if (container.nodeName !== 'FIGURE') {
+                return;
+              }
+              const skltn = container.querySelector('div');
+              if (skltn) {
+                this.renderer.setStyle(skltn, 'display', 'none');
+              }
+              this.renderer.removeChild(container, container.querySelector('div'));
+              this.renderer.setStyle(container.querySelector('img'), 'display', 'block');
+              this.cdr.detectChanges();
             }
-            if (!uri) { return; }
-
-            const containerDiv: HTMLDivElement = this.renderer.parentNode(this.document.getElementById(uri));
-            this.renderer.setStyle(this.document.getElementById(uri), 'display', 'none');
-            this.renderer.removeChild(containerDiv, this.document.getElementById(uri));
-            this.renderer.setStyle(containerDiv && containerDiv.firstChild, 'display', 'block');
-            this.cdr.detectChanges();
           }, true);
 
           this.content.nativeElement.addEventListener('error', (event) => {
@@ -131,7 +130,8 @@ export class ArticleComponent implements OnInit, AfterViewInit, OnDestroy {
         }
       }),
       takeWhile(() => !this.content)
-    ).subscribe();
+    ).pipe(takeUntil(this.unsubscribe$))
+      .subscribe();
 
   }
 
@@ -139,48 +139,58 @@ export class ArticleComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!uri) {
       return;
     }
-    this.contentService.getContentByUri(uri, this.fingerprint).subscribe((data: any) => {
-      if (data.status === 'pending') {
-        this.router.navigate([`/page-not-found`]);
-        return;
-      }
-      this.loadingArticle = false;
-      if (data.files && data.files.length) {
-        this.addSkeleton(data);
-        let loadedFilesCount: number = 0;
-        data.files.forEach((file) => {
-          if (file.mimeType == 'text/html') {
-            this.contentService.getFileContentFromUrl(file.url)
-            .subscribe(
-            fileText => {
+    this.contentService.getContentByUri(uri, this.fingerprint)
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe((data: any) => {
+        if (data.status === 'pending') {
+          this.router.navigate([`/page-not-found`]);
+          return;
+        }
+        this.loadingArticle = false;
+        if (data.files && data.files.length) {
+          data.text = this.addSkeleton(data);
+          let loadedFilesCount: number = 0;
+          const fakeDom = this.utilService.htmlFromString(data.text, true) as Document;
+          data.files.forEach((file) => {
+            if (file.mimeType == 'text/html') {
+              this.contentService.getFileContentFromUrl(file.url)
+                .pipe(takeUntil(this.unsubscribe$))
+                .subscribe(
+                  fileText => {
+                    loadedFilesCount++;
+                    if (loadedFilesCount == data.files.length) {
+                      this.filesLoaded(data, init, uri);
+                    }
+                    const childs = fakeDom.querySelectorAll(`[data-id='${file.uri}']`);
+                    childs.forEach((child) => {
+                      const element = (this.utilService.htmlFromString(fileText) as HTMLCollection).item(0);
+                      fakeDom.body.replaceChild(element, child);
+                    });
+                    data.text = fakeDom.children[0].children[1].innerHTML;
+                  },
+                  error => {
+                    if (error.url === file.url) {
+                      const skeletons = fakeDom.querySelectorAll(`[data-id='${file.uri}']`);
+                      this.textSkeletonError(skeletons, file.uri);
+                      data.text = fakeDom.children[0].children[1].innerHTML;
+                      loadedFilesCount++;
+                    }
+                    if (loadedFilesCount == data.files.length) {
+                      this.filesLoaded(data, init, uri);
+                    }
+                  });
+            } else {
               loadedFilesCount++;
               if (loadedFilesCount == data.files.length) {
                 this.filesLoaded(data, init, uri);
               }
-              const skeletonRegExp = RegExp(`<div id="${file.uri}".*?><\/div>`, 'g');
-              data.text = data.text.split(skeletonRegExp).join(fileText);
-            },
-            error => {
-              if (error.url === file.url) {
-                data.text = data.text.split(RegExp(`<div id="${file.uri}".*?><\/div>`, `g`) ).join(this.textSkeletonError(file['uri']));
-                loadedFilesCount++;
-              }
-              if (loadedFilesCount == data.files.length) {
-                this.filesLoaded(data, init, uri);
-              }
-            });
-          } else {
-            loadedFilesCount++;
-            if (loadedFilesCount == data.files.length) {
-              this.filesLoaded(data, init, uri);
             }
-          }
-        });
-      } else {
-        this.addSkeleton(data);
-        this.filesLoaded(data, init, uri);
-      }
-    });
+          });
+        } else {
+          this.addSkeleton(data);
+          this.filesLoaded(data, init, uri);
+        }
+      });
   }
 
   filesLoaded(data, init, uri) {
@@ -220,8 +230,7 @@ export class ArticleComponent implements OnInit, AfterViewInit, OnDestroy {
       this.toggleStatus({uri: uri, following: true});
       this.accountService.follow(author.publicKey)
         .pipe(
-          takeUntil(this.unsubscribe$)
-        )
+          takeUntil(this.unsubscribe$))
         .subscribe((_author: Account) => {
           this.contentService.updateSearchData = true;
           this.accountService.followAuthorChanged.next({from: 'article', uri: uri, following: true});
@@ -235,8 +244,7 @@ export class ArticleComponent implements OnInit, AfterViewInit, OnDestroy {
       this.toggleStatus({uri: uri, following: false});
       this.accountService.unfollow(author.publicKey)
         .pipe(
-          takeUntil(this.unsubscribe$)
-        )
+          takeUntil(this.unsubscribe$))
         .subscribe((_author: Account) => {
           this.contentService.updateSearchData = true;
           this.accountService.followAuthorChanged.next({from: 'article', uri: uri, following: false});
@@ -331,52 +339,110 @@ export class ArticleComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   };
 
-  private addSkeleton (data: Content) {
-    const imgHtmlTexts: Array<string> = data.text.match(/<img.*?[\/]?>/g) || []; // replacing contents img parts
-    if (imgHtmlTexts.length) {
-      imgHtmlTexts.forEach((imgHtmlText, index) => {
-        if (imgHtmlText && imgHtmlText.match(/data-uri="(.*?)"/) && data.text.includes(imgHtmlText)) {
-          let uri = imgHtmlText.match(/data-uri="(.*?)"/)[1];
-          uri = uri + `__index_${index}`;
-          const width = imgHtmlText.match(/width="(.*?)"/);
-          const height = imgHtmlText.match(/height="(.*?)"/);
-          const size = imgHtmlText.match(/data-size="(.*?)"/);
-          const imgHtmlText1 = imgHtmlText.replace(/data-uri="(.*?)"/, `data-uri="${uri}" style="display: none;"`);
-          let skeletonDiv = '';
-          if ((width && width[1]) && (height && height[1])) {
-            // tslint:disable-next-line:max-line-length
-             skeletonDiv = `<div class="image-wrapper ${(size && size[1]) ? size[1] + '-image' : 'defaultsize-image' }">${imgHtmlText1}<div id="${uri}" class="img-skeleton${+(width[1]) <= 560 ? ' img-skeleton--small' : ''}" style="width: ${width[1]}px;"><i class="icon-picture"></i><div style="padding-top: ${+(height[1]) / +(width[1]) * 100}%"></div></div></div>`;
-          } else {
-             skeletonDiv = `<div class="image-wrapper ${(size && size[1]) ? size[1] + '-image' : 'defaultsize-image' }">${imgHtmlText1}
-            <div id="${uri}" class="img-skeleton" style="width: 100%; padding-top: 160px;"><i class="icon-picture"></i></div></div>`;
-          }
-          data.text = data.text.replace(imgHtmlText, skeletonDiv);
-        }
-      });
+  private addSkeleton(data: Content) {
+    const fakeDom = new DOMParser().parseFromString(data.text, 'text/html');
+    if (!fakeDom) {
+      return;
     }
-    data.text = data.text.replace(`contenteditable="true"`, 'contenteditable="false"');
-    if (!data.files) { return; }
-    data.files.forEach((file) => { // replacing contents text part
-      if (file['mimeType'] === 'text/html') {
-        const skeletonDiv = `<div id="${file['uri']}" style="width: ${this.utilService.getRandomInt(70, 100) + '%'}" class="content-skeleton"></div>`;
-        data.text = data.text.split(file['uri']).join(skeletonDiv);
+    const contentBlocks = fakeDom.children[0].children[1].childNodes;
+
+    for (let i = 0; i < contentBlocks.length; i++) {
+      const node: Node = contentBlocks[i];
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        const imgElement = (node as HTMLElement).querySelector('img');
+        let figure;
+        if (node['tagName'] === 'P' && imgElement) {
+          figure = document.createElement('figure');
+          figure.innerHTML = imgElement.outerHTML;
+          figure.className = (node as HTMLElement).className;
+          const caption = (node as HTMLElement).getElementsByClassName('fr-inner');
+          if (caption.length) {
+            const figCaption = this.document.createElement('figcaption');
+            figCaption.innerHTML = caption.item(0).innerHTML;
+            figure.appendChild(figCaption);
+          }
+          node.parentNode.replaceChild(figure, node);
+        }
+        if (imgElement) {
+          const width = imgElement.width;
+          const naturalWidth = +imgElement.getAttribute('data-natural-width');
+          const height = imgElement.height;
+          const naturalHeight = +imgElement.getAttribute('data-natural-height');
+          const imageSkeleton = this.createSkeleton('image', width, height, naturalWidth, naturalHeight);
+          const uri = `${imgElement.getAttribute('data-uri')}__index_${i}`;
+          imageSkeleton.setAttribute('id', uri);
+          const element = figure || node;
+          element.insertBefore(imageSkeleton, element.lastChild);
+          (element as HTMLElement).querySelector('img').setAttribute('data-uri', uri);
+          (element as HTMLElement).querySelector('img').style.display = 'none';
+        }
+      } else {
+        if (!data.files) {
+          return;
+        }
+        const uris = node.textContent.split(' ');
+        uris.forEach((uri) => { // replacing contents text part
+          const index = data.files.findIndex((file) => file['uri'] === uri);
+          if (index !== -1 && data.files[index]['mimeType'] === 'text/html') {
+            const textSkeleton = this.createSkeleton('text');
+            textSkeleton.setAttribute('data-id', data.files[index]['uri']);
+            node.parentNode.insertBefore(textSkeleton, node);
+          }
+        });
+        node.parentNode.removeChild(node);
       }
-    });
+    }
+
+    return fakeDom.children[0].children[1].innerHTML;
   }
 
-  private textSkeletonError(uri: string) {
-    return `<div id="${uri}" style="width : ${this.utilService.getRandomInt(93, 100) + '%'}" class="content-skeleton content-warning">
-              <span>The file is not available:</span>
-              <span class="uri">${uri}</span>
-            </div>`;
+  private createSkeleton(type: string, width?, height?, naturalWidth?, naturalHeight?): HTMLElement {
+    let skeleton, innerSkeleton;
+    if (type === 'image') {
+      skeleton = this.document.createElement('div');
+      innerSkeleton = this.document.createElement('div');
+      skeleton.classList.add('img-skeleton');
+      if (naturalWidth && naturalHeight) {
+        skeleton.style.width = '100%';
+        innerSkeleton.style.paddingTop = `${naturalHeight / naturalHeight * 100}%`;
+      } else {
+        skeleton.style.width = width ? `${width}px` : '870px';
+        skeleton.classList.add('img-skeleton--grid');
+        if (width < 560) {
+          skeleton.classList.add('img-skeleton--small');
+        }
+        innerSkeleton.style.paddingTop = width && height ? `${height / width * 100}%` : '33.33%';
+      }
+      const icon = this.document.createElement('i');
+      icon.classList.add('icon-picture');
+      skeleton.appendChild(icon);
+      skeleton.appendChild(innerSkeleton);
+    } else {
+      skeleton = this.document.createElement('div');
+      skeleton.classList.add('content-skeleton');
+      skeleton.style.width = this.utilService.getRandomInt(70, 100) + '%';
+    }
+
+    return skeleton;
+  }
+
+  private textSkeletonError(skeletons: NodeListOf<Element>, uri: string) {
+    skeletons.forEach((skeleton) => {
+      skeleton.classList.add('content-warning');
+      skeleton.appendChild((this.utilService.htmlFromString(`<span>The file is not available:</span>`) as HTMLCollection).item(0));
+      skeleton.appendChild((this.utilService.htmlFromString(`<span class="uri">${uri}</span>`) as HTMLCollection).item(0));
+    });
   }
 
   private renderImgErrors(event?, imgUri?: string) {
     const fullUri = imgUri ? imgUri : event.target['dataset']['uri'];
+    if (!fullUri) {
+      return;
+    }
     const uri = fullUri.split(/__index_(\d)/)[0];
 
     const element: HTMLElement = this.renderer.parentNode(this.document.getElementById(fullUri));
-    this.renderer.removeChild(element, element.firstChild);
+    this.renderer.removeChild(element, element.querySelector('img'));
     if (imgUri && imgUri.split('-cover').length > 1) {
       this.renderer.removeChild(element, element.firstChild);
     }
