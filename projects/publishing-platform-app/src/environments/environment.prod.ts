@@ -2,6 +2,7 @@ export const environment = {
   production: true,
   backend: 'https://mainnet-state.publiq.network',
   mercure: 'https://mercure.publiq.network',
+  useMercure: true,
   oauth_backend: 'https://oauth.publiq.network',
   froala_editor_key: '1D4I4C10B6eF5C4C3E3E2C2A5D6A3A1xusedc1D-17C6F-11dzj==',
   google_analytics_id: 'NUA-99830524-3',

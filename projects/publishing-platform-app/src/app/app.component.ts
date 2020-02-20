@@ -15,6 +15,7 @@ import { ContentService } from './core/services/content.service';
 import { PublicationService } from './core/services/publication.service';
 import { Account } from './core/services/models/account';
 import { UiNotificationService } from './core/services/ui-notification.service';
+import { environment } from '../environments/environment';
 
 @Component({
   selector: 'app-root',
@@ -57,20 +58,22 @@ export class AppComponent implements OnInit, OnDestroy {
       }
 
       this.accountService.accountUpdated$
-      .pipe(
-        filter((account: any) => account),
-        takeUntil(this.unsubscribe$))
-      .subscribe((account: Account) => {
-        this.uiNotificationService.initNotificationListener();
-        if (account && account.language) {
-          this.updateLanguage(account.language);
-        }
-      });
+        .pipe(
+          filter((account: any) => account),
+          takeUntil(this.unsubscribe$))
+        .subscribe((account: Account) => {
+          if (environment.useMercure) {
+            this.uiNotificationService.initNotificationListener();
+          }
+          if (account && account.language) {
+            this.updateLanguage(account.language);
+          }
+        });
 
       this.accountService.logoutDataChanged
-      .pipe(
-        takeUntil(this.unsubscribe$))
-      .subscribe(() => this.publicationService.reset());
+        .pipe(
+          takeUntil(this.unsubscribe$))
+        .subscribe(() => this.publicationService.reset());
 
       this.translateService.use((typeof window !== 'undefined' && localStorage) ? (localStorage.getItem('lang') || 'en') : 'en');
       this.translateService.getTranslation(this.translateService.currentLang)

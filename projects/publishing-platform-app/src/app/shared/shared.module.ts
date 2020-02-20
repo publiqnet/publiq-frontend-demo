@@ -64,6 +64,7 @@ import { CustomDialogComponent } from './custom-dialog/custom-dialog.component';
 import { ClickOutsideDirective } from './directives/click-outside.directive';
 import { LocalizedDatePipe } from '../core/pipes/localized-date.pipe';
 import localeJa from '@angular/common/locales/ja';
+import localeEs from '@angular/common/locales/es';
 import { TransformContentPipe } from './pipes/transform-content.pipe';
 import { CropImageComponent } from './crop-image/crop-image.component';
 import { ImageCropperModule } from 'ngx-image-cropper';
@@ -74,7 +75,7 @@ import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { GoogleAdsenseComponent } from './google-adsense/google-adsense.component';
 
 registerLocaleData(localeJa);
-
+registerLocaleData(localeEs);
 
 HttpHelperService.setBaseHeaders([
   {
