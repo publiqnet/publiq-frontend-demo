@@ -100,6 +100,10 @@ export class UiNotificationService {
           this.notificationsListenerDataChanged.next(JSON.parse(event.data).map(nextData => new NotificationListener(nextData)));
         }
       };
+
+      eventSource.onerror = event => {
+        console.log('Mercure Connection Error');
+      };
     }
   }
 

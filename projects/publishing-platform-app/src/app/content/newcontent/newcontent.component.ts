@@ -4,7 +4,7 @@ import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms'
 import { ValidationService } from '../../core/validator/validator.service';
 import { TranslateService } from '@ngx-translate/core';
 import { BehaviorSubject, forkJoin, of, ReplaySubject, Subject } from 'rxjs';
-import { debounceTime, delay, map, switchMap, takeUntil } from 'rxjs/operators';
+import { debounceTime, delay, map, switchMap, takeUntil, tap } from 'rxjs/operators';
 import { ContentService } from '../../core/services/content.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DraftService } from '../../core/services/draft.service';
@@ -72,7 +72,6 @@ export class NewContentComponent implements OnInit, AfterViewInit, OnDestroy {
   private hasDraft = false;
   private uploadedContentUri: string;
 
-  private contentChangeObs$ = new Subject<any>();
   private unsubscribe$ = new ReplaySubject<void>(1);
   @Input() draft?: Draft;
   @Input('autoresize') maxHeight: number;
@@ -298,6 +297,24 @@ export class NewContentComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   initSubscribes() {
+    this.contentForm.valueChanges
+      .pipe(
+        tap(() => this.initSubmitFormView()),
+        debounceTime(2000),
+        map(() => {
+          if (!this.isSubmited) {
+            this.saveDraft(this.draftId);
+          }
+        }),
+        takeUntil(this.unsubscribe$))
+      .subscribe(() => {
+          if (this.contentForm.controls['title'].value && this.contentForm.controls['title'].value.trim() == '') {
+            this.contentForm.controls['title'].reset();
+          }
+        },
+        err => console.log(err)
+      );
+
     this.draftService.draftData$
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe((draft) => {
@@ -322,20 +339,6 @@ export class NewContentComponent implements OnInit, AfterViewInit, OnDestroy {
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe(event => {
         this.onShowStepForm(true);
-      });
-
-    this.contentChangeObs$
-      .pipe(
-        debounceTime(2000),
-        takeUntil(this.unsubscribe$)
-      )
-      .subscribe((data) => {
-        if (!this.isSubmited) {
-          this.saveDraft(this.draftId);
-        }
-        if (this.contentForm.controls['title'].value && this.contentForm.controls['title'].value.trim() == '') {
-          this.contentForm.controls['title'].reset();
-        }
       });
 
     this.maxBoostPrice = Math.floor(this.accountService.accountInfo.balance - this.currentBoostFee - this.currentFee);
@@ -873,9 +876,7 @@ export class NewContentComponent implements OnInit, AfterViewInit, OnDestroy {
 
   onContentChange(content?: string) {
     this.content = content ? content : this.content;
-    this.contentForm.controls['title'].setValue(this.title);
     this.contentForm.controls['content'].setValue(this.content);
-    this.contentChangeObs$.next(content ? content : '');
   }
 
   contentUrisChange() {

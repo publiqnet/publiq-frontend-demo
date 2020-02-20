@@ -71,7 +71,6 @@ export class EditContentComponent implements OnInit, OnDestroy {
   public isWhiteSpaceShown: boolean = false;
   private uploadedContentUri: string;
   private hasDraft = false;
-  private contentChangeObs$ = new Subject<any>();
   private unsubscribe$ = new ReplaySubject<void>(1);
 
   @ViewChild('publicationTitle', {static: false}) set publicationTitle(el: ElementRef | null) {
@@ -298,6 +297,24 @@ export class EditContentComponent implements OnInit, OnDestroy {
   }
 
   initSubscribes() {
+    this.contentForm.valueChanges
+      .pipe(
+        tap(() => this.initSubmitFormView()),
+        debounceTime(2000),
+        map(() => {
+          if (!this.isSubmited) {
+            this.saveDraft(this.draftId);
+          }
+        }),
+        takeUntil(this.unsubscribe$))
+      .subscribe(() => {
+          if (this.contentForm.controls['title'].value && this.contentForm.controls['title'].value.trim() == '') {
+            this.contentForm.controls['title'].reset();
+          }
+        },
+        err => console.log(err)
+      );
+
     this.draftService.draftData$
       .pipe(
         takeUntil(this.unsubscribe$)
@@ -326,20 +343,6 @@ export class EditContentComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe(event => {
         this.onShowStepForm(true);
-      });
-
-    this.contentChangeObs$
-      .pipe(
-        debounceTime(2000),
-        takeUntil(this.unsubscribe$)
-      )
-      .subscribe((data) => {
-        if (!this.isSubmited) {
-          this.saveDraft(this.draftId);
-        }
-        if (this.contentForm.controls['title'].value && this.contentForm.controls['title'].value.trim() == '') {
-          this.contentForm.controls['title'].reset();
-        }
       });
   }
 
@@ -567,7 +570,7 @@ export class EditContentComponent implements OnInit, OnDestroy {
       const node = contentBlocks.item(i);
       const nodeHtml = node.tagName === 'P' ? node.textContent.trim() : node.innerHTML.trim();
       if (nodeHtml != '' && nodeHtml != '<br>' && !nodeHtml.match(/<img/)) {
-         calls.push(this.contentService.uploadTextFiles(node.outerHTML));
+        calls.push(this.contentService.uploadTextFiles(node.outerHTML));
       } else if (nodeHtml.match(/<img/)) {
         let outerText = node.outerHTML;
         const regex = /<img[^>]*data-uri="([^"]*)"/g;
@@ -851,10 +854,7 @@ export class EditContentComponent implements OnInit, OnDestroy {
 
   onContentChange(text?: string) {
     this.content.text = text ? text : this.content.text;
-    this.content.title = this.title;
-    this.contentForm.controls['title'].setValue(this.title);
     this.contentForm.controls['content'].setValue(this.content.text);
-    this.contentChangeObs$.next(text ? text : '');
   }
 
   contentUrisChange() {
