@@ -570,7 +570,7 @@ export class EditContentComponent implements OnInit, OnDestroy {
       const node = contentBlocks.item(i);
       const nodeHtml = node.tagName === 'P' ? node.textContent.trim() : node.innerHTML.trim();
       if (nodeHtml != '' && nodeHtml != '<br>' && !nodeHtml.match(/<img/)) {
-        calls.push(this.contentService.uploadTextFiles(node.outerHTML));
+         calls.push(this.contentService.uploadTextFiles(node.outerHTML));
       } else if (nodeHtml.match(/<img/)) {
         let outerText = node.outerHTML;
         const regex = /<img[^>]*data-uri="([^"]*)"/g;
@@ -694,7 +694,7 @@ export class EditContentComponent implements OnInit, OnDestroy {
     const input = event.target;
     if (input.files && input.files[0]) {
       const myReader: FileReader = new FileReader();
-      if (!this.validateFile(input.files[0], 5000000)) {
+      if (!this.validateFile(input.files[0], 5242880)) {
         this.uiNotificationService.error(this.translateService.instant('edit-content.max_file_size'), '');
         return;
       }
@@ -814,7 +814,6 @@ export class EditContentComponent implements OnInit, OnDestroy {
   }
 
   onImageDelete(data) {
-    console.log('delete ', data);
     const image = data.name ? data : data.img;
     const imageUri = image._attrs.get('data-uri');
     delete this.coverImagesList[imageUri];
@@ -840,7 +839,6 @@ export class EditContentComponent implements OnInit, OnDestroy {
   }
 
   onImageInsert(responseData) {
-    console.log('insert ', responseData);
     if (responseData) {
       this.contentUris[responseData.uri] = responseData.link.replace(/&amp;/g, '&');
       this.selectedCoverImageUri = responseData.uri;
@@ -849,12 +847,17 @@ export class EditContentComponent implements OnInit, OnDestroy {
   }
 
   onEditorReady(editor) {
-    console.log(editor);
+   // console.log(editor);
   }
 
   onContentChange(text?: string) {
-    this.content.text = text ? text : this.content.text;
-    this.contentForm.controls['content'].setValue(this.content.text);
+    if (text) {
+      this.content.text = text;
+      this.contentForm.controls['content'].setValue(this.content.text);
+      return;
+    }
+    this.content.title = this.title;
+    this.contentForm.controls['title'].setValue(this.title);
   }
 
   contentUrisChange() {

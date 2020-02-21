@@ -188,24 +188,59 @@
     }
 
     figure {
-      &.media {
-        margin: 0 auto 20px;
-        max-width: 870px;
-
-        @include media-xl { max-width: 644px; }
-        @include media-lg { max-width: 470px; }
-        @include media-md { max-width: 530px; }
-        @include media-sm {
-          max-width: 100%;
-          width: calc(100% - 30px);
-        }
-      }
       &.image {
         margin: 0 auto 20px;
       }
 
       figcaption {
         margin: 8px 0;
+      }
+    }
+
+    // EMBEDS
+    figure.media {
+      margin: 0 auto 20px;
+      max-width: 870px;
+
+      @include media-xl { max-width: 644px; }
+      @include media-lg { max-width: 470px; }
+      @include media-md { max-width: 530px; }
+      @include media-sm {
+        max-width: 100%;
+        width: calc(100% - 30px);
+      }
+
+      &[data-embed-type="youtube"] {
+        > div {
+          position: relative;
+          padding-top: 56.25%;
+
+          iframe {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+          }
+        }
+      }
+
+      > div {
+        display: flex;
+        justify-content: center;
+        margin: 0 0 20px;
+
+
+        .instagram-media,
+        .instagram-media-registered,
+        .twitter-tweet {
+          &:after, &:before {
+            content: none !important;
+          }
+        }
+
+        .twitter-tweet {
+          max-width: 500px !important;
+        }
       }
     }
   }
