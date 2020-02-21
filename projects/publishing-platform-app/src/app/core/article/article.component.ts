@@ -163,8 +163,14 @@ export class ArticleComponent implements OnInit, AfterViewInit, OnDestroy {
                     }
                     const childs = fakeDom.querySelectorAll(`[data-id='${file.uri}']`);
                     childs.forEach((child) => {
-                      const element = (this.utilService.htmlFromString(fileText) as HTMLCollection).item(0);
-                      fakeDom.body.replaceChild(element, child);
+                      const collection: HTMLCollection = (this.utilService.htmlFromString(fileText) as HTMLCollection);
+                      if (collection.length > 1) {
+                        const document: Document = (this.utilService.htmlFromString(fileText, true) as Document);
+                        fakeDom.body.replaceChild(document.body, child);
+                      } else {
+                        const element = collection.item(0);
+                        fakeDom.body.replaceChild(element, child);
+                      }
                     });
                     data.text = fakeDom.children[0].children[1].innerHTML;
                   },
