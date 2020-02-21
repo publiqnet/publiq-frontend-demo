@@ -3,7 +3,7 @@ import { DOCUMENT, isPlatformBrowser, isPlatformServer } from '@angular/common';
 import { ContentService } from '../services/content.service';
 import { SeoService } from '../services/seo.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { interval, ReplaySubject } from 'rxjs';
+import { interval, ReplaySubject, timer } from 'rxjs';
 import { filter, takeUntil, takeWhile, tap } from 'rxjs/operators';
 import { DomSanitizer } from '@angular/platform-browser';
 import { AccountService } from '../services/account.service';
@@ -15,6 +15,12 @@ import { environment } from '../../../environments/environment';
 import * as moment from 'moment';
 import * as Fingerprint2 from 'fingerprintjs2';
 import { TranslateService } from '@ngx-translate/core';
+
+enum EmbedScripts {
+  instagram = '//www.instagram.com/embed.js',
+  twitter = 'https://platform.twitter.com/widgets.js',
+  pinterest = '//assets.pinterest.com/js/pinit.js',
+}
 
 @Component({
   selector: 'app-article',
@@ -132,7 +138,6 @@ export class ArticleComponent implements OnInit, AfterViewInit, OnDestroy {
       takeWhile(() => !this.content)
     ).pipe(takeUntil(this.unsubscribe$))
       .subscribe();
-
   }
 
   getArticleData(uri, init = false) {
@@ -199,6 +204,39 @@ export class ArticleComponent implements OnInit, AfterViewInit, OnDestroy {
       });
   }
 
+  private loadEmbed(type) {
+    const runScript = (src) => {
+      const script = document.createElement('script');
+      script.src = src;
+      script.async = true;
+      script.defer = true;
+      document.body.appendChild(script);
+    };
+    switch (type) {
+      case 'instagram' :
+        if (window['instgrm']) {
+            window['instgrm'].Embeds.process();
+        } else {
+          runScript(EmbedScripts.instagram);
+        }
+        break;
+      case 'twitter' :
+        if (window['twttr']) {
+            window['twttr'].widgets.load();
+        } else {
+          runScript(EmbedScripts.twitter);
+        }
+        break;
+      case 'pinterest' :
+        if (window['PinUtils']) {
+            window['PinUtils'].build();
+        } else {
+          runScript(EmbedScripts.pinterest);
+        }
+        break;
+    }
+  }
+
   filesLoaded(data, init, uri) {
     let article = null;
     data.text = `${data.text}`;
@@ -213,6 +251,11 @@ export class ArticleComponent implements OnInit, AfterViewInit, OnDestroy {
     this.nextArticleToLoad = this.getNextRelatedArticle(article);
     this.loadedContentsKeys = Object.keys(this.loadedContentsList);
     this.enableLoading = false;
+    timer(0).subscribe(() => {
+      const embeds = this.document.querySelectorAll(`[data-embed-type]`);
+      embeds.forEach((element: Element) => this.loadEmbed(element.getAttribute('data-embed-type')));
+    });
+
     this.cdr.detectChanges();
   }
 

@@ -71,6 +71,7 @@ export class NewContentComponent implements OnInit, AfterViewInit, OnDestroy {
   public chosenDay: number;
   private hasDraft = false;
   private uploadedContentUri: string;
+  private skipDraftSave: boolean = false;
 
   private unsubscribe$ = new ReplaySubject<void>(1);
   @Input() draft?: Draft;
@@ -143,6 +144,7 @@ export class NewContentComponent implements OnInit, AfterViewInit, OnDestroy {
     if (Array.isArray(this.draft.tags)) {
       this.tags = this.draft.tags;
     }
+    this.skipDraftSave = true;
     this.contentForm.controls['content'].setValue(this.draft.content);
     this.content = this.draft.content;
     this.contentForm.controls['title'].setValue(this.draft.title);
@@ -303,7 +305,11 @@ export class NewContentComponent implements OnInit, AfterViewInit, OnDestroy {
         debounceTime(2000),
         map(() => {
           if (!this.isSubmited) {
-            this.saveDraft(this.draftId);
+            if (!this.skipDraftSave) {
+              this.saveDraft(this.draftId);
+            } else {
+              this.skipDraftSave = false;
+            }
           }
         }),
         takeUntil(this.unsubscribe$))
@@ -740,7 +746,7 @@ export class NewContentComponent implements OnInit, AfterViewInit, OnDestroy {
     const input = event.target;
     if (input.files && input.files[0]) {
       const myReader: FileReader = new FileReader();
-      if (!this.validateFile(input.files[0], 5000000)) {
+      if (!this.validateFile(input.files[0], 5242880)) {
         this.uiNotificationService.error(this.translateService.instant('newcontent.max_file_size'), '');
         return;
       }
@@ -834,7 +840,6 @@ export class NewContentComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   onImageDelete(data) {
-    console.log('delete ', data);
     const image = data.name ? data : data.img;
     const imageUri = image._attrs.get('data-uri');
     delete this.coverImagesList[imageUri];
@@ -860,7 +865,6 @@ export class NewContentComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   onImageInsert(responseData) {
-    console.log('insert ', responseData);
     if (responseData) {
       this.contentUris[responseData.uri] = responseData.link.replace(/&amp;/g, '&');
       this.selectedCoverImageUri = responseData.uri;
@@ -875,8 +879,12 @@ export class NewContentComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   onContentChange(content?: string) {
-    this.content = content ? content : this.content;
-    this.contentForm.controls['content'].setValue(this.content);
+    if (content) {
+      this.content = content;
+      this.contentForm.controls['content'].setValue(this.content);
+      return;
+    }
+    this.contentForm.controls['title'].setValue(this.title);
   }
 
   contentUrisChange() {

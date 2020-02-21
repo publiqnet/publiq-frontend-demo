@@ -7,6 +7,7 @@ import { ReplaySubject } from 'rxjs';
 import { ImageCroppedEvent } from 'ngx-image-cropper';
 import PubliqEditorConfig from './publiq-editor.config';
 import { TranslateService } from '@ngx-translate/core';
+import { UiNotificationService } from '../../core/services/ui-notification.service';
 
 declare var BalloonEditor: any;
 
@@ -39,7 +40,9 @@ export class PubliqEditorComponent implements OnInit, OnDestroy {
   private unsubscribe$ = new ReplaySubject<void>(1);
   public pageReady: boolean = false;
 
-  constructor(public accountService: AccountService, private translateService: TranslateService) {}
+  constructor(public accountService: AccountService,
+              public translateService: TranslateService,
+              public uiNotificationService: UiNotificationService) {}
 
   ngOnInit(): void {
     this.publiqEditor = PubliqEditorConfig.Instance;
@@ -50,6 +53,9 @@ export class PubliqEditorComponent implements OnInit, OnDestroy {
           replacementUri: '',
           'X-API-TOKEN': ''
         }
+      },
+      link: {
+        addTargetToExternalLinks: true,
       },
       language: 'en' // TODO - change to current language
     };

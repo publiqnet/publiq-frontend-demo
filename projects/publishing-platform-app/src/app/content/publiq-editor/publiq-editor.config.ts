@@ -1,5 +1,6 @@
 
 import { UtilService } from '../../core/services/util.service';
+import { PubliqEditorComponent } from './publiq-editor.component';
 
 /*
 * Publiq editor custom configuration class
@@ -26,7 +27,7 @@ export default class PubliqEditorConfig {
   /*
   * Init CKEditor event listeners
   */
-  public initListeners(thisArg) {
+  public initListeners(thisArg: PubliqEditorComponent) {
     this._ckEditor.editing.view.document.on( 'clipboardInput', ( evInfo, data) => {
       if (data.dataTransfer.files.length) {
         evInfo.stop();
@@ -41,12 +42,17 @@ export default class PubliqEditorConfig {
     this._ckEditor.ui.componentFactory._components.get('beforeimginsert').callback()
       .on('change:beforeInsert', (eventInfo, event, options) => {
         thisArg.onImageInsert.emit(options);
-        // console.log(options, 'before insert');
       });
     this._ckEditor.ui.componentFactory._components.get('beforeimgdelete').callback()
       .on('change:beforeDelete', (event, evtInfo, imgData) => {
         thisArg.onImageDelete.emit(imgData);
       });
+    this._ckEditor.plugins.get( 'Notification' ).on( 'show:caution:size-error', ( evt, evtInfo ) => {
+        thisArg.uiNotificationService.error(thisArg.translateService.instant('editor.max_file_size'), '');
+      } );
+    this._ckEditor.plugins.get( 'Notification' ).on( 'show:caution:upload', ( evt, evtInfo ) => {
+        thisArg.uiNotificationService.error(thisArg.translateService.instant('editor.upload_error'), '');
+      } );
     this._ckEditor.ui.componentFactory._components.get('imagecrop').callback()
       .on('change:cropIsOn', (p1, p2, p3) => {
         this._ckEditor.plugins.get('WidgetToolbarRepository')._hideToolbar(this._ckEditor.plugins.get('WidgetToolbarRepository')._toolbarDefinitions.get('image'));
@@ -57,6 +63,7 @@ export default class PubliqEditorConfig {
             thisArg.croppingImage = file;
             thisArg.showCropModal = true;
             document.querySelector('html').classList.add('overflow-hidden');
+            document.querySelector('html').click();
           })
           .catch((err) => console.error(`error in publiq --> description ---> ${err}`));
       });
