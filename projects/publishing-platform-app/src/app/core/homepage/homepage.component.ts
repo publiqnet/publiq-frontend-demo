@@ -123,7 +123,7 @@ export class HomepageComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     });
 
-    if (isPlatformBrowser(this.platformId)) {
+    // if (isPlatformBrowser(this.platformId)) {
       this.welcomeMessageType = 'welcome_to_media';
       this.isDataLoaded = true;
       this.accountService.accountUpdated$
@@ -175,7 +175,7 @@ export class HomepageComponent implements OnInit, AfterViewInit, OnDestroy {
             }
           }
         });
-    }
+    // }
     if (!this.publicationsList.length) {
       this.getMyPublications();
     }
