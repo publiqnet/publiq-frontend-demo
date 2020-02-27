@@ -3,7 +3,7 @@
     <div class="col-12 highlights-wrapper">
       <drag-scroll [drag-scroll-y-disabled]="true">
         <div class="highlights">
-          <ng-container *ngIf="((listType == 'grid' && isMasonryLoaded) || (listType == 'single' && firstContentBlock.length)) && highlightsListLoaded; else highlightsLoading;">
+          <ng-container *ngIf="((listType == 'grid' && isMasonryLoaded) || (listType == 'single' && firstContentBlock && firstContentBlock.length)) && highlightsListLoaded; else highlightsLoading;">
             <ui-highlights [highlightData]="highlight" (highlightClick)="onHighlightClicked(highlight)" *ngFor="let highlight of highlightsList;"></ui-highlights>
           </ng-container>
           <ng-template #highlightsLoading>
@@ -19,12 +19,12 @@
     <div class="col-lg-8 col-xl-9">
       <div class="col-lg-12 col-xl-12">
         <div class="grid-style">
-          <h2 *ngIf="!((listType == 'grid' && !isMasonryLoaded) || (listType == 'single' && !firstContentBlock.length))"
+          <h2 *ngIf="!((listType == 'grid' && !isMasonryLoaded) || (listType == 'single' && (!firstContentBlock || !firstContentBlock.length)))"
               class="shadowed-heading"
               [attr.data-shadow-text]="'homepage.recommended' | translate">{{'homepage.recommended' | translate}}</h2>
           <ui-loading-block type="line" width="80" height="20"
                             className="grid-style__loading"
-                            *ngIf="(listType == 'grid' && !isMasonryLoaded) || (listType == 'single' && !firstContentBlock.length)"></ui-loading-block>
+                            *ngIf="(listType == 'grid' && !isMasonryLoaded) || (listType == 'single' && (!firstContentBlock || !firstContentBlock.length))"></ui-loading-block>
           <div class="grid-style__items">
             <i (click)="listType = 'grid'" class="grid-icon grid-icon--selected icon-multi-grid"
                [ngClass]="{'grid-icon--selected': (listType == 'grid')}"></i>
@@ -34,12 +34,12 @@
         </div>
       </div>
       <ng-container
-        *ngIf="(listType == 'grid' && !isMasonryLoaded) || (listType == 'single' && !firstContentBlock.length)">
+        *ngIf="(listType == 'grid' && !isMasonryLoaded) || (listType == 'single' && (!firstContentBlock || !firstContentBlock.length))">
         <div class="col-lg-12 col-xl-12">
             <ui-loading-block *ngFor="let i of loadingBlockCount" [type]="listType"></ui-loading-block>
         </div>
       </ng-container>
-      <ng-container *ngIf="firstContentBlock.length">
+      <ng-container *ngIf="firstContentBlock && firstContentBlock.length">
         <ng-container *ngIf="listType == 'grid'">
           <ngx-masonry class="col-lg-12 col-xl-12 stories" [class.masonry]="isMasonryLoaded"
                        [updateLayout]="updateMasonryFirstBlock" (layoutComplete)="onLayoutComplete($event)"
@@ -76,9 +76,9 @@
       </ng-container>
       <ng-container *ngIf="contentArray && contentArray.length">
         <ui-relevant-content (contentClick)="utilService.routerChangeHelper('content',$event)"
-                             *ngIf="firstRelevantBlock.length" [type]="'all-single'" [contentList]="firstRelevantBlock"
+                             *ngIf="firstRelevantBlock && firstRelevantBlock.length" [type]="'all-single'" [contentList]="firstRelevantBlock"
                              [title]="'homepage.interesting_writers_first' | translate"></ui-relevant-content>
-        <div class="row" *ngIf="secondContentBlock.length">
+        <div class="row" *ngIf="secondContentBlock && secondContentBlock.length">
           <ng-container *ngIf="listType == 'grid'">
             <ngx-masonry class="col-lg-12 col-xl-12 stories" [class.masonry]="isMasonryLoaded"
                          [updateLayout]="updateMasonrySecondBlock" (layoutComplete)="onLayoutComplete($event)"
@@ -115,11 +115,11 @@
         <ui-relevant-content (contentClick)="utilService.routerChangeHelper('content',$event)"
                              (publicationClick)="utilService.routerChangeHelper('publication',$event.slug)"
                              (accountClick)="utilService.routerChangeHelper('account',$event.slug)"
-                             (tagClick)="onTagClick($event)" *ngIf="secondRelevantBlock.length"
+                             (tagClick)="onTagClick($event)" *ngIf="secondRelevantBlock && secondRelevantBlock.length"
                              [contentList]="secondRelevantBlock"
                              [title]="'homepage.interesting_writers_second' | translate"></ui-relevant-content>
       </ng-container>
-      <ng-container *ngIf="loadedContentBlock.length">
+      <ng-container *ngIf="loadedContentBlock && loadedContentBlock.length">
         <div class="row">
           <ng-container *ngIf="listType == 'grid'">
             <ngx-masonry class="col-lg-12 col-xl-12 stories" [class.masonry]="isMasonryLoaded"
@@ -168,10 +168,10 @@
       </ng-container>
     </div>
     <div class="col-lg-4 col-xl-3 feed-sidebar" [ngClass]="accountService.loggedIn() ? '' : 'guest-version'">
-      <ng-container *ngIf="(listType == 'grid' && !isMasonryLoaded) || (listType == 'single' && !firstContentBlock.length)">
+      <ng-container *ngIf="(listType == 'grid' && !isMasonryLoaded) || (listType == 'single' && (!firstContentBlock || !firstContentBlock.length))">
         <div class="feed-sidebar__widget" *ngIf="!storageAuth()">
           <ui-welcome-message type="welcome_to_media_loading"></ui-welcome-message>
-          <ui-loading-block type="item-list" *ngIf="recommendedPublicationsList.length === 0"></ui-loading-block>
+          <ui-loading-block type="item-list" *ngIf="!recommendedPublicationsList || recommendedPublicationsList.length === 0"></ui-loading-block>
         </div>
         <div class="feed-sidebar__widget" *ngIf="storageAuth()">
           <ui-loading-block type="boostable"></ui-loading-block>
@@ -179,7 +179,7 @@
           <ui-loading-block type="item-list"></ui-loading-block>
         </div>
       </ng-container>
-      <div *ngIf="(listType == 'grid' && isMasonryLoaded) || (listType == 'single' && firstContentBlock.length)"
+      <div *ngIf="(listType == 'grid' && isMasonryLoaded) || (listType == 'single' && firstContentBlock && firstContentBlock.length)"
            class="feed-sidebar__widget">
         <ui-welcome-message *ngIf="welcomeMessageState && !accountService.loggedIn()"
                             [type]="welcomeMessageType"

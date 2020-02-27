@@ -500,22 +500,22 @@ export class ContentService {
     const url = `${environment.backend}/api/user/homepage-data`;
     return this.httpHelperService.call(HttpMethodTypes.get, url)
       .pipe(map(homepageData => {
-        if (homepageData.trending.authors && homepageData.trending.authors.length) {
+        if (homepageData.trending && homepageData.trending.authors && homepageData.trending.authors.length) {
           homepageData.trending.authors = homepageData.trending.authors.map(nextAuthor => (nextAuthor instanceof Author) ? nextAuthor : new Author(nextAuthor));
         }
-        if (homepageData.trending.publications && homepageData.trending.publications.length) {
+        if (homepageData.trending && homepageData.trending.publications && homepageData.trending.publications.length) {
           homepageData.trending.publications = homepageData.trending.publications.map(nextPublication => (nextPublication instanceof Publication) ? nextPublication : new Publication(nextPublication));
         }
-        if (homepageData.recommended.authors && homepageData.recommended.authors.length) {
+        if (homepageData.recommended && homepageData.recommended.authors && homepageData.recommended.authors.length) {
           homepageData.recommended.authors = homepageData.recommended.authors.map(nextAuthor => (nextAuthor instanceof Author) ? nextAuthor : new Author(nextAuthor));
         }
-        if (homepageData.recommended.publications && homepageData.recommended.publications.length) {
+        if (homepageData.recommended && homepageData.recommended.publications && homepageData.recommended.publications.length) {
           homepageData.recommended.publications = homepageData.recommended.publications.map(nextPublication => (nextPublication instanceof Publication) ? nextPublication : new Publication(nextPublication));
         }
-        if (homepageData.preferences.author && homepageData.preferences.author.length) {
+        if (homepageData.preferences && homepageData.preferences.author && homepageData.preferences.author.length) {
           homepageData.preferences.author = homepageData.preferences.author.map(nextContent => (nextContent instanceof Content) ? nextContent : new Content(nextContent));
         }
-        if (homepageData.preferences.tag && homepageData.preferences.tag.length) {
+        if (homepageData.preferences && homepageData.preferences.tag && homepageData.preferences.tag.length) {
           homepageData.preferences.tag = homepageData.preferences.tag.map(nextContent => (nextContent instanceof Content) ? nextContent : new Content(nextContent));
         }
         if (homepageData.articleToBoost) {
