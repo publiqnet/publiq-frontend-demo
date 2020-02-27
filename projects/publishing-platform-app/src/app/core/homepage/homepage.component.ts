@@ -141,10 +141,12 @@ export class HomepageComponent implements OnInit, AfterViewInit, OnDestroy {
               this.firstRelevantBlock = homepageData.preferences.author;
               this.secondRelevantBlock = homepageData.preferences.tag;
               this.articleToBoost = homepageData.articleToBoost;
-              this.feeWhole = homepageData.currentBoostFee.whole;
-              this.feeFraction = homepageData.currentBoostFee.fraction;
-              this.currentTime = homepageData.currentBoostFee.currentTime;
-              this.currentBoostFee = UtilsService.calculateBalance(homepageData.currentBoostFee.whole, homepageData.currentBoostFee.fraction);
+              if (homepageData && homepageData.currentBoostFee) {
+                this.feeWhole = homepageData.currentBoostFee.whole;
+                this.feeFraction = homepageData.currentBoostFee.fraction;
+                this.currentTime = homepageData.currentBoostFee.currentTime;
+                this.currentBoostFee = UtilsService.calculateBalance(homepageData.currentBoostFee.whole, homepageData.currentBoostFee.fraction);
+              }
             } else {
               this.firstRelevantBlock = UtilService.pickRandomFromArray(this.contentArray, this.storiesDefaultCount);
               this.secondRelevantBlock = UtilService.pickRandomFromArray(this.contentArray, this.storiesDefaultCount);
@@ -164,7 +166,7 @@ export class HomepageComponent implements OnInit, AfterViewInit, OnDestroy {
           this.contentArray = contentData.data;
           this.seeMoreChecker = contentData.more;
           this.seeMoreLoading = false;
-          if (this.contentArray.length) {
+          if (this.contentArray && this.contentArray.length) {
             this.firstContentBlock = this.contentArray.slice(0, this.storiesPerBlock);
             this.secondContentBlock = this.contentArray.slice(this.storiesPerBlock, this.storiesDefaultCount);
             this.loadedContentBlock = this.contentArray.slice(this.storiesDefaultCount);
@@ -185,9 +187,11 @@ export class HomepageComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   calculateLastStoriUri() {
-    const lastIndex = this.contentArray.length - 1;
-    if (this.contentArray[lastIndex].uri !== this.startFromUri) {
-      this.startFromUri = this.contentArray[lastIndex].uri;
+    if (this.contentArray) {
+      const lastIndex = this.contentArray.length - 1;
+      if (this.contentArray[lastIndex].uri !== this.startFromUri) {
+        this.startFromUri = this.contentArray[lastIndex].uri;
+      }
     }
   }
 
