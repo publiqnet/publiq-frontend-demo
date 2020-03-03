@@ -564,6 +564,15 @@ export class EditContentComponent implements OnInit, OnDestroy {
     const contentTitle = (this.title) ? `<h1>${this.title.trim()}</h1>` : '';
     let uploadedContentHtml = '';
     const calls = [];
+    const document: Document = (this.utilService.htmlFromString(this.content.text, true) as Document);
+    document.body.childNodes.forEach((node) => {
+      if (node.nodeType === Node.TEXT_NODE || node.nodeName === 'B') {
+        const p = document.createElement('p');
+        p.innerHTML = node.nodeType === Node.TEXT_NODE ? node.textContent : (node as HTMLElement).outerHTML;
+        document.body.replaceChild(p, node);
+      }
+    });
+    this.content.text = document.body.innerHTML;
     const fakeDom = new DOMParser().parseFromString(this.content.text, 'text/html');
     const contentBlocks = fakeDom.children[0].children[1].children;
     for (let i = 0; i < contentBlocks.length; i++) {
