@@ -19,7 +19,7 @@ import { ErrorEvent, ErrorService } from './error.service';
 export class AuthguardService implements CanActivate, CanActivateChild {
   loginSessionSubscription: Subscription = Subscription.EMPTY;
   errorHandleSubscription: Subscription = Subscription.EMPTY;
-  lang: string = 'en';
+  lang: string = 'es';
   constructor(
     private router: Router,
     private accountService: AccountService,
@@ -34,7 +34,7 @@ export class AuthguardService implements CanActivate, CanActivateChild {
   ): Observable<boolean> | Promise<boolean> | boolean {
     if (isPlatformBrowser(this.platformId)) {
       return new Promise(resolve => {
-        this.lang = localStorage.getItem('lang') ? localStorage.getItem('lang') : 'en';
+        this.lang = localStorage.getItem('lang') ? localStorage.getItem('lang') : 'es';
         if (this.accountService.loggedIn()) {
           resolve(true);
           return;

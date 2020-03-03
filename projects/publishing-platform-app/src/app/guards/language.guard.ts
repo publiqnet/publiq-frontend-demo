@@ -7,7 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 
 @Injectable()
 export class LanguageGuard implements CanActivate, CanActivateChild {
-  currentLang: string = 'en';
+  currentLang: string = 'es';
   constructor(
     private router: Router,
     private translateService: TranslateService,

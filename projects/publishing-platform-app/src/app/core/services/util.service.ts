@@ -14,7 +14,7 @@ export class UtilService {
     private translateService: TranslateService
   ) {
   }
-  static lang: string = 'en';
+  static lang: string = 'es';
   utcMoment = moment.utc();
 
   static getCookie(name) {

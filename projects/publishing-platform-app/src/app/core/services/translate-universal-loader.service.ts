@@ -10,7 +10,7 @@ export class TranslationLoader implements TranslateLoader {
 
   getTranslation(lang: string): Observable<any> {
     if (typeof window !== 'undefined') {
-      lang = (localStorage && localStorage.getItem('lang')) ? localStorage.getItem('lang') : 'en';
+      lang = (localStorage && localStorage.getItem('lang')) ? localStorage.getItem('lang') : 'es';
     }
 
     return this.http.get(this.url +  lang + '.json');

@@ -140,7 +140,7 @@ export class AccountService {
     localStorage.removeItem('encrypted_brain_key');
     this.brainKey = '';
     localStorage.removeItem('for_adult');
-    localStorage.setItem('lang', this.translateService.currentLang ? this.translateService.currentLang : 'en');
+    localStorage.setItem('lang', this.translateService.currentLang ? this.translateService.currentLang : 'es');
     localStorage.removeItem(this.userFavouriteTagsKey);
     this.accountUpdated$.next(null);
     this.logoutDataChanged.next(null);

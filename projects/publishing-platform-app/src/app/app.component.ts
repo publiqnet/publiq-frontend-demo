@@ -75,7 +75,7 @@ export class AppComponent implements OnInit, OnDestroy {
           takeUntil(this.unsubscribe$))
         .subscribe(() => this.publicationService.reset());
 
-      this.translateService.use((typeof window !== 'undefined' && localStorage) ? (localStorage.getItem('lang') || 'en') : 'en');
+      this.translateService.use((typeof window !== 'undefined' && localStorage) ? (localStorage.getItem('lang') || 'es') : 'es');
       this.translateService.getTranslation(this.translateService.currentLang)
         .pipe(
           tap((translations) => {
