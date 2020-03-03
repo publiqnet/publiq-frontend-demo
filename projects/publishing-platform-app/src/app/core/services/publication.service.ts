@@ -18,7 +18,7 @@ import { Account } from './models/account';
 export class PublicationService {
   public tabIndexInv = 0;
   public tabIndexReq = 0;
-  public lang: string = 'en';
+  public lang: string = 'es';
   public updatePublication$: EventEmitter<any> = new EventEmitter();
 
   private observers: object = {
