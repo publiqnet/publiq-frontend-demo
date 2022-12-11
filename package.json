@@ -61,7 +61,7 @@
         "crypto-js": "^3.1.9-1",
         "cryptography-ts": "https://github.com/publiqnet/cryptography-ts.git",
         "event-source-polyfill": "^1.0.12",
-        "express": "4.17.1",
+        "express": "4.17.3",
         "fingerprintjs2": "^2.1.0",
         "font-awesome": "^4.7.0",
         "hammerjs": "^2.0.8",
